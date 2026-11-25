@@ -48,9 +48,11 @@ jobs:
           HOME_HTML="$(curl -sf http://127.0.0.1:8686/)"
           case "$HOME_HTML" in *'<title>'*) ;; *) echo '首页没有 title'; exit 1;; esac
           # 环境变量设的初始密码生效、默认密码不能登录
-          LOGIN="$(curl -sf -X POST -H 'Content-Type: application/json' -d '{"username":"admin","password":"ci-pass-123"}' http://127.0.0.1:8686/api/login)"
+          LOGIN="$(curl -s -X POST -H 'Content-Type: application/json' -d '{"username":"admin","password":"ci-pass-123"}' http://127.0.0.1:8686/api/login)"
+          echo "login: $LOGIN"
           case "$LOGIN" in *token*) ;; *) echo '初始密码登录失败'; exit 1;; esac
           CODE="$(curl -s -o /dev/null -w '%{http_code}' -X POST -H 'Content-Type: application/json' -d '{"username":"admin","password":"admin123"}' http://127.0.0.1:8686/api/login)"
+          echo "default-password http: $CODE"
           test "$CODE" = 401 || { echo "默认密码居然能登录（HTTP $CODE）"; exit 1; }
           # 数据写在 /data，时区是北京时间
           docker exec xerp-ci ls /data/erp.db /data/config.json

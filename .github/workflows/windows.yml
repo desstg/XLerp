@@ -47,7 +47,7 @@ jobs:
         shell: powershell
         run: |
           chcp 65001 | Out-Null
-          \System.Text.UTF8Encoding = [Console]::OutputEncoding = [Text.Encoding]::UTF8
+          $OutputEncoding = [Console]::OutputEncoding = [Text.Encoding]::UTF8
           .\windows\build-windows.ps1
 
       - name: 上传安装包到 GitHub Release
