@@ -1,4 +1,7 @@
+# 只把运行需要的文件打进镜像，其余（文档、截图、客户端源码、飞牛包）一律不进
 *
 !src/server.js
+!src/portal.js
 !src/index.html
 !src/vendor/
+!src/vendor/**

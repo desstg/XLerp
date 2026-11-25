@@ -13,7 +13,34 @@ if (-not $Version) { throw '读不到 src\server.js 里的 VERSION' }
 
 $Iscc = @("$env:LOCALAPPDATA\Programs\Inno Setup 6\ISCC.exe", "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe", "$env:ProgramFiles\Inno Setup 6\ISCC.exe") | Where-Object { Test-Path $_ } | Select-Object -First 1
 if (-not $Iscc) { throw '找不到 Inno Setup 6，请先运行：winget install JRSoftware.InnoSetup' }
-$Node = (Get-Command node).Source
+
+# 找真正的 node.exe：优先用 setup-node / nvm 设的 RUNNER_TOOL_CACHE，其次 PATH
+# （CI 上 `Get-Command node` 有时拿到的是 .cmd shim 或符号链接，Copy-Item 复制过去是个坏文件）
+$Node = $null
+foreach ($cand in @(
+  (Join-Path $env:RUNNER_TOOL_CACHE 'node'),
+  (Join-Path $env:ProgramFiles 'nodejs'),
+  $env:NODE_HOME
+)) {
+  if (-not $cand -or -not (Test-Path $cand)) { continue }
+  $exe = Get-ChildItem -Path $cand -Filter 'node.exe' -Recurse -ErrorAction SilentlyContinue |
+         Where-Object { $_.DirectoryName -notmatch 'node_modules' } | Select-Object -First 1
+  if ($exe) { $Node = $exe.FullName; break }
+}
+if (-not $Node) {
+  $cmd = Get-Command node -ErrorAction SilentlyContinue
+  if ($cmd) {
+    $src = $cmd.Source
+    # shim / 符号链接 → 找同目录下真正的 node.exe
+    if ($src -notmatch '\.exe$') {
+      $real = Join-Path (Split-Path $src -Parent) 'node.exe'
+      if (Test-Path $real) { $src = $real }
+    }
+    if (Test-Path $src) { $Node = $src }
+  }
+}
+if (-not $Node) { throw '找不到 node.exe，请安装 Node.js x64 22.13+' }
+Write-Host "node.exe: $Node"
 $NodeVer = (& $Node -p process.version) + " " + (& $Node -p process.arch)
 if ($NodeVer -notmatch 'x64$') { throw "需要 x64 的 Node.js，当前是 $NodeVer" }
 if ([int]($NodeVer -replace '^v(\d+).*', '$1') -lt 22) { throw "需要 Node.js 22.13 以上，当前是 $NodeVer" }
