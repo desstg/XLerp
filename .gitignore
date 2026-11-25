@@ -1,0 +1,18 @@
+dist/
+fnos/build/
+fnos/tools/
+node_modules/
+*.fpk
+*.db
+*.db-shm
+*.db-wal
+windows/build/
+android/build/
+payrelay/build/
+tools/stats-server/ip2region_v4.xdb
+__pycache__/
+# 私有运维记录（含内网地址与密码，勿上传）
+接续备忘.md
+智慧记-to-x.erp-迁移手册.md
+*.bak
+*.bak-*

@@ -1,0 +1,84 @@
+# Android 安装包自动构建与签名：
+# - 推送 v* 标签或手动触发（填 tag 如 v2.14.2）时，在云端 Windows 用正式签名证书打包 xerp-<版本>-android.apk
+# - 自动上传为对应 GitHub Release 的附件
+name: android
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: '要发布附件的版本标签（如 v2.14.2，留空只做构建测试）'
+        required: false
+
+permissions:
+  contents: write
+
+env:
+  TAG: ${{ inputs.tag || (startsWith(github.ref, 'refs/tags/v') && github.ref_name) || '' }}
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.TAG || github.ref }}
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: 确保 Android SDK 36 与 build-tools 36.1.0 已安装
+        shell: powershell
+        run: |
+          $sdk = @($env:ANDROID_HOME, $env:ANDROID_SDK_ROOT, "$env:LOCALAPPDATA\Android\Sdk") | Where-Object { $_ -and (Test-Path $_) } | Select-Object -First 1
+          if (-not $sdk) { throw 'Android SDK not found' }
+          $need = @()
+          if (-not (Test-Path "$sdk\platforms\android-36\android.jar")) { $need += 'platforms;android-36' }
+          if (-not (Test-Path "$sdk\build-tools\36.1.0\apksigner.bat")) { $need += 'build-tools;36.1.0' }
+          if ($need.Count -gt 0) {
+            $mgr = Join-Path $sdk 'cmdline-tools\latest\bin\sdkmanager.bat'
+            "y`ny`ny`ny`ny`ny`n" | & $mgr @need
+          }
+
+      - name: 准备签名证书
+        shell: powershell
+        env:
+          KS_B64: ${{ secrets.ANDROID_KEYSTORE_B64 }}
+          PROPS_B64: ${{ secrets.ANDROID_KEYSTORE_PROPS_B64 }}
+        run: |
+          $dir = Join-Path $env:USERPROFILE '.xerp-android'
+          New-Item -ItemType Directory -Force -Path $dir | Out-Null
+          if ($env:KS_B64 -and $env:PROPS_B64) {
+            Write-Host '使用仓库 Secrets 里的正式签名证书'
+            [IO.File]::WriteAllBytes((Join-Path $dir 'release.jks'), [Convert]::FromBase64String($env:KS_B64))
+            [IO.File]::WriteAllBytes((Join-Path $dir 'keystore.properties'), [Convert]::FromBase64String($env:PROPS_B64))
+            exit 0
+          }
+          # 没配 Secrets：生成一次性证书，保证能出包（这样的包不能覆盖安装已装的正式版）
+          Write-Host '::warning::未配置 ANDROID_KEYSTORE_B64 / ANDROID_KEYSTORE_PROPS_B64，本次用临时证书签名，不能覆盖升级已安装的应用'
+          $chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789'.ToCharArray()
+          $pw = -join (1..24 | ForEach-Object { $chars | Get-Random })
+          $ks = Join-Path $dir 'release.jks'
+          $keytool = Join-Path $env:JAVA_HOME 'bin\keytool.exe'
+          & $keytool -genkeypair -v -keystore $ks -alias xerp -keyalg RSA -keysize 2048 -validity 10000 -storepass $pw -keypass $pw -dname 'CN=XLerp,O=XLerp,C=CN'
+          if ($LASTEXITCODE -ne 0) { throw 'keytool 生成证书失败' }
+          $props = "storeFile=$ks`nstorePassword=$pw`nkeyAlias=xerp`nkeyPassword=$pw`n"
+          [IO.File]::WriteAllText((Join-Path $dir 'keystore.properties'), $props, (New-Object Text.UTF8Encoding $false))
+
+      - name: 打包并签名 Android APK
+        shell: powershell
+        run: .\android\build-android.ps1
+
+      - name: 上传安装包到 GitHub Release
+        if: env.TAG != ''
+        shell: powershell
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          $apk = Get-ChildItem dist\x*lerp-*-android.apk | Select-Object -First 1
+          if (-not $apk) { throw 'Android APK not found' }
+          gh release upload "$env:TAG" $apk.FullName --clobber

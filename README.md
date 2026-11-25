@@ -1,0 +1,196 @@
+# XLerp
+
+[![License: AGPL-3.0](https://img.shields.io/badge/license-AGPL--3.0-blue.svg)](LICENSE)
+[![Release](https://img.shields.io/github/v/release/desstg/XLerp)](https://github.com/desstg/XLerp/releases/latest)
+
+轻量级企业资源计划（ERP）系统，面向中小企业，可部署在 **飞牛 fnOS NAS**、**Docker**（群晖、威联通等任意 NAS）或任意装有 Node.js 22+ 的机器上，通过浏览器多人同时使用。进销存、财务、人事一站搞定，全部免费，完全离线可用，数据留在你自己手里。
+
+- **在线演示**：[demo.zhaoyoucai.xyz](https://demo.zhaoyoucai.xyz)（账号 `admin`，密码 `admin123`；所有人共用，数据每小时重置）
+- **下载**：[Releases](https://github.com/desstg/XLerp/releases)（Docker 离线镜像 / Windows 安装包 / Android APK / 飞牛 fpk）
+- **飞牛一键安装 / 自动更新**：装好 [FnDepot](https://github.com/EWEDLCM/FnDepot) 后添加应用源 `https://github.com/desstg/XLerp`（连不上 GitHub 就填 `https://www.zhaoyoucai.xyz/xerp/fnpack.json`），搜索 XLerp 安装，有新版本会提示更新
+- **应用内检查更新**：系统设置 → 版本更新，手动检查新版本；确认后只下载安装包，不会自动安装，飞牛 / Windows 会显示保存路径和安装步骤
+
+> **English**: XLerp is a free, open-source (AGPL-3.0) self-hosted inventory / ERP for small businesses — products, purchase & sales orders, returns, payments, multi-warehouse stock, finance and reports. Runs on fnOS, Docker (Synology, QNAP, Unraid, CasaOS / ZimaOS) or any machine with Node.js 22+. The UI is in Simplified Chinese.
+
+| 工作台 | 库存 |
+|---|---|
+| ![工作台](docs/screenshots/dashboard.png) | ![库存](docs/screenshots/inventory.png) |
+| **销售** | **收款记录** |
+| ![销售](docs/screenshots/sales.png) | ![收款记录](docs/screenshots/payments.png) |
+
+<p align="center"><img src="docs/screenshots/mobile.png" width="260" alt="手机端"></p>
+
+## 功能
+
+- 商品（编码、品牌、规格型号、安全库存），编码可留空自动生成；品牌支持搜索、筛选和导入导出；库存（出入库流水、安全库存预警）
+- 商品分类支持父子级路径（例如「电子产品/手机」），父级改名同步子级，按父级筛选会包含全部子分类
+- 入库单 / 出库单：多行明细、扫码枪录入、作废冲回；A4 / 二等分（针式）/ A5 打印，带金额大写与签字栏
+- 出入库审核（可选，系统设置里按入库 / 出库分别开启）：新单先「待审核」，审核通过才改库存；驳回需填原因，制单人可一键重开
+- 多单位 / 多包装条码：商品可设基本单位 + 多级包装单位（如 1 箱 = 10 中包装 = 100 盒），每级可绑定自己的条码、单独售价，并设置默认采购 / 销售单位；入库、出库、销售、采购支持直接扫包装码带出对应单位，库存与成本始终按基本单位核算，基本单位使用后锁定
+- 打印模板（系统设置 → 打印模板）：各类单据可改标题（如「送货单」）、抬头地址电话、表头项目、明细列的显示 / 顺序 / 列名 / 列宽 / 对齐、签字栏、底部说明、字体、字号、LOGO 和纸张方向，带实时预览；空白表头字段和整列都为空的可选明细列不会打印
+- 盘点单：建单时快照账面，扫码定位录入实盘数，审核后自动生成盘盈 / 盘亏；录入与审核权限分离；打印盘点表 / 盘点盈亏表
+- 收发存汇总表：任意期间的期初、入库、出库、期末数量与金额，可打印、导出；点开商品查看明细账（逐笔结存）
+- 成本核算：可选移动加权平均或先进先出（FIFO），入库自动记成本，出库按所选口径结转
+- 管理员成本修正：填写原因后可修正当前商品成本，库存数量不变，历史销售成本不回写
+- Excel / CSV 导入商品和期初库存：下载模板 → 填写 → 预览校验 → 导入，任何一行出错都不会写入
+- 入库单 / 出库单 / 销售单 / 采购单 Excel 批量导入：按单据编号合并多行，支持不同日期和多张单据；整批校验，失败不写入
+- 销售单、采购单（审核 / 发货 / 入库 / 收付款）：支持分批发货、分批入库和一张订单多次执行，发货/入库统一生成关联出入库单，库存只扣减一次；支持同一商品多行、0 元赠品行和手工修改行小计；销售订单可单独填写收货地址
+- 统计报表「客户贡献」：按客户和时间段查看销售、退货、毛利及订单毛利，可导出客户汇总和订单明细
+- 客户、供应商往来与应收应付，支持录入接管旧账的期初应收 / 期初应付；客户档案支持添加和删除跟进记录
+- 客户 / 供应商独立收付款：可先登记预收 / 预付款，再核销到订单
+- 财务收支流水、人事档案、经营报表
+- 角色权限：预置仓库主管、仓管员、入库员、出库员、盘点员、商品专员、成本会计、只读查询、业务员，可新增自定义角色并逐项勾选权限（服务端校验）
+- 功能模块可按需启用（默认只启用库存管理与商品管理，在 系统设置 → 常规设置 中开启其他模块）
+- 操作日志
+- 列表支持勾选、全选本页和批量操作：批量删除商品/客户/供应商/员工/临时送货/订单等，批量作废出入库单、调拨单、盘点单、报销和备用金，临时送货可批量标记已付
+- 多仓库 + 调拨单：多个仓库 / 门店分开记库存，出入库单、盘点单、销售发货、采购入库按仓库进行，仓库之间开调拨单；收发存汇总与明细账可按仓库统计
+- 多公司 / 多账套：管理员在 系统设置 → 公司管理 新建公司，每家公司使用独立数据库；登录页选择公司，登录后在顶部随时切换，商品、客户、库存、财务报表互不影响
+- 项目档案：维护项目名称、状态、工期和负责人；出入库单可关联项目，按项目筛选和汇总，项目改名会同步已有单据
+- 批次 / 保质期：按商品开启；入库记批号、生产日期、有效期（可按保质期天数自动计算），出库先到期先出（已过期批次不会自动发出，报损出库优先出过期批次），临期 / 过期提醒，批次随调拨走
+- 条码标签打印：Code 128 条码，40×30 / 50×30 / 60×40 热敏标签或 A4 不干胶，可带品名、规格、售价
+- 补货建议：按近期出库速度、到货周期、备货天数、安全库存与在途采购计算建议补货量，按供应商一键生成采购单
+- 序列号：按商品开启，出入库单、调拨单逐件登记（可扫码，出库可自动选号），查每一件的入库、出库、去向
+- 往来对账单：按往来单位和期间列出收发货明细，销售 / 采购模块启用时带应收应付余额，可打印给对方盖章
+- 库龄 / 呆滞品分析：按先进先出估算库龄分段，标出多少天没出库的呆滞品和占压金额
+- 库存提醒推送：每天定时把库存不足、临期 / 过期批次、待审核单据发到企业微信、钉钉、飞书群机器人或任意 Webhook
+- 盘点可按「2箱3」录入，开启「扫码累加」后每扫一次 +1（安卓客户端连续扫码）
+- 数据存于本地 SQLite，每日自动备份（保留 30 天），支持 JSON 备份导出 / 导入
+- 问题反馈支持文字、粘贴或上传截图，回复会显示在客户端的「问题反馈」里
+- 云服务支持扫码购买 / 续费，支付回调自动发授权码；1GB / 5GB / 10GB 三档套餐
+
+全部功能免费使用，基于 [AGPL-3.0](LICENSE) 协议开源。
+
+## 目录
+
+| 路径 | 说明 |
+|---|---|
+| `src/server.js` | 服务端：只依赖 Node.js 内置模块，数据库使用内置 `node:sqlite` |
+| `src/portal.js` | 多账套网关：全局账号、公司管理、登录后切换，每家公司启动独立服务实例 |
+| `src/index.html` | 前端单页应用（由服务端提供） |
+| `src/client.js` | Windows 桌面客户端外壳（基于系统 Edge 内核的独立窗口） |
+| `tests/` | 后端接口与多账套测试（`node --test "tests/*.test.mjs"`） |
+| `fnos/` | 飞牛 fnOS 应用打包（manifest、生命周期脚本、安装向导） |
+| `Dockerfile`、`docker-compose.yml` | Docker 镜像（见下方「Docker 部署」） |
+
+## 直接运行
+
+需要 Node.js 22.13+（22.5–22.12 需加 `--experimental-sqlite`）：
+
+```bash
+node src/portal.js --data ./data --port 8686
+```
+
+浏览器打开 `http://127.0.0.1:8686`，默认账号 `admin` / `admin123`，首次登录后请立即修改。网关会从 `9001` 起为各公司分配本机内部端口，可用 `--base-port 9100` 改起始端口；这些内部端口只监听 `127.0.0.1`。
+
+## Docker 部署（群晖 / 威联通 / Unraid / 绿联 / 极空间等）
+
+镜像 `ghcr.io/desstg/xlerp`，Docker Hub 上同步一份 `desstg/xlerp`（群晖 Container Manager、威联通 Container Station、绿联、极空间的镜像仓库里搜 `xerp` 就能找到），支持 amd64 和 arm64。数据全部在容器的 `/data` 目录（数据库、每日自动备份、日志），挂载出来后升级镜像不丢数据。
+
+```bash
+docker run -d --name xerp --restart unless-stopped \
+  -p 8686:8686 -v ./xerp-data:/data \
+  -e XERP_ADMIN_PASSWORD=你的初始密码 \
+  ghcr.io/desstg/xlerp:latest
+```
+
+或者用仓库里的 [`docker-compose.yml`](docker-compose.yml)：`docker compose up -d`。浏览器打开 `http://NAS地址:8686`，账号 `admin`，密码是 `XERP_ADMIN_PASSWORD`（不设置则为 `admin123`，登录后请及时修改；这个变量只在第一次启动时生效）。
+
+- **升级**：`docker pull ghcr.io/desstg/xlerp:latest` 后重建容器（compose：`docker compose pull && docker compose up -d`）
+- **国内拉不动 ghcr.io**：到 [Releases](https://github.com/desstg/XLerp/releases/latest) 或官网下载离线镜像包 `xerp-<版本>-docker-amd64.tar.gz`（ARM 设备用 `arm64`），执行 `docker load -i xerp-<版本>-docker-amd64.tar.gz` 导入，之后同上
+- **环境变量**：`XERP_ADMIN_PASSWORD` 首次启动的管理员密码；`XERP_STATS_URL=`（留空）关闭匿名使用统计，也可以在 系统设置 里关；`TZ` 默认 `Asia/Shanghai`
+- **Unraid**：Docker 页面底部的 Template Repositories 里加上 `https://github.com/desstg/XLerp` 并保存，然后 Add Container → Template 选 XLerp；模板见 [`unraid/xerp.xml`](unraid/xerp.xml)
+- **CasaOS / ZimaOS**：已提交到官方应用商店，上架后在应用商店搜索 XLerp 即可安装
+- 镜像由 [GitHub Actions](.github/workflows/docker.yml) 在每次发版时自动构建
+
+## 测试
+
+`tests/` 下是后端接口测试：在临时目录启动一个真实服务端，覆盖出入库、成本、多单位、盘点、出入库审核与权限。发版前跑一遍：
+
+```bash
+node --test tests/api.test.mjs
+```
+
+在线演示模式另有测试：`node --test tests/demo.test.mjs`。
+
+## 在线演示模式
+
+设置环境变量 `XERP_DEMO=1` 启动即为公开演示版：默认打开全部模块，登录页给出演示账号，顶部常驻提示条；屏蔽改密码、账号和角色管理、推送、快递鸟、导入备份 / 清空、问题反馈。部署在本机反向代理后面时按 `X-Forwarded-For` 区分访客。数据重置交给部署侧，见 `tools/demo-server/xerp-demo.service`（每小时重启并清空数据目录）。
+
+## Windows 安装版
+
+从 [Releases](https://github.com/desstg/XLerp/releases) 下载 `xerp-<版本>-windows-x64-setup.exe`（Windows 10 / 11 64 位），双击安装：
+
+- 安装向导里设置端口（默认 8686）和管理员密码；自带 Node.js，不用另装任何东西
+- 以后台服务运行（任务计划程序「XLerp」，SYSTEM 身份开机自启，崩溃自动重启），不用登录 Windows
+- 自动在防火墙放行该端口，仅限同一局域网；局域网其他电脑访问 `http://本机IP:8686`
+- 数据在 `C:\ProgramData\XERP`；覆盖安装新版即可升级，升级和卸载都不删数据
+
+构建：`powershell -ExecutionPolicy Bypass -File windows\build-windows.ps1`（需要 x64 Node.js 22.13+ 和 Inno Setup 6：`winget install JRSoftware.InnoSetup`），产物为 `dist\xerp-<版本>-windows-x64-setup.exe`。
+
+## 安卓客户端
+
+下载 `xerp-<版本>-android.apk`（Android 7.0 及以上）安装。手机连上和服务端同一个 Wi-Fi，首次打开填写服务端地址，或点「自动查找」扫描局域网。
+
+- 右下角扫码按钮：用摄像头扫商品条码 / 二维码（EAN-13/8、UPC、Code 128/39/93、ITF、Codabar、QR、Data Matrix），结果填进当前输入框并自动回车，开出入库单、盘点、搜索都能用；没有选中输入框时直接查这个商品的库存
+- 导出的 CSV / 备份 / 导入模板会让你选择保存位置；导入时可从手机选文件；单据、标签可走手机的系统打印（打印机或另存 PDF）
+- 返回键先关弹窗，再后退；设置页和登录页可以切换服务器
+
+页面本身来自服务端，服务端升级后手机端界面自动更新，一般不用重装 App。
+
+构建（不需要 Gradle / Android Studio）：`powershell -ExecutionPolicy Bypass -File android\build-android.ps1`，需要 JDK 17+ 和 Android SDK（`platforms;android-36`、`build-tools;36.1.0`）。签名密钥首次构建时生成在 `%USERPROFILE%\.xerp-android\`，请备份——换了密钥就不能覆盖安装升级。
+
+## 离线使用
+
+完全离线可用：服务端只用 Node.js 内置模块和内置 SQLite，前端用到的图表（Chart.js）和 Excel 导入（SheetJS）组件放在 `src/vendor/` 随程序发布。
+
+## 飞牛 fnOS 应用
+
+构建（Windows，需 Node.js；首次运行会自动下载官方 [fnpack](https://developer.fnnas.com/docs/cli/fnpack/)）：
+
+```powershell
+powershell -ExecutionPolicy Bypass -File fnos\build-fnos.ps1
+```
+
+产物为 `dist\xerp-<版本>.fpk`，在飞牛 Web 界面 → 应用中心 → 手动安装。
+
+- 依赖飞牛官方运行环境 `nodejs_v22`（安装时自动安装），包本身为纯 JS，x86 / ARM 通用
+- 安装向导中设置管理员密码
+- 数据目录为应用数据目录（`/vol*/@appdata/xerp`），升级不丢失
+- `fnos/fix-fpk.js` 用于修正 Windows 上 fnpack 打包后的文件权限与换行
+
+发布新版本时修改 `fnos/pkg/manifest` 中的 `version` 与 `changelog`。
+
+### 上架飞牛应用中心
+
+参见 [官方上架文档](https://developer.fnnas.com/docs/quick-started/publish-application/)：目前通过飞牛官网的微信群联系社区主理人，加入“应用中心开发者先锋交流群”后提交 `.fpk`、图标、真实界面截图与测试材料。
+
+
+## 请作者喝杯咖啡
+XLerp 完全免费、核心功能不锁，也不会弹窗要打赏。如果你用它省了时间、省了钱，欢迎自愿支持一下，打赏用于优先修你提的 Bug、优先做你想要的功能。
+| 打赏 | 回报 |
+| --- | --- |
+| 8.88 元 | 请作者喝杯咖啡 |
+| 88 元 | 进交流群（打赏后加作者微信） |
+| 288 元 | 一对一帮你部署一次 |
+
+<table>
+  <tr>
+    <td align="center">微信<br><img src="docs/donate-wechat.png" width="200" alt="微信收款码"></td>
+    <td align="center">支付宝<br><img src="docs/donate-alipay.png" width="200" alt="支付宝收款码"></td>
+  </tr>
+</table>
+
+进交流群：打赏 88 元后，扫下方二维码加作者微信，拉你进交流群。
+<img src="docs/wechat-contact.jpg" width="200" alt="作者微信">
+
+## 许可证
+
+Copyright (C) 2026 desstg
+
+XLerp 以 [GNU Affero General Public License v3.0](LICENSE)（AGPL-3.0）发布：
+
+- 个人、企业都可以免费使用，包括商用，可以自由修改
+- 如果分发修改后的版本，或者把修改后的版本做成在线服务给别人用，必须以同样的 AGPL-3.0 协议公开修改后的完整源码，并保留原作者的版权声明
+- 软件按“现状”提供，不附带任何担保
+
+如需不受 AGPL 约束的商业授权，请通过 [GitHub Issues](https://github.com/desstg/XLerp/issues) 联系作者。
