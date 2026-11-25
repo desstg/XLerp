@@ -381,9 +381,11 @@ const server = http.createServer(async (req, res) => {
 async function boot() {
   const def = ensureDefaultCompany();
   let adminPwd = '';
+  // 优先级：--admin-password-file > 数据目录下的密码文件 > 环境变量 XERP_ADMIN_PASSWORD（Docker 用）
   for (const f of [arg('admin-password-file'), path.join(DATA_DIR, 'admin-password'), path.join(DATA_DIR, 'admin-password.txt')]) {
     if (f && fs.existsSync(f)) { try { adminPwd = fs.readFileSync(f, 'utf8').trim(); } catch (e) {} break; }
   }
+  if (!adminPwd) adminPwd = String(process.env.XERP_ADMIN_PASSWORD || '').trim();
   initCompany(def, adminPwd);
   if (adminPwd) { for (const f of [arg('admin-password-file'), path.join(DATA_DIR, 'admin-password'), path.join(DATA_DIR, 'admin-password.txt')]) { try { if (f && fs.existsSync(f)) fs.unlinkSync(f); } catch (e) {} } }
   migrateDefaultUsers(def);
