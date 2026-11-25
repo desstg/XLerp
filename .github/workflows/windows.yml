@@ -50,6 +50,13 @@ jobs:
           $OutputEncoding = [Console]::OutputEncoding = [Text.Encoding]::UTF8
           .\windows\build-windows.ps1
 
+      - name: 上传构建产物（Artifacts）
+        uses: actions/upload-artifact@v4
+        with:
+          name: xlerp-windows-setup
+          path: dist/*-windows-x64-setup.exe
+          if-no-files-found: error
+
       - name: 上传安装包到 GitHub Release
         if: env.TAG != ''
         shell: powershell
