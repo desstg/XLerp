@@ -63,6 +63,6 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          $exe = Get-ChildItem dist\x*lerp-*-windows-x64-setup.exe | Select-Object -First 1
+          $exe = Get-ChildItem dist\*erp-*-windows-x64-setup.exe | Select-Object -First 1
           if (-not $exe) { throw '未找到生成的 Windows 安装包' }
           gh release upload "$env:TAG" $exe.FullName --clobber

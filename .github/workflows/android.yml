@@ -89,6 +89,6 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          $apk = Get-ChildItem dist\x*lerp-*-android.apk | Select-Object -First 1
+          $apk = Get-ChildItem dist\*erp-*-android.apk | Select-Object -First 1
           if (-not $apk) { throw 'Android APK not found' }
           gh release upload "$env:TAG" $apk.FullName --clobber
