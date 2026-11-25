@@ -78,15 +78,42 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      # Docker Hub：群晖 / 威联通 / 绿联 / 极空间的 Docker 界面搜索的都是 Docker Hub，推一份过去才搜得到
-      - uses: docker/login-action@v3
+      # Docker Hub：群晖 / 威联通 / 绿联 / 极空间的 Docker 界面搜索的都是 Docker Hub
+      # 没配 DOCKERHUB_TOKEN 就自动跳过，只推 ghcr.io，不让发版因为缺密钥卡住
+      - name: 判断 Docker Hub 是否可用
+        id: hub
         if: env.TAG != ''
+        run: |
+          if [ -n "${{ secrets.DOCKERHUB_TOKEN }}" ]; then
+            echo "on=1" >> "$GITHUB_OUTPUT"
+          else
+            echo "on=0" >> "$GITHUB_OUTPUT"
+            echo "::warning::未配置 DOCKERHUB_TOKEN，本次只推 ghcr.io，跳过 Docker Hub"
+          fi
+
+      - uses: docker/login-action@v3
+        if: env.TAG != '' && steps.hub.outputs.on == '1'
         with:
           username: ${{ env.HUB_USER }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: 推送多架构镜像到 ghcr.io 和 Docker Hub
-        if: env.TAG != ''
+      - name: 推送多架构镜像到 ghcr.io
+        if: env.TAG != '' && steps.hub.outputs.on == '0'
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: |
+            ${{ env.IMAGE }}:${{ steps.v.outputs.ver }}
+            ${{ env.IMAGE }}:latest
+          labels: |
+            org.opencontainers.image.source=https://github.com/desstg/XLerp
+            org.opencontainers.image.description=XLerp 轻量 ERP：进销存、财务、人事，数据留在自己的 NAS 里
+            org.opencontainers.image.licenses=AGPL-3.0
+
+      - name: 推送多架构镜像到 ghcr.io + Docker Hub
+        if: env.TAG != '' && steps.hub.outputs.on == '1'
         uses: docker/build-push-action@v6
         with:
           context: .
