@@ -1,4 +1,4 @@
-# 构建 XLerp 安卓客户端：dist\xerp-<版本>-android.apk
+﻿# 构建 XLerp 安卓客户端：dist\xerp-<版本>-android.apk
 # 需要：JDK 17+（JAVA_HOME）、Android SDK（platforms;android-36、build-tools;36.1.0），不需要 Gradle / Android Studio
 # 签名密钥：%USERPROFILE%\.xerp-android\release.jks（首次构建自动生成；务必备份，丢了以后就没法覆盖升级）
 $ErrorActionPreference = 'Stop'

@@ -45,7 +45,10 @@ jobs:
 
       - name: 打包 Windows 安装包
         shell: powershell
-        run: .\windows\build-windows.ps1
+        run: |
+          chcp 65001 | Out-Null
+          \System.Text.UTF8Encoding = [Console]::OutputEncoding = [Text.Encoding]::UTF8
+          .\windows\build-windows.ps1
 
       - name: 上传安装包到 GitHub Release
         if: env.TAG != ''

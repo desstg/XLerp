@@ -1,4 +1,4 @@
-# 构建飞牛 fnOS 应用包：dist\xerp-<版本>.fpk（应用名“XLerp”）
+﻿# 构建飞牛 fnOS 应用包：dist\xerp-<版本>.fpk（应用名“XLerp”）
 # 需要：Windows、Node.js、联网（首次运行自动下载官方 fnpack 打包工具）
 $ErrorActionPreference = 'Stop'
 $Root   = Split-Path $PSScriptRoot -Parent

@@ -1,4 +1,4 @@
-# 构建 XLerp 收款助手 APK：dist\xerp-payrelay-1.0.0.apk
+﻿# 构建 XLerp 收款助手 APK：dist\xerp-payrelay-1.0.0.apk
 # 只需要 JDK 17+、Android SDK（platforms;android-36、build-tools;36.1.0），不需要 Gradle
 $ErrorActionPreference = 'Stop'
 $Root  = Split-Path $PSScriptRoot -Parent

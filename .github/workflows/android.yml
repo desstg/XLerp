@@ -71,7 +71,10 @@ jobs:
 
       - name: 打包并签名 Android APK
         shell: powershell
-        run: .\android\build-android.ps1
+        run: |
+          chcp 65001 | Out-Null
+          \System.Text.UTF8Encoding = [Console]::OutputEncoding = [Text.Encoding]::UTF8
+          .\android\build-android.ps1
 
       - name: 上传安装包到 GitHub Release
         if: env.TAG != ''
