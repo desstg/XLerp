@@ -20,7 +20,7 @@ const tls = require('tls');
 const zlib = require('zlib');
 const { DatabaseSync } = require('node:sqlite');
 
-const VERSION = '2.14.5';
+const VERSION = '2.2.0';
 const argv = process.argv.slice(2);
 const arg = (name, def) => { const i = argv.indexOf('--' + name); return i >= 0 && argv[i + 1] ? argv[i + 1] : def; };
 
@@ -3409,7 +3409,7 @@ async function davLiveRun() {
     if (r.kind !== 'none') {
       const day = today();
       const cnt = (c0.liveDay === day ? c0.liveCount : 0) + 1;
-      saveDav({ liveLast: new Date().toISOString(), liveCount: cnt, liveDay: day, liveError: '', liveErrorAt: '' });
+      saveDav({ liveLast: new Date().toISOString(), liveCount: cnt, liveDay: day, liveError: '', liveErrorAt: '', error: '', errorAt: '' });
       log('WebDAV 实时备份：' + r.name + (r.changed ? `（${r.changed} 处变化）` : ''));
     }
   } catch (e) {
@@ -4008,6 +4008,75 @@ for (const col of Object.keys(ENTITY)) {
   route('PUT', `/api/${col}/:id`, ctx => saveEntity(ctx, col, ctx.params.id), { perm });
   route('DELETE', `/api/${col}/:id`, ctx => { const r = deleteEntity(ctx, col, ctx.params.id); if (col === 'products') db.prepare('DELETE FROM images WHERE id = ?').run(ctx.params.id); return r; }, { perm });
 }
+route('POST', '/api/customers/:id/merge', ctx => mergeParty(ctx, 'customers'), { perm: 'parties' });
+route('POST', '/api/suppliers/:id/merge', ctx => mergeParty(ctx, 'suppliers'), { perm: 'parties' });
+// ===== 往来单位合并：把 fromId 的所有单据/流水/往来款挂到 toId 名下，然后删掉 fromId =====
+// 支持的列：客户 = customers，供应商 = suppliers
+function mergeParty(ctx, col) {
+  const b = ctx.body || {};
+  const fromId = str(b.fromId, 64), toId = str(b.toId, 64);
+  if (!fromId || !toId) fail('请选择要合并的两个' + (col === 'customers' ? '客户' : '供应商'));
+  if (fromId === toId) fail('不能自己合并自己');
+  if (col !== 'customers' && col !== 'suppliers') fail('不支持的合并类型');
+  const field = col === 'customers' ? 'customerId' : 'supplierId';
+  const from = get(col, fromId) || fail('要合并的' + (col === 'customers' ? '客户' : '供应商') + '不存在', 404);
+  const to = get(col, toId) || fail('合并到的' + (col === 'customers' ? '客户' : '供应商') + '不存在', 404);
+  return tx(() => {
+    const moved = {};
+    // 1) 所有 docs 里带这个字段的记录，把 id 换过去
+    //    COLS 覆盖全部列；每列都按字段名扫一遍，不预先猜哪些表有引用
+    for (const c of COLS) {
+      if (c === col) continue;
+      let n = 0;
+      list(c).forEach(r => {
+        let touched = false;
+        if (r[field] === fromId) { r[field] = toId; touched = true; }
+        // 单据上冗余保存的名字 / 地址 / 联系方式一起更新，保证打印和对账显示一致
+        if (touched) {
+          if ('party' in r) r.party = to.name;
+          if ('customerName' in r) r.customerName = to.name;
+          if ('supplierName' in r) r.supplierName = to.name;
+          if ('address' in r && from.address && r.address === from.address) r.address = to.address || '';
+          if ('contact' in r && from.contact && r.contact === from.contact) r.contact = to.contact || '';
+          if ('phone' in r && from.phone && r.phone === from.phone) r.phone = to.phone || '';
+        }
+        if (touched) { put(c, r); n++; }
+      });
+      if (n) moved[c] = n;
+    }
+    // 2) 往来款记录（partyPayments）用 partyId + partyName
+    let ppN = 0;
+    list('partyPayments').forEach(r => {
+      if (r.partyId !== fromId) return;
+      r.partyId = toId; r.partyName = to.name; put('partyPayments', r); ppN++;
+    });
+    if (ppN) moved.partyPayments = ppN;
+    // 3) 合并档案字段：备注 / 跟进记录 / 期初应收应付 / 专属价 / 类目 / 等级都要并上去
+    const merged = { ...to };
+    const joinTxt = (a, b) => [a, b].map(x => String(x || '').trim()).filter(Boolean).filter((x, i, arr) => arr.indexOf(x) === i).join('；');
+    merged.remark = joinTxt(to.remark, from.remark);
+    if (from.address && !to.address) merged.address = from.address;
+    if (from.contact && !to.contact) merged.contact = from.contact;
+    if (from.phone && !to.phone) merged.phone = from.phone;
+    if (from.category && !to.category) merged.category = from.category;
+    if (from.level && !to.level) merged.level = from.level;
+    // 跟进记录：两边合并，按时间排序
+    const fu = [...(Array.isArray(to.followups) ? to.followups : []), ...(Array.isArray(from.followups) ? from.followups : [])];
+    if (fu.length) merged.followups = fu.sort((a, b) => String(a.date || '').localeCompare(String(b.date || '')));
+    // 期初应收 / 应付：相加
+    if (+from.openingBalance) merged.openingBalance = round2((+to.openingBalance || 0) + (+from.openingBalance || 0));
+    // 专属价：B 已有的商品保持 B 的价，A 独有的补进来
+    const pA = from.prices && typeof from.prices === 'object' ? from.prices : {};
+    const pB = to.prices && typeof to.prices === 'object' ? to.prices : {};
+    const pM = { ...pA, ...pB };
+    if (Object.keys(pM).length) merged.prices = pM;
+    put(col, merged);
+    // 4) 删除被合并掉的那条
+    del(col, fromId);
+    audit(ctx, '合并' + (col === 'customers' ? '客户' : '供应商'), `${from.name} → ${to.name}`);
+    return { ok: true, toId, toName: to.name, moved };
+  });
+}
 function importParties(ctx) {
   const type = ctx.body.type === 'suppliers' ? 'suppliers' : 'customers';
   const rows = Array.isArray(ctx.body.rows) ? ctx.body.rows : fail('没有可导入的数据');
@@ -4282,12 +4351,16 @@ route('POST', '/api/webdav/test', async ctx => {
   if (!c.url) fail('请先填写 WebDAV 服务器地址');
   await davMkdir(c);
   const list = await davList(c);
+  // 连上了说明配置没问题，顺手把历史错误清掉
+  saveDav({ error: '', errorAt: '', liveError: '', liveErrorAt: '' });
   return { ok: true, count: list.length, files: list.slice(0, 20) };
 }, { admin: true });
 route('POST', '/api/webdav/backup', async ctx => {
   const c = davCfgFrom(ctx.body);
   if (!c.url) fail('请先填写 WebDAV 服务器地址');
   const r = await davBackupNow(!!(ctx.body && ctx.body.full), c);
+  // 手动备份成功 = 连接恢复了，把之前留下的错误提示清掉
+  saveDav({ error: '', errorAt: '', liveError: '', liveErrorAt: '', last: new Date().toISOString() });
   audit(ctx, 'WebDAV 备份', r.kind + ' ' + (r.name || '跳过'));
   return { ok: true, ...r };
 }, { admin: true });

@@ -455,6 +455,10 @@ html.mobile .m-tab{
   flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;
   color:#9aa3ad;font-size:11px;text-decoration:none;position:relative;padding-bottom:0;
 }
+/* 登录页（含「连接服务器」步）不许出现底栏 —— 那时还没登入，底栏按钮全点不动。
+   用 class 兜住，避免 JS 同步时机差（load / pageshow / 切前后台）导致底栏闪一下。
+   不用 :has()：安卓 WebView 老版本（<105）不支持，App 壳里会失效。 */
+html.mobile.zhj-login-page .m-tabbar{display:none!important}
 html.mobile .m-tab svg{width:23px;height:23px;stroke:currentColor;fill:none;stroke-width:1.7}
 html.mobile .m-tab span{font-size:11px;line-height:1.15}
 html.mobile .m-tab.on{color:var(--zhj)}
@@ -613,8 +617,17 @@ html.mobile .zhj-notice-item{
 }
 html.mobile .zhj-gap{flex:none;height:30px;background:#fff}
 /* WebDAV 在同步时：云框不动，里面那个箭头循环往上顶出框一点点 */
+/* 首页左上角 WebDAV 云图标：比默认 18px 放大一点，按钮尺寸不变 */
+html.mobile .zhj-hero-top .icon-btn svg.i{width:26px;height:26px}
+/* 搜索框高度对齐（图标变大后视觉更平衡） */
+html.mobile .zhj-hero-top .zhj-search{height:34px}
+/* 首页左上角 WebDAV 云图标：默认 18px 放大到 26px（按钮 38px 不变）*/
+html.mobile .zhj-hero-top .icon-btn svg.i{width:26px;height:26px}
+/* 搜索框高度跟着对齐，视觉更平衡 */
+html.mobile .zhj-hero-top .zhj-search{height:34px}
+/* 备份中：云不动，里面的箭头上下顶出云外 —— 图标放大后位移同步放大到 5.5px */
 html.mobile .zhj-hero-top .icon-btn.syncing svg .ar{animation:zhjDavUp 1s ease-in-out infinite}
-@keyframes zhjDavUp{0%,100%{transform:translateY(0)}45%,55%{transform:translateY(-4px)}}
+@keyframes zhjDavUp{0%,100%{transform:translateY(0)}45%,55%{transform:translateY(-5.5px)}}
 
 /* ===== 手机「功能列表」整屏页（首页九宫格「更多」进入，照智慧记） ===== */
 html.mobile.zhj-func-page .topbar{display:none!important}
@@ -623,8 +636,245 @@ html.mobile.zhj-func-page .content{padding:0!important;background:#f2f4f8!import
 html.mobile.zhj-func-page #view{padding-bottom:0!important}
 /* 销售统计整屏页：照智慧记，这页没有底部 tabbar（返回只靠标题栏左侧箭头） */
 html.mobile.zhj-ss-page .m-tabbar{display:none!important}
+/* 排行榜单列模式（自定义 / 全部 / 超过一年）：照智慧记图2 */
+/* 流水卡片可点：按下有反馈 */
+/* 客户选择页顶部的「全部客户」 */
+html.mobile .zhj-pick-body .zhj-allcust{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:16px;background:#fff;border-bottom:1px solid #f0f2f5;
+  font-size:16px;color:var(--zhj);
+}
+html.mobile .zhj-pick-body .zhj-allcust i{
+  width:8px;height:8px;border-right:1.5px solid #c8cdd4;border-top:1.5px solid #c8cdd4;
+  transform:rotate(45deg);flex:none;
+}
+html.mobile .zhj-pick-body .zhj-allcust:active{background:#f7f9fc}
+
+html.mobile.zhj-ss-page .zhj-ss-card2{transition:transform .12s ease,background .12s ease;cursor:pointer}
+html.mobile.zhj-ss-page .zhj-ss-card2:active{transform:scale(.985);background:#f7f9fc}
+
+/* 颜色条：进屏幕时从 0 长到目标宽度 */
+html.mobile .zhj-ss-rkone .bar>i{width:0!important;transition:width .55s cubic-bezier(.22,.9,.3,1)}
+html.mobile .zhj-ss-rkone .bar>i.grow{width:var(--w)!important}
+html.mobile .zhj-ss-rkone .bar>i>b{opacity:0;transition:opacity .3s ease .35s}
+html.mobile .zhj-ss-rkone .bar>i.grow>b{opacity:1}
+
+html.mobile .zhj-ss-rkone{padding:14px 16px 2px}
+html.mobile .zhj-ss-rkone .nm{font-size:15.5px;color:#333;line-height:1.35;margin-bottom:8px;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+html.mobile .zhj-ss-rkone .bar{display:flex;align-items:center;gap:10px}
+html.mobile .zhj-ss-rkone .bar .no{flex:none;width:26px;height:26px;border-radius:50%;border:1.5px solid;
+  display:flex;align-items:center;justify-content:center;font-size:13px;box-sizing:border-box}
+html.mobile .zhj-ss-rkone .bar>i{position:relative;display:block;height:26px;border-radius:13px;
+  min-width:40px;transition:width .2s;background:#e9edf2}
+html.mobile .zhj-ss-rkone .bar>i>b{position:absolute;right:10px;top:0;height:26px;line-height:26px;
+  color:#fff;font-size:14px;font-weight:400;white-space:nowrap}
+
 html.mobile.zhj-mg-page .m-tabbar{display:none!important}
 html.mobile.zhj-mg-page #view{padding-bottom:0!important}
+/* ===== 手机端物流运费 / 人事管理 ===== */
+html.mobile.zhj-ship-page .m-tabbar{display:none!important}
+html.mobile.zhj-ship-page .topbar{display:none!important}
+html.mobile.zhj-ship-page .content{padding:0!important;background:#f2f4f8!important}
+html.mobile.zhj-ship-page #view{padding-bottom:0!important}
+html.mobile .zhj-ship-page .zhj-nav+.sh-hero,
+html.mobile .zhj-mg .sh-hero{margin:12px;padding:16px 18px;border-radius:14px;color:#fff;
+  background:linear-gradient(135deg,#4bb8d4 0%,#31cfcf 100%);box-shadow:0 6px 18px rgba(49,207,207,.28)}
+html.mobile .sh-hero .r1{display:flex;align-items:baseline;gap:8px}
+html.mobile .sh-hero .r1 b{font-size:24px;font-weight:600}
+html.mobile .sh-hero .r1 em{font-style:normal;font-size:13px;opacity:.88}
+html.mobile .sh-hero .r2{display:flex;margin-top:14px;padding-top:12px;border-top:1px solid rgba(255,255,255,.25)}
+html.mobile .sh-hero .r2>span{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px}
+html.mobile .sh-hero .r2 b{font-size:17px;font-weight:600}
+html.mobile .sh-hero .r2 em{font-style:normal;font-size:12px;opacity:.85}
+html.mobile .hr-hero{margin:12px;padding:16px 18px;border-radius:14px;color:#fff;
+  background:linear-gradient(135deg,#7c8cf8 0%,#5b6ef5 100%);box-shadow:0 6px 18px rgba(91,110,245,.26)}
+html.mobile .hr-hero .r1{display:flex;align-items:baseline;gap:8px}
+html.mobile .hr-hero .r1 b{font-size:26px;font-weight:600}
+html.mobile .hr-hero .r1 em{font-style:normal;font-size:13px;opacity:.88}
+html.mobile .hr-hero .r2{display:flex;margin-top:14px;padding-top:12px;border-top:1px solid rgba(255,255,255,.25)}
+html.mobile .hr-hero .r2>span{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px}
+html.mobile .hr-hero .r2 b{font-size:16px;font-weight:600}
+html.mobile .hr-hero .r2 em{font-style:normal;font-size:12px;opacity:.85}
+/* 筛选行 */
+html.mobile .sh-filter{display:flex;gap:8px;padding:0 12px 0}
+html.mobile .sh-filter select{flex:1;min-width:0;height:38px;font-size:14px;border:1px solid #dfe4ea;border-radius:8px;padding:0 8px;background:#fff;color:#333}
+/* 运单行 */
+html.mobile .sh-list,html.mobile .hr-list{margin:10px 12px;background:#fff;border-radius:10px;overflow:hidden;box-shadow:0 1px 3px rgba(15,23,42,.05)}
+html.mobile .sh-row{padding:13px 16px;border-bottom:1px solid #f2f4f7}
+html.mobile .sh-row:last-child{border-bottom:none}
+html.mobile .sh-row .hd{display:flex;align-items:center;gap:8px}
+html.mobile .sh-row .hd b{font-size:15.5px;color:#333;font-weight:500;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+html.mobile .sh-row .ln{font-size:12.5px;color:#9aa3ad;margin-top:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+html.mobile .sh-row .ft{display:flex;justify-content:space-between;align-items:center;margin-top:6px;font-size:13px;color:#8e959e}
+html.mobile .sh-row .ft b{color:var(--zhj);font-size:15px;font-weight:500}
+html.mobile .sh-badge{flex:none;font-size:11.5px;color:#fff;border-radius:4px;padding:1px 6px}
+/* 员工行 */
+html.mobile .hr-row{display:flex;align-items:center;gap:12px;padding:13px 16px;border-bottom:1px solid #f2f4f7;background:#fff}
+html.mobile .hr-row:last-child{border-bottom:none}
+html.mobile .hr-row .av{width:42px;height:42px;border-radius:50%;color:#fff;display:flex;align-items:center;justify-content:center;font-size:17px;flex:none}
+html.mobile .hr-row .bd{flex:1;min-width:0}
+html.mobile .hr-row .bd .nm{font-size:16px;color:#333;display:flex;align-items:center;gap:8px}
+html.mobile .hr-row .bd .nm .st{font-size:12px}
+html.mobile .hr-row .bd .ln{font-size:12.5px;color:#9aa3ad;margin-top:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+html.mobile .hr-row .ar{width:8px;height:8px;border-right:1.5px solid #c8cdd4;border-top:1.5px solid #c8cdd4;transform:rotate(45deg);flex:none}
+/* 底部按钮 */
+html.mobile .zhj-ship-page .foot button{width:100%;height:46px;border-radius:8px;border:none;background:var(--zhj);color:#fff;font-size:16px;font-family:inherit}
+html.mobile .zhj-mg .foot button{width:100%;height:46px;border-radius:8px;border:none;background:var(--zhj);color:#fff;font-size:16px;font-family:inherit}
+
+/* 四个 tab 时只收字号，高度和点击区保持原样（至少 48px 好按） */
+html.mobile .zhj-mg .tabs.tabs4 b{font-size:15px;padding:15px 2px;min-height:48px}
+/* ===== 手机端系统设置：分组列表 + 二级页 ===== */
+html.mobile.zhj-set2-page .m-tabbar{display:none!important}
+html.mobile.zhj-set2-page .topbar{display:none!important}
+html.mobile.zhj-set2-page .content{padding:0!important;background:#f2f4f8!important}
+html.mobile.zhj-set2-page #view{padding-bottom:0!important}
+html.mobile .zhj-set2 .set-body{padding:0 0 30px;background:#f2f4f8;min-height:100%}
+html.mobile .zhj-set2 .set-body.set-sub{padding-bottom:calc(30px + env(safe-area-inset-bottom,0px))}
+/* 顶部账号卡 */
+html.mobile .zhj-set2 .set-hero{display:flex;align-items:center;gap:14px;margin:12px;padding:18px 20px;border-radius:14px;color:#fff;
+  background:linear-gradient(135deg,#4bb8d4 0%,#31cfcf 100%);box-shadow:0 6px 18px rgba(49,207,207,.28)}
+html.mobile .zhj-set2 .set-hero .av{width:50px;height:50px;border-radius:50%;background:rgba(255,255,255,.24);display:flex;align-items:center;justify-content:center;
+  font-size:22px;font-weight:600;flex:none}
+html.mobile .zhj-set2 .set-hero .info{flex:1;min-width:0}
+html.mobile .zhj-set2 .set-hero .info b{display:block;font-size:18px;font-weight:600}
+html.mobile .zhj-set2 .set-hero .info small{display:block;font-size:12.5px;opacity:.88;margin-top:3px}
+/* 分组标题与卡片 */
+html.mobile .zhj-set2 .set-grp{font-size:13px;color:#9aa3ad;padding:14px 26px 8px}
+html.mobile .zhj-set2 .set-card{margin:0 12px;background:#fff;border-radius:10px;overflow:hidden;box-shadow:0 1px 3px rgba(15,23,42,.05)}
+html.mobile .zhj-set2 .set-sec{margin:12px;background:#fff;border-radius:10px;overflow:hidden;box-shadow:0 1px 3px rgba(15,23,42,.05)}
+html.mobile .zhj-set2 .set-sub .set-sec{margin:12px}
+/* 行 */
+html.mobile .zhj-set2 .set-row{display:flex;align-items:center;min-height:54px;padding:11px 16px;border-bottom:1px solid #f2f4f7;background:#fff}
+html.mobile .zhj-set2 .set-row:last-child{border-bottom:none}
+html.mobile .zhj-set2 .set-row .ri{width:20px;height:20px;margin-right:13px;flex:none;display:flex;align-items:center;justify-content:center}
+html.mobile .zhj-set2 .set-row .ri svg{width:19px;height:19px;stroke:#b9c0c8;fill:none;stroke-width:1.6}
+html.mobile .zhj-set2 .set-row .tx{flex:1;min-width:0}
+html.mobile .zhj-set2 .set-row .tx b{display:block;font-size:16px;color:#333;font-weight:400;line-height:1.35}
+html.mobile .zhj-set2 .set-row .tx small{display:block;font-size:12.5px;color:#9aa3ad;margin-top:3px;line-height:1.4}
+html.mobile .zhj-set2 .set-row .rv{font-size:15px;color:#8e959e;max-width:45%;text-align:right;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-left:8px}
+html.mobile .zhj-set2 .set-row .ar{width:8px;height:8px;border-right:1.5px solid #c8cdd4;border-top:1.5px solid #c8cdd4;transform:rotate(45deg);margin-left:8px;flex:none}
+/* 开关行 */
+html.mobile .zhj-set2 .set-swrow{display:flex;align-items:center;gap:12px;min-height:60px;padding:13px 16px;border-bottom:1px solid #f2f4f7;background:#fff}
+html.mobile .zhj-set2 .set-swrow:last-child{border-bottom:none}
+html.mobile .zhj-set2 .set-swrow .tx{flex:1;min-width:0}
+html.mobile .zhj-set2 .set-swrow .tx b{display:block;font-size:16px;color:#333;font-weight:400}
+html.mobile .zhj-set2 .set-swrow .tx small{display:block;font-size:12.5px;color:#9aa3ad;margin-top:3px;line-height:1.45}
+html.mobile .zhj-set2 .set-swrow .tx small em{font-style:normal;color:var(--zhj);font-weight:600}
+html.mobile .zhj-set2 .ck-switch{flex:none;width:46px;height:27px;border-radius:14px;background:#d8dde3;position:relative;transition:background .18s;display:block;padding:0;border:none}
+html.mobile .zhj-set2 .ck-switch>i{position:absolute;left:2px;top:2px;width:23px;height:23px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.22);transition:transform .18s;display:block}
+html.mobile .zhj-set2 .ck-switch.on{background:var(--zhj)}
+html.mobile .zhj-set2 .ck-switch.on>i{transform:translateX(19px)}
+/* 单选行（成本口径 / 审批方式） */
+html.mobile .zhj-set2 .set-opt{display:flex;align-items:center;gap:12px;padding:14px 16px;border-bottom:1px solid #f2f4f7;background:#fff}
+html.mobile .zhj-set2 .set-opt:last-child{border-bottom:none}
+html.mobile .zhj-set2 .set-opt .tx{flex:1;min-width:0}
+html.mobile .zhj-set2 .set-opt .tx b{display:block;font-size:16px;color:#333;font-weight:400}
+html.mobile .zhj-set2 .set-opt .tx small{display:block;font-size:12.5px;color:#9aa3ad;margin-top:3px;line-height:1.45}
+html.mobile .zhj-set2 .set-opt.on{background:#f0fbfc}
+html.mobile .zhj-set2 .set-opt.on .tx b{color:var(--zhj)}
+html.mobile .zhj-set2 .set-opt .ck{color:var(--zhj);font-size:17px;flex:none}
+/* 说明与底部按钮 */
+html.mobile .zhj-set2 .set-note{margin:10px 26px 0;font-size:12.5px;color:#9aa3ad;line-height:1.6}
+html.mobile .zhj-set2 .set-fix{margin:16px 12px 0}
+html.mobile .zhj-set2 .set-fix .btn{width:100%;height:46px;border-radius:8px;font-size:16px}
+html.mobile .zhj-set2 .set-fix .btn.ok{background:var(--zhj)!important;border-color:var(--zhj)!important;color:#fff!important}
+/* 操作日志 */
+html.mobile .zhj-set2 .set-log{padding:12px 16px;border-bottom:1px solid #f2f4f7;background:#fff}
+html.mobile .zhj-set2 .set-log:last-child{border-bottom:none}
+html.mobile .zhj-set2 .set-log .lt{font-size:12px;color:#9aa3ad}
+html.mobile .zhj-set2 .set-log .lm{font-size:15px;color:#333;margin-top:3px}
+html.mobile .zhj-set2 .set-log .lm b{color:var(--zhj);font-weight:400}
+html.mobile .zhj-set2 .set-log .ld{font-size:13px;color:#8e959e;margin-top:2px;line-height:1.5;word-break:break-all}
+/* 二级页里的卡片（打印模板/医疗器械/公司管理复用电脑端结构，这里只做包裹） */
+/* ===== 手机端打印模板页 ===== */
+html.mobile .zhj-set2 .set-sub .tp-grid{display:block!important}
+html.mobile .zhj-set2 .set-sub .tp-grid>div+div{margin-top:12px}
+/* 预览卡：手机上先看效果，限制高度可滚动 */
+html.mobile .zhj-set2 .set-sub .slip-preview{overflow-x:auto;-webkit-overflow-scrolling:touch;padding:6px 0}
+html.mobile .zhj-set2 .set-sub .slip-preview>*{max-width:none!important}
+/* 明细列编辑器：每列一张小卡，控件分两行 */
+html.mobile .zhj-set2 .set-sub .tp-col{
+  display:grid!important;grid-template-columns:28px 1fr auto auto auto!important;
+  grid-template-areas:"ck name name name name" "ck w al up down";
+  gap:6px 8px!important;align-items:center;
+  padding:10px 12px!important;margin:0 0 8px!important;
+  background:#f7f9fc;border:1px solid #eceff3;border-radius:8px;
+}
+html.mobile .zhj-set2 .set-sub .tp-col>input[type=checkbox]{grid-area:ck;width:20px;height:20px;margin:0}
+html.mobile .zhj-set2 .set-sub .tp-col>input[data-l]{
+  grid-area:name;flex:1 1 auto!important;min-width:0!important;width:100%!important;
+  height:34px;font-size:15px;border:1px solid #dfe4ea;border-radius:6px;padding:0 10px;box-sizing:border-box;
+}
+html.mobile .zhj-set2 .set-sub .tp-col>input[data-w]{
+  grid-area:w;width:76px!important;height:34px;font-size:14px;
+  border:1px solid #dfe4ea;border-radius:6px;padding:0 8px;box-sizing:border-box;
+}
+html.mobile .zhj-set2 .set-sub .tp-col>select[data-al]{
+  grid-area:al;height:34px;font-size:14px;border:1px solid #dfe4ea;border-radius:6px;padding:0 6px;box-sizing:border-box;
+}
+html.mobile .zhj-set2 .set-sub .tp-col>button[data-mv]{
+  width:34px!important;height:34px!important;min-width:34px;border-radius:6px;
+  border:1px solid #dfe4ea;background:#fff;color:#5c636b;font-size:15px;
+}
+html.mobile .zhj-set2 .set-sub .tp-col>button[data-mv]:disabled{opacity:.35}
+html.mobile .zhj-set2 .set-sub .tp-col>button[data-mv$="|-1"]{grid-area:up}
+html.mobile .zhj-set2 .set-sub .tp-col>button[data-mv$="|1"]{grid-area:down}
+/* 打印模板页的输入框：整行铺满，不要半宽 */
+html.mobile .zhj-set2 .set-sub .tp-form>.field>input,
+html.mobile .zhj-set2 .set-sub .tp-form>.field>select,
+html.mobile .zhj-set2 .set-sub .tp-form>.field>textarea{
+  width:100%!important;box-sizing:border-box!important;height:44px!important;
+  font-size:15px!important;border:1px solid #dfe4ea!important;border-radius:8px!important;
+  padding:0 12px!important;background:#fff!important;text-align:left!important;
+}
+html.mobile .zhj-set2 .set-sub .tp-form>.field>textarea{height:auto!important;min-height:64px!important;padding:10px 12px!important;line-height:1.5}
+html.mobile .zhj-set2 .set-sub .tp-form>.field>textarea{height:auto!important;min-height:64px!important;padding:10px 12px!important;line-height:1.5}
+/* 表头项目那种「标签 + 一堆复选框」也跟着换行排 */
+html.mobile .zhj-set2 .set-sub .tp-form>.field{display:block!important;padding:12px 0!important;border-bottom:1px solid #f2f4f7;margin:0!important}
+html.mobile .zhj-set2 .set-sub .tp-form>.field>span{display:block!important;margin-bottom:8px;font-size:15px!important;color:#333!important;white-space:normal!important;max-width:none!important}
+html.mobile .zhj-set2 .set-sub .tp-form>.field>.chk{display:inline-flex;margin-right:16px;margin-bottom:6px}
+html.mobile .zhj-set2 .set-sub .tp-form>.field>div[style*="flex-wrap"]{display:flex!important;flex-wrap:wrap!important;gap:6px 16px!important}
+html.mobile .zhj-set2 .set-sub .tp-form>.field>div[style*="flex-wrap"] .btn{flex:0 0 auto}
+/* LOGO 行 */
+html.mobile .zhj-set2 .set-sub .tp-form>.field>div[id=tpLogoBox]{align-items:center!important}
+/* 底部按钮铺满一行 */
+html.mobile .zhj-set2 .set-sub .tp-form>div[style*="justify-content:flex-end"]{display:flex!important;gap:8px!important;margin-top:12px!important}
+html.mobile .zhj-set2 .set-sub .tp-form>div[style*="justify-content:flex-end"] .btn{flex:1;min-width:0;height:44px}
+html.mobile .zhj-set2 .set-sub .card{margin:12px!important;border-radius:10px;border:none!important;box-shadow:0 1px 3px rgba(15,23,42,.05)!important}
+/* 二级页里的 form-grid 行：去掉圆角卡片的双重边框，让行贴边 */
+html.mobile .zhj-set2 .set-sub .card-body{padding:0!important}
+html.mobile .zhj-set2 .set-sub .card-head{padding:14px 16px 10px!important}
+html.mobile .zhj-set2 .set-sub .set-sub .setting-row{padding:12px 16px!important}
+html.mobile .zhj-set2 .set-sub .setting-row{padding:12px 16px!important;border-bottom:1px solid #f2f4f7!important;flex-wrap:wrap}
+html.mobile .zhj-set2 .set-sub .setting-row .sr-group b{font-size:16px;font-weight:400}
+html.mobile .zhj-set2 .set-sub .setting-row .sr-group small{font-size:12.5px;color:#9aa3ad;line-height:1.5;margin-top:3px;display:block}
+/* 长标签（如「商户 ID（EBusinessID）」）不换行挤掉输入框：标签限宽 + 输入框保底宽度 */
+html.mobile .set-sub .form-grid>label.field>span{
+  min-width:0!important;max-width:56%!important;flex:0 1 auto!important;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+}
+html.mobile .set-sub .form-grid>label.field>input,
+html.mobile .set-sub .form-grid>label.field>select{flex:1 1 44%!important;min-width:44%!important}
+/* 「推送内容」这类标签 + 一堆复选框：标签不压缩、选项换行排 */
+html.mobile .set-sub .form-grid>div.field{display:block!important;padding:12px 16px!important;background:#fff;border-bottom:1px solid #f0f2f5;width:100%;box-sizing:border-box}
+html.mobile .set-sub .form-grid>div.field>span{flex:0 0 auto!important;min-width:0!important;max-width:none!important;white-space:normal!important;font-size:15px!important;color:#333!important;font-weight:400!important;display:block!important;margin-bottom:10px}
+html.mobile .set-sub .form-grid>div.field>div{display:flex!important;flex-wrap:wrap!important;gap:10px 20px!important;padding-top:0!important}
+html.mobile .set-sub .form-grid>div.field .chk{font-size:15px;display:flex;align-items:center;gap:8px;padding:0}
+html.mobile .zhj-set2 .set-sub .tip-line{margin:0!important;border-radius:0!important;font-size:13px;padding:11px 16px!important;line-height:1.6}
+html.mobile .zhj-set2 .set-sub .sub-t{font-size:13px;color:#9aa3ad;line-height:1.6}
+html.mobile .zhj-set2 .set-sub .chk{font-size:15px;padding:10px 0;align-items:center}
+html.mobile .zhj-set2 .set-sub .chk input{width:20px;height:20px;margin-right:8px;flex:none}
+/* 二级页里那些带 margin-top 的内联按钮排 */
+html.mobile .zhj-set2 .set-sub .card-body>div[style*="justify-content:flex-end"]{padding:12px 16px!important;margin:0!important;border-top:1px solid #f2f4f7}
+html.mobile .zhj-set2 .set-sub .card-body>div[style*="justify-content:flex-end"] .btn{flex:1;min-width:0}
+html.mobile .zhj-set2 .set-sub .card-head{padding:14px 16px 6px}
+html.mobile .zhj-set2 .set-sub .card-head h3{font-size:16px}
+html.mobile .zhj-set2 .set-sub .card-body{padding:0 16px 16px}
+html.mobile.zhj-dav-page .m-tabbar{display:none!important}
+html.mobile.zhj-dav-page .topbar{display:none!important}
+html.mobile.zhj-dav-page .content{padding:0!important;background:#f2f4f8!important}
+html.mobile.zhj-dav-page #view{padding-bottom:0!important}
 html.mobile.zhj-ss-page #view{padding-bottom:0!important}
 html.mobile.zhj-ss-page .content{background:#fff!important;padding-bottom:0!important}
 /* 底栏没了，时间/类型浮层要一直盖到屏幕底 */
@@ -929,7 +1179,59 @@ html.mobile .zhj-ob-foot .btn{
   text-align:center;box-sizing:border-box;
 }
 html.mobile .zhj-ob-foot .btn.primary{background:#fff!important;border-color:var(--zhj)!important;color:var(--zhj)!important}
-html.mobile .order-mobile{padding-bottom:calc(70px + env(safe-area-inset-bottom,0))}
+/* ===== 手机端 WebDAV 备份页：行式布局（和货品详情、系统设置同一套手感） ===== */
+html.mobile .zhj-dav .dav-body{padding:0 0 calc(78px + env(safe-area-inset-bottom,0px));background:#f2f4f8;min-height:100%}
+html.mobile .zhj-dav .zhj-ob-foot .btn.ok{background:var(--zhj)!important;border-color:var(--zhj)!important;color:#fff!important}
+/* 顶部状态卡 */
+html.mobile .zhj-dav .dav-hero{margin:12px;padding:18px 20px 16px;border-radius:14px;color:#fff;
+  background:linear-gradient(135deg,#4bb8d4 0%,#31cfcf 100%);box-shadow:0 6px 18px rgba(49,207,207,.28)}
+html.mobile .zhj-dav .dav-hero .h1{font-size:20px;font-weight:600;line-height:1.3}
+html.mobile .zhj-dav .dav-hero .h2{font-size:13px;opacity:.9;margin-top:4px}
+html.mobile .zhj-dav .dav-hero .hstat{display:flex;margin-top:16px;padding-top:14px;border-top:1px solid rgba(255,255,255,.25)}
+html.mobile .zhj-dav .dav-hero .hstat>span{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px}
+html.mobile .zhj-dav .dav-hero .hstat b{font-size:17px;font-weight:600}
+html.mobile .zhj-dav .dav-hero .hstat em{font-style:normal;font-size:12px;opacity:.85}
+/* 分组标题 */
+html.mobile .zhj-dav .dav-grp{font-size:13px;color:#9aa3ad;padding:14px 26px 8px}
+/* 白卡片 + 行 */
+html.mobile .zhj-dav .dav-card{margin:0 12px;background:#fff;border-radius:10px;overflow:hidden;box-shadow:0 1px 3px rgba(15,23,42,.05)}
+html.mobile .zhj-dav .dav-row{display:flex;align-items:center;min-height:52px;padding:10px 16px;border-bottom:1px solid #f2f4f7;background:#fff}
+html.mobile .zhj-dav .dav-row:last-child{border-bottom:none}
+html.mobile .zhj-dav .dav-row .ri{width:20px;height:20px;margin-right:12px;flex:none;display:flex;align-items:center;justify-content:center}
+html.mobile .zhj-dav .dav-row .ri svg{width:19px;height:19px;stroke:#b9c0c8;fill:none;stroke-width:1.6}
+html.mobile .zhj-dav .dav-row label{flex:1;font-size:16px;color:#333;min-width:0;display:flex;align-items:baseline;gap:8px}
+html.mobile .zhj-dav .dav-row label em{font-style:normal;font-size:13px;color:#9aa3ad}
+html.mobile .zhj-dav .dav-row .rv{font-size:15px;color:#8e959e;max-width:58%;text-align:right;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+html.mobile .zhj-dav .dav-row .ar{width:8px;height:8px;border-right:1.5px solid #c8cdd4;border-top:1.5px solid #c8cdd4;transform:rotate(45deg);margin-left:8px;flex:none}
+/* 开关行 */
+html.mobile .zhj-dav .dav-sw{display:flex;align-items:center;gap:12px;min-height:56px;padding:12px 16px;border-bottom:1px solid #f2f4f7;background:#fff}
+html.mobile .zhj-dav .dav-sw:last-child{border-bottom:none}
+html.mobile .zhj-dav .dav-sw .tx{flex:1;min-width:0}
+html.mobile .zhj-dav .dav-sw .tx b{display:block;font-size:16px;color:#333;font-weight:400}
+html.mobile .zhj-dav .dav-sw .tx small{display:block;font-size:12.5px;color:#9aa3ad;margin-top:3px;line-height:1.4}
+html.mobile .zhj-dav .dav-sw .ck-switch{flex:none;width:46px;height:27px;border-radius:14px;background:#d8dde3;position:relative;transition:background .18s;
+  padding:0;border:none;display:block}
+html.mobile .zhj-dav .dav-sw .ck-switch>i{position:absolute;left:2px;top:2px;width:23px;height:23px;border-radius:50%;background:#fff;
+  box-shadow:0 1px 3px rgba(0,0,0,.22);transition:transform .18s;display:block}
+html.mobile .zhj-dav .dav-sw .ck-switch.on{background:var(--zhj)}
+html.mobile .zhj-dav .dav-sw .ck-switch.on>i{transform:translateX(19px)}
+/* 提示条与说明 */
+html.mobile .zhj-dav .dav-warn{margin:8px 12px 0;padding:11px 14px;border-radius:10px;background:#fff4e5;color:#c46a00;font-size:13px;line-height:1.5}
+html.mobile .zhj-dav .dav-note{margin:12px 26px 0;font-size:12.5px;color:#9aa3ad;line-height:1.6}
+html.mobile .zhj-dav .dav-empty{margin:12px;padding:48px 0;text-align:center;color:#9aa3ad;background:#fff;border-radius:10px}
+html.mobile .zhj-dav .dav-err{margin:12px;padding:14px 16px;border-radius:10px;background:#fff;color:var(--red);font-size:14px;line-height:1.5}
+/* 云端文件二级页 */
+html.mobile .zhj-dav .dav-file{display:flex;align-items:center;gap:12px;padding:14px 16px;border-bottom:1px solid #f2f4f7;background:#fff}
+html.mobile .zhj-dav .dav-file:last-child{border-bottom:none}
+html.mobile .zhj-dav .dav-file .fh{width:36px;height:36px;border-radius:9px;background:#eef7fa;display:flex;align-items:center;justify-content:center;flex:none}
+html.mobile .zhj-dav .dav-file .fh svg{width:19px;height:19px;stroke:var(--zhj);fill:none;stroke-width:1.7}
+html.mobile .zhj-dav .dav-file .fb{flex:1;min-width:0}
+html.mobile .zhj-dav .dav-file .fb b{display:block;font-size:14.5px;color:#333;font-weight:400;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+html.mobile .zhj-dav .dav-file .fb small{display:block;font-size:12px;color:#9aa3ad;margin-top:3px}
+html.mobile .zhj-dav .dav-file .fop{flex:none;display:flex;gap:8px}
+html.mobile .zhj-dav .dav-file .fop button{height:30px;padding:0 12px;border-radius:15px;border:1px solid var(--zhj);background:#fff;color:var(--zhj);font-size:13.5px;font-family:inherit}
+html.mobile .zhj-dav .dav-file .fop button.del{border-color:#f0c4c4;color:#e05555}
+html.mobile.order-mobile{padding-bottom:calc(70px + env(safe-area-inset-bottom,0))}
 html.mobile .zhj-ob-empty span{font-size:13px;color:#b6bcc4}
 /* 购物车行：图片 + 名称 / 数量：X 单位 / 价格：¥X   金额：¥X（照智慧记真机） */
 html.mobile .zhj-cart-item{display:flex;gap:14px;padding:16px;border-bottom:1px solid #f0f2f5;position:relative;background:#fff}
@@ -948,6 +1250,10 @@ html.mobile .zhj-item-dlg .ttl{font-size:17px;color:#333;text-align:center;margi
 html.mobile .zhj-item-dlg .ir{display:flex;align-items:center;padding:12px 0;border-bottom:1px solid #eceff3}
 html.mobile .zhj-item-dlg .ir label{width:auto;min-width:64px;flex:none;font-size:16px;color:#333;margin-right:14px;white-space:nowrap}
 html.mobile .zhj-item-dlg .ir input{flex:1;border:none;outline:none;background:none;font-size:16px;color:#333;min-width:0;padding:0}
+/* 数值行输入框：禁掉系统长按选择菜单与「剪切/复制/全选」浮动工具条（安卓 WebView 会盖在弹窗上） */
+html.mobile .zhj-item-dlg .ir input[inputmode="decimal"]{-webkit-touch-callout:none;-webkit-user-modify:read-write-plaintext-only}
+html.mobile .zhj-item-dlg .ir input[inputmode="decimal"]::selection{background:transparent;color:inherit}
+html.mobile .zhj-item-dlg .ir input[inputmode="decimal"]::-moz-selection{background:transparent;color:inherit}
 html.mobile .zhj-item-dlg .ir input[readonly]{color:#666}
 html.mobile .zhj-item-dlg .ir .u{width:26px;flex:none;text-align:right;font-size:15px;color:#9aa3ad}
 html.mobile .zhj-item-dlg .ir select{flex:1;border:none;outline:none;background:none;font-size:16px;color:#333;min-width:0;-webkit-appearance:none;appearance:none}
@@ -1513,8 +1819,30 @@ html.mobile .zhj-ss-rangetxt b svg{width:14px;height:14px;stroke:#9aa3ad;fill:no
 html.mobile .zhj-ss-flow .fhd .th img,html.mobile .zhj-ss-flow .fhd .th .pimg{width:100%;height:100%;object-fit:cover;display:block}
 html.mobile .zhj-ss-flow .fhd .th svg{width:24px;height:24px;stroke:#ccd2d9;fill:none;stroke-width:1.4}
 html.mobile .zhj-ss-flow .fhd .bd{flex:1;min-width:0}
-html.mobile .zhj-ss-flow .fhd .t1{font-size:16px;color:#222;margin-bottom:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-html.mobile .zhj-ss-flow .fhd .t2{font-size:14px;color:#9aa3ad}
+html.mobile .zhj-ss-flow .fhd{margin:12px;padding:16px 18px 14px;border-radius:14px;color:#fff;
+  background:linear-gradient(135deg,#4bb8d4 0%,#31cfcf 100%);box-shadow:0 6px 18px rgba(49,207,207,.28);
+  display:block}
+html.mobile .zhj-ss-flow .fhd .top{display:flex;align-items:center;gap:12px}
+html.mobile .zhj-ss-flow .fhd .th{background:rgba(255,255,255,.22);border-color:rgba(255,255,255,.3)}
+html.mobile .zhj-ss-flow .fhd .th svg{stroke:rgba(255,255,255,.75)}
+html.mobile .zhj-ss-flow .fhd .t1{font-size:18px;color:#fff;margin-bottom:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+html.mobile .zhj-ss-flow .fhd .t2{font-size:12.5px;color:rgba(255,255,255,.88)}
+html.mobile .zhj-ss-flow .fhd .stats{display:flex;margin-top:14px;padding-top:13px;border-top:1px solid rgba(255,255,255,.25)}
+html.mobile .zhj-ss-flow .fhd .stats>div{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;min-width:0}
+html.mobile .zhj-ss-flow .fhd .stats b{font-size:18px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+html.mobile .zhj-ss-flow .fhd .stats b em{font-style:normal;font-size:12px;font-weight:400;margin-left:2px;opacity:.85}
+html.mobile .zhj-ss-flow .fhd .stats label{font-size:11.5px;opacity:.85}
+/* 四格汇总时字号收一点 */
+/* 四格金额不截断：金额那格给更大空间 */
+html.mobile .zhj-ss-flow .fhd .stats>div:nth-child(2){flex:1.5}
+html.mobile .zhj-ss-flow .fhd .stats>div:nth-child(2) b{font-size:15px;letter-spacing:-.2px}
+
+html.mobile .zhj-ss-flow .fhd .stats>div{min-width:0;padding:0 2px}
+html.mobile .zhj-ss-flow .fhd .stats b{font-size:16px}
+html.mobile .zhj-ss-flow .fhd .stats label{font-size:11px;white-space:nowrap}
+/* 返回按钮：flowAll 无时间选择器 */
+html.mobile.zhj-ss-flow .zhj-ss-tl{padding-bottom:30px}
+
 html.mobile .zhj-ss-tl{position:relative;padding:6px 16px 10px 34px}
 html.mobile .zhj-ss-tl::before{content:'';position:absolute;left:14px;top:0;bottom:12px;width:1px;background:#e0e5eb}
 html.mobile .zhj-ss-tl .dt{position:relative;font-size:14px;color:#8e959e;padding:14px 0 8px}
@@ -1906,8 +2234,18 @@ html.mobile .zhj-detailcard .zhj-ob-tab.on::after{background:var(--side,#31bfcf)
 html.mobile .zhj-detaillist .ficon{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;background:#fb6a6a;color:#fff;font-size:13px;margin-right:8px;flex:none}
 html.mobile .zhj-detaillist .ficon.out{background:#7b8cf5}
 html.mobile .zhj-detailcard .zhj-filter .sum b{font-weight:400}
+/* 明细页搜索框清除按钮 */
+html.mobile .zhj-searchbar .box{position:relative}
+html.mobile .zhj-searchbar .box .ssclr{
+  position:absolute;right:8px;top:50%;transform:translateY(-50%);
+  width:20px;height:20px;line-height:18px;text-align:center;border-radius:50%;
+  background:#c8cdd4;color:#fff;font-size:13px;font-style:normal;
+  display:flex;align-items:center;justify-content:center;cursor:pointer;
+}
+html.mobile .zhj-searchbar .box input{padding-right:30px}
+html.mobile .zhj-searchbar .box .ssclr:active{background:#a8b0b9}
 html.mobile .zhj-addfab{
-  position:absolute;right:12px;top:96px;width:52px;height:52px;border-radius:50%;background:var(--zhj);color:#fff;
+  position:absolute;right:12px;top:104px;width:52px;height:52px;border-radius:50%;background:var(--zhj);color:#fff;
   display:flex;align-items:center;justify-content:center;box-shadow:0 3px 10px rgba(49,191,207,.4);z-index:2;
 }
 html.mobile .zhj-addfab svg{width:26px;height:26px;stroke:#fff;fill:none;stroke-width:2}
@@ -1916,7 +2254,7 @@ html.mobile .zhj-loadmore{padding:18px 0;text-align:center;font-size:14px;color:
 html.mobile .zhj-drow{position:relative;padding:14px 34px 14px 14px;border-bottom:1px solid #f2f4f7}
 html.mobile .zhj-drow:last-child{border-bottom:none}
 html.mobile .zhj-drow .dd{font-size:13px;color:#b0b7bf;margin-bottom:8px}
-html.mobile .zhj-drow .dm{font-size:16px;color:#333;line-height:1.3;padding-right:172px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+html.mobile .zhj-drow .dm{font-size:16px;color:#333;line-height:1.3;padding-right:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;position:relative;z-index:1}
 html.mobile .zhj-drow .da{position:absolute;right:18px;top:40px;font-size:16px;color:#5c636b;display:flex;align-items:center;white-space:nowrap}
 html.mobile .zhj-drow .da .ar{width:8px;height:8px;border-right:1.5px solid #c8cdd4;border-top:1.5px solid #c8cdd4;transform:rotate(45deg);margin-left:10px;flex:none}
 html.mobile .zhj-drow .dn{font-size:13px;color:#b0b7bf;margin-top:8px;padding-right:60px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -1941,7 +2279,7 @@ html.mobile .zhj-stamp{
   position:absolute;right:134px;top:22px;width:46px;height:46px;border-radius:50%;
   display:flex;align-items:center;justify-content:center;
   font-size:10px;letter-spacing:0;transform:rotate(-14deg);line-height:1.15;text-align:center;
-  border:1.5px solid;background:rgba(255,255,255,.92);pointer-events:none;
+  border:1.5px solid;background:rgba(255,255,255,.62);pointer-events:none;z-index:2;
 }
 html.mobile .zhj-stamp.warn{color:#f4a4a4;border-color:#f4b8b8}
 html.mobile .zhj-stamp.ok{color:#9ed6a4;border-color:#b3e0b8}
@@ -2112,32 +2450,34 @@ html.mobile .zhj-ob-sub{display:flex;background:#fff;padding:10px 14px;gap:10px;
 html.mobile .zhj-ob-sub .s{flex:1;height:36px;line-height:34px;text-align:center;border:1px solid #dfe3e8;border-radius:5px;font-size:15px;color:#666;background:#fff}
 html.mobile .zhj-ob-sub .s.on{border-color:var(--zhj);color:var(--zhj);background:rgba(49,191,207,.06)}
 /* 手机端所有表单弹窗（商品/客户/供应商/报销…）：左标签右值，和智慧记编辑页一致 */
-html.mobile .m-body .form-grid{display:block!important;padding:0!important}
-html.mobile .m-body .form-grid>label.field,html.mobile .m-body .form-grid>.field{
+html.mobile .m-body .form-grid,html.mobile .set-sub .form-grid{display:block!important;padding:0!important}
+html.mobile .m-body .form-grid>label.field,html.mobile .m-body .form-grid>.field,html.mobile .set-sub .form-grid>label.field,html.mobile .set-sub .form-grid>.field{
   display:flex!important;flex-direction:row!important;align-items:center!important;flex-wrap:nowrap!important;
   gap:10px;min-height:46px;padding:11px 16px!important;
   background:#fff;border-bottom:1px solid #f0f2f5;margin:0!important;font-size:15px;width:100%;box-sizing:border-box;
 }
-html.mobile .m-body .form-grid>label.field>span{
+html.mobile .m-body .form-grid>label.field>span,html.mobile .set-sub .form-grid>label.field>span{
   flex:0 0 auto!important;color:#333;min-width:76px;max-width:44%;margin:0!important;font-size:15px!important;
   display:block!important;padding:0!important;text-align:left!important;line-height:1.35;
 }
-html.mobile .m-body .form-grid>label.field>span i{display:none}
+html.mobile .m-body .form-grid>label.field>span i,html.mobile .set-sub .form-grid>label.field>span i{display:none}
 html.mobile .m-body .form-grid>label.field>input,
-html.mobile .m-body .form-grid>label.field>select{
+html.mobile .m-body .form-grid>label.field>select,
+html.mobile .set-sub .form-grid>label.field>input,
+html.mobile .set-sub .form-grid>label.field>select{
   flex:1 1 auto!important;border:none!important;outline:none!important;background:none!important;
   text-align:right!important;font-size:15px;color:#333;min-width:0;width:auto!important;
   height:auto!important;min-height:24px!important;padding:0!important;box-shadow:none!important;margin:0!important;
   display:block!important;border-radius:0!important;
 }
-html.mobile .m-body .form-grid>label.field>textarea{
+html.mobile .m-body .form-grid>label.field>textarea,html.mobile .set-sub .form-grid>label.field>textarea{
   flex:1 1 auto!important;border:1px solid #eceff3!important;background:#f7f9fc!important;
   text-align:left!important;font-size:15px;color:#333;min-width:0;width:auto!important;
   min-height:56px!important;padding:8px 10px!important;box-shadow:none!important;margin:0!important;
   display:block!important;border-radius:8px!important;resize:none;
 }
-html.mobile .m-body .form-grid>label.field:has(textarea){align-items:flex-start}
-html.mobile .m-body .form-grid>label.field.span2,html.mobile .m-body .form-grid>label.field.span3{grid-column:auto}
+html.mobile .m-body .form-grid>label.field:has(textarea),html.mobile .set-sub .form-grid>label.field:has(textarea){align-items:flex-start}
+html.mobile .m-body .form-grid>label.field.span2,html.mobile .m-body .form-grid>label.field.span3,html.mobile .set-sub .form-grid>label.field.span2,html.mobile .set-sub .form-grid>label.field.span3{grid-column:auto}
 html.mobile .m-body .doc-info{grid-template-columns:1fr!important}
 /* 手机端：内容区左右不留白，白底铺满屏幕（智慧记列表是通栏的） */
 html.mobile .content{padding:0!important}
@@ -2262,7 +2602,7 @@ html.mobile .zhj-rpt-cap{font-size:16px}
   <aside class="sidebar">
     <div class="brand"><div class="logo">XL</div><span class="brand-name">XLerp</span></div>
     <nav id="nav"></nav>
-<div class="side-foot"><span id="sideVer">v2.14.5</span> · 数据保存在服务器</div>
+<div class="side-foot"><span id="sideVer">v2.2.0</span> · 数据保存在服务器</div>
   </aside>
   <div class="backdrop" data-act="toggleSide"></div>
   <div class="main">
@@ -2654,6 +2994,10 @@ async function mutate(method, path, body, msg) {
 /* ---------- 登录 ---------- */
 function showLogin(msg) {
   $('#login').classList.add('show');
+  // 立刻收起底栏，不等 syncTabbar 的延迟同步
+  document.documentElement.classList.add('zhj-login-page');
+  const bar = document.getElementById('mTabbar');
+  if (bar) bar.style.display = 'none';
   $('#lPass').value = window.XERP_DEMO ? 'admin123' : '';
   if (msg) toast(msg, 'error');
   setTimeout(() => (CLIENT_MODE && !$('#lServer').value ? $('#lServer') : $('#lPass')).focus(), 50);
@@ -2703,6 +3047,7 @@ async function doLogin() {
 async function enterApp() {
   await reload();
   $('#login').classList.remove('show');
+  document.documentElement.classList.remove('zhj-login-page');   // 登入成功，放开底栏
   applyTheme(); render();
   setupPortalUI();
 }
@@ -3252,15 +3597,30 @@ function pageMore() {
       </div></div>
     </div>`).join('');
 }
+/* 从任意页面跳到明细页的指定侧栏 + 子 tab（首页功能列表的「销售退货 / 采购退货」用） */
+function jumpToDetail(side, sub) {
+  ui.detailSide = side;
+  ui.__sideIntent = '';
+  if (sub) getState('detail_' + side).sub = sub;
+  // 不走 go('sales')：go 里会按来源页把 __sideIntent 设成 sales/purchase，把刚设的侧栏冲掉
+  if (location.hash !== '#/sales') {
+    if (location.replace) location.replace('#/sales'); else location.hash = '#/sales';
+  }
+  ui.__hashPage = 'sales';
+  render();
+}
 /* 更多页里的跳转：部分不是独立页面，映射到对应模块的子页 */
 function goMore(id) {
   const map = {
-    checkDocs: () => { go('inventory'); setTimeout(() => { const t = document.querySelector('[data-act="invTab"][data-id="checks"]'); if (t) t.click(); }, 120); },
+    // 盘点 → 直接开新的盘点单（手机端草稿态，点保存才真建单）
+    checkDocs: () => { if (IS_MOBILE && typeof zhjCheckNew === 'function') return zhjCheckNew(); go('inventory'); setTimeout(() => { const t = document.querySelector('[data-act="invTab"][data-id="checks"]'); if (t) t.click(); }, 120); },
     transfers: () => { go('inventory'); setTimeout(() => { const t = document.querySelector('[data-act="invTab"][data-id="transfers"]'); if (t) t.click(); }, 120); },
     stock: () => { go('inventory'); setTimeout(() => { const t = document.querySelector('[data-act="invTab"][data-id="inv"]'); if (t) t.click(); }, 120); },
     pays: () => { go('sales'); setTimeout(() => { const t = [...document.querySelectorAll('[data-act="tab"]')].find(x => /收款|付款/.test(x.textContent)); if (t) t.click(); }, 120); },
-    accounts: () => go('finance'),
-    statement: () => { go('inventory'); setTimeout(() => { const t = document.querySelector('[data-act="invTab"][data-id="statement"]'); if (t) t.click(); }, 120); },
+    // 资金流水 → 明细页「资金」标签的收入单
+    accounts: () => (IS_MOBILE ? jumpToDetail('fund', 'income') : go('finance')),
+    // 对账 → 明细页「资金」标签的收入单（和资金流水同一个落点）
+    statement: () => (IS_MOBILE ? jumpToDetail('fund', 'income') : (() => { go('inventory'); setTimeout(() => { const t = document.querySelector('[data-act="invTab"][data-id="statement"]'); if (t) t.click(); }, 120); })()),
     priceList: () => go('customers'),
     batch: () => { go('inventory'); setTimeout(() => { const t = document.querySelector('[data-act="invTab"][data-id="batches"]'); if (t) t.click(); }, 120); },
     serial: () => { go('inventory'); setTimeout(() => { const t = document.querySelector('[data-act="invTab"][data-id="serials"]'); if (t) t.click(); }, 120); },
@@ -3268,6 +3628,9 @@ function goMore(id) {
     summary: () => { go('inventory'); setTimeout(() => { const t = document.querySelector('[data-act="invTab"][data-id="summary"]'); if (t) t.click(); }, 120); },
     reportCustomer: () => { go('reports'); setTimeout(() => { ui.rptTab = 'customers'; render(); }, 120); },
     reportPeople: () => { go('reports'); setTimeout(() => { ui.rptTab = 'people'; render(); }, 120); },
+    // 销售退货 / 采购退货：进明细页对应侧栏，并选中「退货单」tab
+    salesReturns: () => jumpToDetail('sales', 'salesReturn'),
+    purchaseReturns: () => jumpToDetail('purchase', 'purchaseReturn'),
   };
   if (map[id]) return map[id]();
   go(id);
@@ -6266,6 +6629,119 @@ const PARTY_COLS = {
   customers: [['name', '客户名称'], ['contact', '联系人'], ['phone', '电话'], ['email', '邮箱'], ['level', '等级'], ['openingBalance', '期初应收'], ['address', '地址'], ['remark', '备注'], ['bizLicense', '营业执照号'], ['licenseNo', '许可证号'], ['licenseExp', '许可证有效期']],
   suppliers: [['name', '供应商名称'], ['contact', '联系人'], ['phone', '电话'], ['email', '邮箱'], ['category', '主营类目'], ['openingBalance', '期初应付'], ['address', '地址'], ['remark', '备注'], ['bizLicense', '营业执照号'], ['licenseNo', '许可证号'], ['licenseExp', '许可证有效期']]
 };
+// ===== 合并重复的客户 / 供应商 =====
+function mergePartyPage(type) {
+  const isC = type === 'customers';
+  const W = isC ? '客户' : '供应商';
+  const rows = [...db[type]].sort((a, b) => (a.name || '').localeCompare(b.name || '', 'zh'));
+  // 按名字相似度提示可能的重复（同名或只差空格/全半角括号）
+  const norm = n => String(n || '').replace(/[\s\uFF08\uFF09()\u3010\u3011\[\]]/g, '').toLowerCase();
+  const dupOf = {};
+  rows.forEach(r => { const k = norm(r.name); (dupOf[k] = dupOf[k] || []).push(r); });
+  const dups = Object.values(dupOf).filter(a => a.length > 1);
+  const cnt = id => (db.sales || []).filter(o => o.customerId === id).length + (db.purchases || []).filter(o => o.supplierId === id).length;
+  const pick = { from: null, to: null };
+
+  document.querySelectorAll('.zhj-setmask').forEach(n => n.remove());
+  const m = document.createElement('div');
+  m.className = 'zhj-ss-datemask';
+  m.innerHTML = `<div class="sheet">
+    <div class="grp"></div>
+    <div class="hd"><span>合并${W}</span><i data-x="c">&#215;</i></div>
+    <div style="padding:0 16px 12px;max-height:66vh;overflow-y:auto">
+      <p style="font-size:13px;color:#8e959e;line-height:1.6;margin:0 0 14px">
+        把「${W} A」名下的所有单据、收款记录、往来款全部转到「${W} B」名下，然后删除 A。
+        合并后不可撤销，建议先导出备份。
+      </p>
+      ${dups.length ? `<div style="background:#fff8e6;border-radius:8px;padding:12px 14px;margin-bottom:14px;font-size:13px;color:#a86b00;line-height:1.6">
+        发现 ${dups.length} 组同名${W}：${dups.map(g => esc(g[0].name)).join('、')}
+      </div>` : ''}
+      <label style="display:block;font-size:13px;color:#8e959e;margin-bottom:6px">要合并掉的${W}（A）</label>
+      <div id="mgFromRow" style="display:flex;align-items:center;justify-content:space-between;height:46px;border:1px solid #dfe4ea;border-radius:8px;padding:0 12px;font-size:15px;margin-bottom:14px;background:#fff">
+        <span id="mgFromTxt" style="color:#9aa3ad">点这里选择${W}</span><span style="color:#c8cdd4">›</span>
+      </div>
+      <label style="display:block;font-size:13px;color:#8e959e;margin-bottom:6px">合并到（B）</label>
+      <div id="mgToRow" style="display:flex;align-items:center;justify-content:space-between;height:46px;border:1px solid #dfe4ea;border-radius:8px;padding:0 12px;font-size:15px;margin-bottom:8px;background:#fff">
+        <span id="mgToTxt" style="color:#9aa3ad">点这里选择${W}</span><span style="color:#c8cdd4">›</span>
+      </div>
+      <div id="mgHint" style="font-size:13px;color:#8e959e;line-height:1.6;min-height:20px"></div>
+    </div>
+    <div class="ft"><button class="btn" data-x="c">取消</button><button class="btn primary" data-x="ok">确认合并</button></div>
+  </div>`;
+  document.body.appendChild(m);
+
+  const fTxt = m.querySelector('#mgFromTxt'), tTxt = m.querySelector('#mgToTxt'), hint = m.querySelector('#mgHint');
+  const upd = () => {
+    const a = pick.from, b = pick.to;
+    if (!a || !b) { hint.innerHTML = ''; return; }
+    if (a.id === b.id) { hint.innerHTML = '<span style="color:#ef5350">A 和 B 不能是同一个</span>'; return; }
+    const sales = (db.sales || []).filter(o => o.customerId === a.id).length;
+    const rets = (db.salesReturns || []).filter(o => o.customerId === a.id).length;
+    const purs = (db.purchases || []).filter(o => o.supplierId === a.id).length;
+    const pp = (db.partyPayments || []).filter(o => o.partyId === a.id).length;
+    const parts = [];
+    if (sales) parts.push(sales + ' 张销售单');
+    if (rets) parts.push(rets + ' 张退货单');
+    if (purs) parts.push(purs + ' 张进货单');
+    if (pp) parts.push(pp + ' 条往来款');
+    hint.innerHTML = parts.length
+      ? '将把「' + esc(a.name) + '」的 <b>' + parts.join('、') + '</b> 全部转到「' + esc(b.name) + '」，然后删除「' + esc(a.name) + '」'
+      : '「' + esc(a.name) + '」名下没有单据，直接删除并合并档案';
+  };
+  // 带搜索的选择页：复用 zhjPickPage，选项上面有搜索框
+  const openPick = which => {
+    const other = which === 'from' ? pick.to : pick.from;
+    zhjPickPage({
+      title: which === 'from' ? '选择要合并掉的' + W : '选择合并到',
+      placeholder: '输入名称 / 联系人 / 手机搜索',
+      rows: kw => {
+        const q = String(kw.q || '').trim().toLowerCase();
+        return rows.filter(r => {
+          if (other && r.id === other.id) return false;   // 排除已选的另一个
+          if (!q) return true;
+          return (r.name + (r.contact || '') + (r.phone || '')).toLowerCase().includes(q);
+        });
+      },
+      renderRow: r => `<div class="zhj-party" data-pick="${esc(r.id)}" style="display:flex;align-items:center;padding:14px 16px;border-bottom:1px solid #f0f2f5;background:#fff;gap:10px">
+        <div style="flex:1;min-width:0">
+          <div style="font-size:16px;color:#333;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(r.name)}</div>
+          <div style="font-size:12.5px;color:#9aa3ad;margin-top:3px">${cnt(r.id)} 张单据${r.phone ? ' · ' + esc(r.phone) : ''}</div>
+        </div>
+        <span class="arrow"></span>
+      </div>`,
+      onPick: id => {
+        const r = rows.find(x => x.id === id);
+        if (!r) return;
+        pick[which] = r;
+        const el = m.querySelector(which === 'from' ? '#mgFromTxt' : '#mgToTxt');
+        if (el) { el.textContent = r.name; el.style.color = '#333'; }
+        upd();
+      },
+    });
+  };
+  m.querySelector('#mgFromRow').onclick = () => openPick('from');
+  m.querySelector('#mgToRow').onclick = () => openPick('to');
+  m.querySelectorAll('[data-x=c]').forEach(b => b.onclick = () => m.remove());
+  m.querySelector('[data-x=ok]').onclick = async () => {
+    const a = pick.from, b = pick.to;
+    if (!a || !b) return toast('请选择两个' + W, 'error');
+    if (a.id === b.id) return toast('A 和 B 不能是同一个', 'error');
+    const btn = m.querySelector('[data-x=ok]');
+    btn.disabled = true; btn.textContent = '合并中…';
+    try {
+      const r = await api('POST', '/api/' + type + '/' + a.id + '/merge', { fromId: a.id, toId: b.id });
+      await reload();
+      m.remove();
+      const mv = r && r.moved ? Object.entries(r.moved).map(([k, v]) => v + ' 条 ' + k).join('、') : '';
+      toast('已合并' + (mv ? '：' + mv : ''), 'success');
+      render();
+    } catch (e) {
+      btn.disabled = false; btn.textContent = '确认合并';
+      toast(e.message, 'error');
+    }
+  };
+}
+
 function partyImport(type) {
   const C = ENT[type], cols = PARTY_COLS[type].filter(([k]) => k !== 'licenseExp' || medOn());
   let rows = [];
@@ -6537,7 +7013,24 @@ function zhjDetailPage() {
     // 筛选用的 key 固定写「已结清 / 未结清」，只换显示文字，避免历史选择状态失效
     if (payFilter === '已结清') data = data.filter(o => unpaidOf(kind, o) <= 0.001);
     if (payFilter === '未结清') data = data.filter(o => unpaidOf(kind, o) > 0.001);
-    if (st.q) { const q = st.q.toLowerCase(); data = data.filter(o => (o.no + partyName(kind, o)).toLowerCase().includes(q)); }
+    if (st.q) {
+      const q = st.q.toLowerCase();
+      // 四样都能搜：单据号 / 往来单位名 / 货品名 / 快递单号（+ 说明备注兜底）
+      data = data.filter(o => {
+        if ((o.no || '').toLowerCase().includes(q)) return true;
+        if (partyName(kind, o).toLowerCase().includes(q)) return true;
+        if ((o.remark || '').toLowerCase().includes(q)) return true;
+        // 货品名（明细里任一商品命中即可）
+        if ((o.items || []).some(it => {
+          const p2 = byId(db.products, it.productId);
+          return p2 && String(p2.name || '').toLowerCase().includes(q);
+        })) return true;
+        // 快递单号（挂在这张单上的运单）
+        if ((db.shipments || []).some(sh => sh.srcType === kind && sh.srcId === o.id && sh.status !== '已作废'
+          && String(sh.trackNo || '').toLowerCase().includes(q))) return true;
+        return false;
+      });
+    }
     sumAmt = sum(data, orderTotal);
     chips = ['全部', '已结清', '未结清'].map((t, i) => ({ t: i === 0 ? '全部' : (i === 1 ? DONE_T : PEND_T), on: (payFilter || '全部') === t, act: `zhjPay|${stKey}|${t}` }));
     addAct = 'zhjAdd'; addId = kind;
@@ -6639,7 +7132,7 @@ function zhjDetailPage() {
         ${S.tabs.map(([k, l]) => `<div class="zhj-ob-tab ${k === sub ? 'on' : ''}" data-act="zhjDetailTab" data-id="${S.id}|${k}">${l}</div>`).join('')}
       </div>
       <div class="zhj-searchbar" style="border-bottom:none">
-        <div class="box">${ic('search')}<input data-search="${stKey}" value="${esc(st.q || '')}" placeholder="${S.ph}"></div>
+        <div class="box">${ic('search')}<input data-search="${stKey}" value="${esc(st.q || '')}" placeholder="${S.ph}"><i class="ssclr" data-act="zhjSsClearInput" data-id="${stKey}" style="display:${st.q ? '' : 'none'}">&#215;</i></div>
       </div>
       <div class="zhj-filter" style="border-bottom:none">
         <div class="line"><span class="range" data-act="zhjDate" data-id="${stKey}">${rngText}</span></div>
@@ -6654,6 +7147,8 @@ function zhjDetailPage() {
   const si = document.querySelector(`[data-search="${stKey}"]`);
   if (si) si.oninput = e => {
     st.q = e.target.value;
+    const clr = si.parentNode.querySelector('.ssclr');
+    if (clr) clr.style.display = st.q ? '' : 'none';
     compute();
     const box = document.querySelector('.zhj-detaillist');
     if (box) box.innerHTML = rows.length ? rows.join('') + (allRows.length > rows.length ? ckMoreHint(allRows.length - rows.length) : '') : '<div class="empty" style="padding:60px 0;text-align:center;color:#98a0aa">暂无数据</div>';
@@ -7387,10 +7882,36 @@ function orderModal(kind, id, srcId0) {
     };
     /* 手机端专用逻辑（独立页面版） */
     const partyNow2 = () => $('#oParty') ? $('#oParty').value : party0;
-    const priceOf2 = (p, unit, party = partyNow2()) => { const s = srcOf(), l = s && s.items.find(x => x.productId === p.id), sp = specialPrice(C.party, party, p.id);
+    // 这个客户最近一单买这个商品时的单价（按单据日期倒序找第一条含该商品的销售单/进货单）
+    // 只在同一个往来单位 + 同一个商品命中时才算，找不到返回 null
+    const lastPartyPrice = (p, unit, party) => {
+      if (!party || !p) return null;
+      const plist = db[C.db] || [];
+      const rate = rateOf(p, unit);
+      // 按日期倒序（同日期按创建时间倒序），找最近一张含这个商品的单
+      const sorted = plist.slice().sort((a, b) => String(b.date || '').localeCompare(String(a.date || ''))
+        || String(b.createdAt || '').localeCompare(String(a.createdAt || '')));
+      for (const o of sorted) {
+        if (o.status === '已作废') continue;
+        if (o[C.partyKey] !== party) continue;
+        const hit = (o.items || []).find(x => x.productId === p.id);
+        if (!hit) continue;
+        const v = +hit.price;
+        if (!Number.isFinite(v) || v <= 0) continue;
+        // hit.price 是基本单位价，要按当前单位换算
+        const hitRate = rateOf(p, hit.unit) || 1;
+        return +(v * rate).toFixed(4);
+      }
+      return null;
+    };
+    const priceOf2 = (p, unit, party = partyNow2()) => {
+      const s = srcOf(), l = s && s.items.find(x => x.productId === p.id), sp = specialPrice(C.party, party, p.id);
       const rate = rateOf(p, unit), own = C.priceKey === 'price' ? unitSalePrice(p, unit) : null;
       const lv = levelPrice(p, party, C.party);
-      return +(l ? l.price : sp != null ? sp * rate : lv != null ? lv * rate : own != null ? own : (p[C.priceKey] || 0) * rate).toFixed(4); };
+      // 优先级：关联原单 > 专属价 > 这个客户最近一单的价 > 等级价 > 商品档案价
+      const lpp = (s === null && sp == null) ? lastPartyPrice(p, unit, party) : null;
+      return +(l ? l.price : sp != null ? sp * rate : lpp != null ? lpp : lv != null ? lv * rate : own != null ? own : (p[C.priceKey] || 0) * rate).toFixed(4);
+    };
     let curParty2 = party0;
     const reprice2 = np => { draft.items.forEach(it => { const p = it.productId && byId(db.products, it.productId); if (p && it.price !== '' && Math.abs(+it.price - priceOf2(p, it.unit, curParty2)) < 1e-6) it.price = priceOf2(p, it.unit, np); }); curParty2 = np; };
     const pick2 = (i, v) => {
@@ -7440,9 +7961,9 @@ function orderModal(kind, id, srcId0) {
       m.innerHTML = `<div class="zhj-item-dlg">
         <div class="ttl">${esc(p.name || '')}</div>
         ${hasUnits ? `<div class="ir"><label>单位</label><select id="iiUnit">${unitsOf(p).map(x => `<option value="${esc(x.name)}" ${x.name === selU ? 'selected' : ''}>${esc(x.name)}${x.rate > 1 ? '（1' + esc(x.name) + '=' + x.rate + esc(p.unit) + '）' : '（基本单位）'}</option>`).join('')}</select><span class="u"></span></div>` : ''}
-        <div class="ir"><label>数量</label><input id="iiQty" type="number" inputmode="decimal" min="0" step="any" value="0"><span class="u" id="iiU">${esc(selU)}</span></div>
-        <div class="ir"><label>单价</label><input id="iiPrice" type="number" inputmode="decimal" min="0" step="0.01" value="0"><span class="u">元</span></div>
-        <div class="ir"><label>金额</label><input id="iiAmt" type="number" readonly value="0"><span class="u">元</span></div>
+        <div class="ir"><label>数量</label><input id="iiQty" type="text" inputmode="decimal" value="0"><span class="u" id="iiU">${esc(selU)}</span></div>
+        <div class="ir"><label>单价</label><input id="iiPrice" type="text" inputmode="decimal" value="0"><span class="u">元</span></div>
+        <div class="ir"><label>金额</label><input id="iiAmt" type="text" readonly value="0"><span class="u">元</span></div>
         <div class="ir"><label>备注</label><input id="iiNote" type="text" value="${esc(it.note || '')}"><span class="u"></span></div>
         <div class="ibs"><button data-x="cancel">取消</button><button class="ok" data-x="ok">保存</button><button data-x="del" style="flex:0 0 62px;color:#fa3757">删除</button></div>
       </div>`;
@@ -7453,7 +7974,7 @@ function orderModal(kind, id, srcId0) {
       const show = () => {
         const r = rateNow();
         qIn.value = r > 1 ? +((baseQty / r).toFixed(4)) : baseQty;
-        pIn.value = r > 1 ? +((basePrice * r).toFixed(4)) : +basePrice.toFixed(2);
+        pIn.value = r > 1 ? +((basePrice * r).toFixed(4)) : basePrice.toFixed(2);
         if (uLbl) uLbl.textContent = selU;
         calc();
       };
@@ -7464,6 +7985,8 @@ function orderModal(kind, id, srcId0) {
         selU = uSel.value;
         show();
       };
+      // 点「数量」「单价」「金额」这几行任意位置 → 输入框聚焦并全选（手机上直接改数字）
+      bindRowSelectAll(m, '#iiQty, #iiPrice, #iiAmt');
       qIn.oninput = calc; pIn.oninput = calc;
       aIn.oninput = () => {
         const base = (+qIn.value || 0) * (+pIn.value || 0);
@@ -7946,7 +8469,7 @@ function orderModal(kind, id, srcId0) {
   // zhjPickProduct 内部 closePicker() 会把 productPicker 的弹窗删掉，结果电脑上弹出手机版全屏选货页。
   if (IS_MOBILE) {
     bindTap(document.getElementById('oPick'), () => {
-      zhjPickProduct(pid => { addPicked(draft, blank, pick, [pid]); renderItems(); }, null, { title: '选择货品', kind });
+      zhjPickProduct(pid => { addPicked(draft, blank, pick, [pid]); renderItems(); }, null, { title: '选择货品', kind, partyId: (document.getElementById('oParty') || {}).value || '' });
     });
     bindTap(document.getElementById('oScanAdd'), () => {
       if (NATIVE && NATIVE.scan) {
@@ -7966,7 +8489,7 @@ function orderModal(kind, id, srcId0) {
   }
   // 兜底：把选货品挂到 window，供 data-act 委托调用
   window.__zhjOrderPick = () => {
-    zhjPickProduct(pid => { addPicked(draft, blank, pick, [pid]); renderItems(); }, null, { title: '选择货品', kind });
+    zhjPickProduct(pid => { addPicked(draft, blank, pick, [pid]); renderItems(); }, null, { title: '选择货品', kind, partyId: (document.getElementById('oParty') || {}).value || '' });
   };
   // 手机端：点客户行 → 整屏选择页
   const pText = $('#oPartyText');
@@ -8365,8 +8888,64 @@ function shipOps(s, inView) {
   if (s.status === '申诉中' && can('ship.bill')) b.push(tbtn('处理申诉', 'shipResolve', s.id, 'primary'));
   return b.join('');
 }
+/* ---------- 手机端物流运费页 ---------- */
+function shipMobile() {
+  document.documentElement.classList.add('zhj-set2-page', 'zhj-ship-page');
+  if (!ui.shipTab) ui.shipTab = 'list';
+  const S = db.shipments.filter(s => s.status !== '已作废');
+  const m = monthKey(today()), mS = S.filter(s => monthKey(s.date) === m);
+  const dis = S.filter(s => s.status === '申诉中');
+  const wait = S.filter(s => s.status === '待对账');
+  const q = String(ui.shipQ || '').trim().toLowerCase();
+  const fCar = ui.shipCar || '', fSt = ui.shipSt || '';
+  let list = S.slice().sort((a, b) => String(b.date || '').localeCompare(String(a.date || '')));
+  if (fCar) list = list.filter(x => x.carrierId === fCar);
+  if (fSt) list = list.filter(x => x.status === fSt);
+  if (q) list = list.filter(x => (x.trackNo + x.no + (x.srcNo || '') + (x.party || '') + (x.address || '')).toLowerCase().includes(q));
+  const badges = st => {
+    const C = { '待对账': '#f0a92e', '已对账': '#3d8fd6', '申诉中': '#ef5350', '已作废': '#9aa3ad' };
+    return `<span class="sh-badge" style="background:${C[st] || '#9aa3ad'}">${esc(st || '-')}</span>`;
+  };
+  const rowHtml = x => `<div class="sh-row" data-act="shipView" data-id="${esc(x.id)}">
+    <div class="hd"><b>${esc(x.trackNo || '(无单号)')}</b>${badges(x.status)}</div>
+    <div class="ln">${esc(carrierLabel(x.carrierId) || '-')} · ${esc(String(x.date || '').slice(0, 10))}</div>
+    ${x.party ? `<div class="ln">${esc(x.party)}${x.province ? ' · ' + esc(x.province) : ''}</div>` : ''}
+    <div class="ft"><span>${x.weight ? num(x.weight) + ' kg' : ''}</span><b>${money(shipFee(x))}</b></div>
+  </div>`;
+  $('#view').innerHTML = `<div class="zhj-page zhj-mg" style="background:#f2f4f8">
+    <div class="zhj-nav">
+      <span class="nv-l" data-act="go" data-id="more"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></span>
+      <span class="nv-t">物流运费</span>
+      <span class="nv-r">${can('ship.edit') ? `<span class="ico" data-act="shipNew">${ic('plus')}</span>` : ''}</span>
+    </div>
+    <div class="sh-hero">
+      <div class="r1"><b>${money(sum(mS, shipFee))}</b><em>本月运费</em></div>
+      <div class="r2">
+        <span><b>${mS.length}</b><em>本月运单</em></span>
+        <span><b>${wait.length}</b><em>待对账</em></span>
+        <span><b>${dis.length}</b><em>申诉中</em></span>
+      </div>
+    </div>
+    <div class="sh-filter">
+      <select data-shipfilter="car"><option value="">全部快递</option>${db.carriers.map(c => `<option value="${esc(c.id)}" ${c.id === fCar ? 'selected' : ''}>${esc(c.name)}</option>`).join('')}</select>
+      <select data-shipfilter="st"><option value="">全部状态</option>${Object.keys(SHIP_STATUS).map(k => `<option value="${esc(k)}" ${k === fSt ? 'selected' : ''}>${esc(k)}</option>`).join('')}</select>
+    </div>
+    <div class="sb"><div class="box">${ic('search')}<input id="shipQ" value="${esc(ui.shipQ || '')}" placeholder="单号 / 客户 / 地址"></div></div>
+    <div class="sh-list">${list.length ? list.slice(0, 150).map(rowHtml).join('') : '<div class="empty" style="padding:60px 0;text-align:center;color:#98a0aa">暂无运单</div>'}</div>
+    ${can('ship.bill') ? `<div class="foot" style="padding:12px"><button data-act="billImport">导入快递账单</button></div>` : ''}
+  </div>`;
+  const qi = document.getElementById('shipQ');
+  if (qi) qi.oninput = e => { ui.shipQ = e.target.value; render(); };
+  document.querySelectorAll('[data-shipfilter]').forEach(el => {
+    el.onchange = () => {
+      if (el.dataset.shipfilter === 'car') ui.shipCar = el.value; else ui.shipSt = el.value;
+      render();
+    };
+  });
+}
 function pageShipping() {
   if (!ui.shipTab) ui.shipTab = 'list';
+  if (IS_MOBILE) return shipMobile();
   const m = monthKey(today()), S = db.shipments.filter(s => s.status !== '已作废'), mS = S.filter(s => monthKey(s.date) === m), dis = S.filter(s => s.status === '申诉中');
   const head = `<button class="btn" data-act="shipCalc">${ic('coin')}运费试算</button>` + (can('ship.edit') ? `<button class="btn primary" data-act="shipNew">${ic('plus')}登记运单</button>` : '')
     + (can('ship.bill') ? `<button class="btn primary" data-act="billImport">${ic('upload')}导入快递账单</button>` : '');
@@ -9159,6 +9738,44 @@ function partyPaymentApplyView(id) {
 // 通用：整屏选择浮层（撑满屏幕，蓝色标题栏 + 搜索 + 列表）
 // 通用「明细编辑」弹窗（照智慧记）：标题=商品名，数量(单位)/单价(元)/金额(元,联动)/备注，底部 取消｜保存
 // hideUnit=true 时不显示单位后缀（无单位商品）
+// 给「数量 / 单价 / 金额」这类行的输入框绑「点行任意处 → 聚焦并清空待覆盖」。
+// 安卓 WebView 的坑一：click 阶段调 select()，系统随后按手指抬起位置把光标放回去，看起来没反应。
+// 安卓 WebView 的坑二（更麻烦）：只要真的建立了选区，系统就会弹出「剪切/复制/全选」浮动工具条，
+//   盖在弹窗上很难看，而且这是系统行为，preventDefault() 拦不住。
+// 所以这里不用真选区：聚焦后把光标放到末尾，并标记「首次按键整段替换」，
+// 用户直接打数字就整段顶掉旧值，效果和全选一致，但不触发系统工具条。
+function bindRowSelectAll(root, sel) {
+  const arm = inp => {
+    if (!inp) return;
+    try { inp.focus(); } catch (e) { }
+    inp.dataset.replace = '1';             // 下一次输入整段替换
+    const L = String(inp.value).length;
+    setTimeout(() => { try { inp.setSelectionRange(L, L); } catch (e) { } }, 0);
+  };
+  root.querySelectorAll('.ir').forEach(row => {
+    const inp = row.querySelector(sel);
+    if (!inp) return;
+    row.style.cursor = 'text';
+    inp.addEventListener('focus', () => { inp.dataset.replace = '1'; });
+    inp.addEventListener('blur', () => { delete inp.dataset.replace; });
+    inp.addEventListener('beforeinput', ev => {
+      if (inp.dataset.replace !== '1') return;
+      delete inp.dataset.replace;
+      const t = ev.inputType || '';
+      // 只对「插入文本/删除内容」做整段替换；方向键、粘贴也照此处理
+      if (!/^insert|^delete/.test(t)) return;
+      if (t === 'deleteContentBackward') {
+        // 退格：直接清空整段（相当于全选后按退格）
+        ev.preventDefault();
+        inp.value = '';
+        inp.dispatchEvent(new Event('input', { bubbles: true }));
+        return;
+      }
+      inp.value = '';
+    });
+    row.addEventListener('click', ev => { if (ev.target !== inp) ev.preventDefault(); arm(inp); });
+  });
+}
 function zhjItemDialog({ name, unit, units, qty, price, lineDiscount, note, onSave, onDelete }) {
   document.querySelectorAll('.zhj-item-mask').forEach(n => n.remove());
   const base = (units && units.length) ? units : null;
@@ -9171,9 +9788,9 @@ function zhjItemDialog({ name, unit, units, qty, price, lineDiscount, note, onSa
   m.innerHTML = `<div class="zhj-item-dlg">
     <div class="ttl">${esc(name || '')}</div>
     ${base ? `<div class="ir"><label>单位</label><select id="iiUnit">${base.map(u => `<option value="${esc(u.name)}" ${u.name === selU ? 'selected' : ''}>${esc(u.name)}${u.rate > 1 ? '（1' + esc(u.name) + '=' + u.rate + '）' : '（基本单位）'}</option>`).join('')}</select><span class="u"></span></div>` : ''}
-    <div class="ir"><label>数量</label><input id="iiQty" type="number" inputmode="decimal" min="0" step="any" value="${+qty || 0}"><span class="u" id="iiU">${selU && selU !== '个' ? esc(selU) : ''}</span></div>
-    <div class="ir"><label>单价</label><input id="iiPrice" type="number" inputmode="decimal" min="0" step="0.01" value="${(+price || 0).toFixed(2)}"><span class="u">元</span></div>
-    <div class="ir"><label>金额</label><input id="iiAmt" type="number" inputmode="decimal" min="0" step="0.01" value="${((+qty || 0) * (+price || 0) - disc).toFixed(2)}"><span class="u">元</span></div>
+    <div class="ir"><label>数量</label><input id="iiQty" type="text" inputmode="decimal" value="${+qty || 0}"><span class="u" id="iiU">${selU && selU !== '个' ? esc(selU) : ''}</span></div>
+    <div class="ir"><label>单价</label><input id="iiPrice" type="text" inputmode="decimal" value="${(+price || 0).toFixed(2)}"><span class="u">元</span></div>
+    <div class="ir"><label>金额</label><input id="iiAmt" type="text" inputmode="decimal" value="${((+qty || 0) * (+price || 0) - disc).toFixed(2)}"><span class="u">元</span></div>
     <div class="ir"><label>备注</label><input id="iiNote" type="text" value="${esc(note || '')}"><span class="u"></span></div>
     <div class="ibs">${onDelete ? '<button data-x="del" style="flex:0 0 70px;color:#fa3757">删除</button>' : ''}<button data-x="cancel">取消</button><button class="ok" data-x="ok">保存</button></div>
   </div>`;
@@ -9183,7 +9800,7 @@ function zhjItemDialog({ name, unit, units, qty, price, lineDiscount, note, onSa
   const show = () => {
     const r = rateNow();
     qIn.value = r > 1 ? +((baseQty / r).toFixed(4)) : baseQty;
-    pIn.value = r > 1 ? +((basePrice * r).toFixed(4)) : +basePrice.toFixed(2);
+    pIn.value = r > 1 ? +((basePrice * r).toFixed(4)) : basePrice.toFixed(2);
     if (uLbl) uLbl.textContent = (selU && selU !== '个') ? selU : '';
     calc();
   };
@@ -9196,6 +9813,8 @@ function zhjItemDialog({ name, unit, units, qty, price, lineDiscount, note, onSa
   };
   qIn.oninput = calc; pIn.oninput = calc;
   aIn.oninput = () => { disc = +((+qIn.value || 0) * (+pIn.value || 0) - (+aIn.value || 0)).toFixed(2); };
+  // 点整行任意处 → 聚焦该行输入框并全选，省得用户手动清空旧值
+  bindRowSelectAll(m, 'input');
   m.onclick = e => {
     const b = e.target.closest('[data-x]');
     if (!b && e.target !== m) return;
@@ -9448,16 +10067,67 @@ function zhjPickParty(type, onPick, onAdd) {
      分类 = settings.categories（支持 父/子，写在 category 里用 "/" 分隔）
      单位 = settings.units
    商品数统计：分类用 catMatch（含子分类），单位直接比 unit                        */
+// 手机端仓库管理：复用「分类与单位」那套行样式（左滑改/删，••• 面板）
+function zhjWhEdit(id) {
+  const w = id ? whs().find(x => x.id === id) : null;
+  const m = document.createElement('div');
+  m.className = 'zhj-ss-datemask';
+  m.innerHTML = `<div class="sheet"><div class="grp"></div>
+    <div class="hd"><span>${w ? '修改仓库' : '新增仓库'}</span><i data-x="c">&#215;</i></div>
+    <div class="dates" style="padding:0 14px 10px;flex-direction:column;gap:10px">
+      <input id="whName" value="${esc(w ? w.name : '')}" placeholder="仓库名称，例如：二号仓" maxlength="30" style="width:100%">
+      <input id="whCode" value="${esc(w ? (w.code || '') : '')}" placeholder="编码（选填），例如：W02" maxlength="20" style="width:100%">
+      <input id="whRemark" value="${esc(w ? (w.remark || '') : '')}" placeholder="备注（选填）" maxlength="60" style="width:100%">
+    </div>
+    <div class="ft"><button class="btn" data-x="c">取消</button><button class="btn primary" data-x="ok">保存</button></div>
+  </div>`;
+  document.body.appendChild(m);
+  const nm = m.querySelector('#whName');
+  setTimeout(() => { try { nm.focus(); } catch (e) { } }, 120);
+  const save = async () => {
+    const name = (nm.value || '').trim();
+    if (!name) return toast('请填写仓库名称', 'info');
+    const body = { name, code: (m.querySelector('#whCode').value || '').trim(), remark: (m.querySelector('#whRemark').value || '').trim() };
+    try {
+      if (w) await api('PUT', '/api/warehouses/' + w.id, body);
+      else await api('POST', '/api/warehouses', body);
+      await reload(); m.remove(); toast(w ? '已修改' : '已新增', 'success'); zhjWhPage();
+    } catch (e) { toast(e.message, 'error'); }
+  };
+  m.querySelectorAll('[data-x=c]').forEach(b => b.onclick = () => m.remove());
+  m.querySelector('[data-x=ok]').onclick = save;
+  nm.onkeydown = e => { if (e.key === 'Enter') save(); };
+  m.onclick = e => { if (e.target === m) m.remove(); };
+}
+function zhjWhDel(id) {
+  const w = whs().find(x => x.id === id); if (!w) return;
+  if (id === META.defaultWh) return toast('默认仓库不能删除，请先把别的仓库设为默认', 'info');
+  if (whs().length <= 1) return toast('至少要保留一个仓库', 'info');
+  const n = db.products.filter(p => whQty(p, id)).length;
+  if (n > 0) return toast(`还有 ${n} 个商品在这个仓库有库存，先把货调走再删`, 'info');
+  confirmBox(`确定删除仓库「${esc(w.name)}」？`, async () => {
+    try { await api('DELETE', '/api/warehouses/' + id); await reload(); toast('已删除', 'success'); zhjWhPage(); }
+    catch (e) { toast(e.message, 'error'); }
+  });
+}
 function zhjMgPage(kind) {
   if (!ui.mg) ui.mg = { tab: 'cat', q: '', open: {} };
   if (!ui.mg.open) ui.mg.open = {};   // 别处可能把 ui.mg 换成空对象
   const M = ui.mg;
-  if (kind) M.tab = kind === 'unit' ? 'unit' : 'cat';
+  if (kind) M.tab = ['unit', 'dept', 'wh'].includes(kind) ? kind : 'cat';
   const isCat = M.tab === 'cat';
+  const isDept = M.tab === 'dept';
+  const isWh = M.tab === 'wh';
   const q = String(M.q || '').trim().toLowerCase();
   const allCats = [...new Set([...catBase(), ...db.products.map(p => p.category).filter(Boolean)])];
   const allUnits = units();
-  const list = (isCat ? allCats : allUnits).filter(v => !q || v.toLowerCase().includes(q));
+  const allDepts = depts();
+  // 仓库按名字筛，其它按字符串筛
+  const allWhs = whs();
+  const base = isCat ? allCats : isDept ? allDepts : isWh ? allWhs : allUnits;
+  const list = isWh
+    ? base.filter(w => !q || String(w.name || '').toLowerCase().includes(q))
+    : base.filter(v => !q || v.toLowerCase().includes(q));
 
   // 分类：一级 + 其下的二级
   const topOf = v => String(v).split('/')[0];
@@ -9489,6 +10159,28 @@ function zhjMgPage(kind) {
       if (M.open[v] !== false) kids(v).forEach(c => { body += rowHtml(c, true); });
     });
     if (!q) body += `<div class="zhj-mg-row" data-mg=""><div class="bd"><span class="tg" style="visibility:hidden">▴</span><span class="nm">未分类（系统默认）</span><span class="cnt">${noneCnt} 个商品</span></div><span class="mo" style="visibility:hidden">•••</span></div>`;
+  } else if (isWh) {
+    const qtyOf = w => sum(db.products, p => whQty(p, w.id));
+    const cntOf = w => db.products.filter(p => whQty(p, w.id)).length;
+    const defId = META.defaultWh;
+    body = list.map(w => `<div class="zhj-mg-row" data-mg="${esc(w.id)}">
+      <div class="bd">
+        <span class="tg" style="visibility:hidden">▴</span>
+        <span class="nm">${esc(w.name)}${w.id === defId ? '<i style="font-style:normal;font-size:11px;color:var(--zhj);border:1px solid var(--zhj);border-radius:3px;padding:0 4px;margin-left:6px">默认</i>' : ''}</span>
+        <span class="cnt">${cntOf(w)} 个商品 · ${num(qtyOf(w))}</span>
+      </div>
+      <span class="mo" data-mgmore="${esc(w.id)}">•••</span>
+      <div class="sw"><button class="ed" data-mgedit="${esc(w.id)}">${ic('settings')}</button><button class="dl" data-mgdel="${esc(w.id)}">${ic('trash')}</button></div>
+    </div>`).join('');
+  } else if (isDept) {
+    const cntOf = d => db.employees.filter(e => e.dept === d).length;
+    body = list.map(d => `<div class="zhj-mg-row" data-mg="${esc(d)}">
+      <div class="bd"><span class="tg" style="visibility:hidden">▴</span><span class="nm">${esc(d)}</span><span class="cnt">${cntOf(d)} 名员工</span></div>
+      <span class="mo" data-mgmore="${esc(d)}">•••</span>
+      <div class="sw"><button class="ed" data-mgedit="${esc(d)}">${ic('settings')}</button><button class="dl" data-mgdel="${esc(d)}">${ic('trash')}</button></div>
+    </div>`).join('');
+    const noneCnt2 = db.employees.filter(e => !e.dept).length;
+    if (!q) body += `<div class="zhj-mg-row" data-mg=""><div class="bd"><span class="tg" style="visibility:hidden">▴</span><span class="nm">未分配部门（系统默认）</span><span class="cnt">${noneCnt2} 名员工</span></div><span class="mo" style="visibility:hidden">•••</span></div>`;
   } else {
     const cntOf = u => db.products.filter(p => p.unit === u).length;
     body = list.map(u => `<div class="zhj-mg-row" data-mg="${esc(u)}">
@@ -9501,17 +10193,19 @@ function zhjMgPage(kind) {
   $('#view').innerHTML = `<div class="zhj-page zhj-mg">
     <div class="zhj-nav">
       <span class="nv-l" data-act="zhjMgBack"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></span>
-      <span class="nv-t">${isCat ? '商品分类' : '单位管理'}</span>
+      <span class="nv-t">${isCat ? '商品分类' : isDept ? '部门管理' : isWh ? '仓库管理' : '单位管理'}</span>
       <span class="nv-r"><span class="ico" data-act="zhjMgAdd">${ic('plus')}</span></span>
     </div>
-    <div class="tabs">
-      <b class="${isCat ? 'on' : ''}" data-act="zhjMgTab" data-id="cat">商品分类</b>
-      <b class="${isCat ? '' : 'on'}" data-act="zhjMgTab" data-id="unit">单位</b>
+    <div class="tabs tabs4">
+      <b class="${isCat ? 'on' : ''}" data-act="zhjMgTab" data-id="cat">分类</b>
+      <b class="${M.tab === 'unit' ? 'on' : ''}" data-act="zhjMgTab" data-id="unit">单位</b>
+      <b class="${isWh ? 'on' : ''}" data-act="zhjMgTab" data-id="wh">仓库</b>
+      ${(db.settings.modules || []).includes('hr') ? `<b class="${isDept ? 'on' : ''}" data-act="zhjMgTab" data-id="dept">部门</b>` : ''}
     </div>
-    <div class="tip">操作提示：左滑可修改或删除</div>
-    <div class="sb"><div class="box">${ic('search')}<input id="mgQ" value="${esc(M.q || '')}" placeholder="请输入${isCat ? '分类' : '单位'}"></div></div>
-    <div class="list">${body || `<div class="empty" style="padding:60px 0;text-align:center;color:#98a0aa">还没有${isCat ? '分类' : '单位'}</div>`}</div>
-    <div class="foot"><button data-act="zhjMgAddCat">+ 新增一级${isCat ? '分类' : '单位'}</button></div>
+    <div class="tip">${isWh ? '多仓库可调拨、按仓库看库存；左滑可修改或删除' : '操作提示：左滑可修改或删除'}</div>
+    <div class="sb"><div class="box">${ic('search')}<input id="mgQ" value="${esc(M.q || '')}" placeholder="请输入${isCat ? '分类' : isDept ? '部门' : isWh ? '仓库' : '单位'}"></div></div>
+    <div class="list">${body || `<div class="empty" style="padding:60px 0;text-align:center;color:#98a0aa">还没有${isCat ? '分类' : isDept ? '部门' : isWh ? '仓库' : '单位'}</div>`}</div>
+    <div class="foot"><button data-act="zhjMgAddCat">+ 新增${isCat ? '一级分类' : isDept ? '部门' : isWh ? '仓库' : '单位'}</button></div>
   </div>`;
 
   const qi = document.getElementById('mgQ');
@@ -9586,9 +10280,10 @@ function bindMgSwipe() {
   });
 }
 function zhjMgAdd(asChild, parentName) {
-  const isCat = (ui.mg && ui.mg.tab) !== 'unit';
-  const title = isCat ? (asChild ? '新增子分类' : '新增一级分类') : '新增单位';
-  const ph = isCat ? (asChild ? '子分类名称，例如：80公分白布' : '分类名称，例如：白布') : '单位名称，例如：米';
+  const tab = (ui.mg && ui.mg.tab) || 'cat';
+  const isCat = tab === 'cat', isDept = tab === 'dept', isWh = tab === 'wh';
+  const title = isCat ? (asChild ? '新增子分类' : '新增一级分类') : isDept ? '新增部门' : isWh ? '新增仓库' : '新增单位';
+  const ph = isCat ? (asChild ? '子分类名称，例如：80公分白布' : '分类名称，例如：白布') : isDept ? '部门名称，例如：生产部' : isWh ? '仓库名称，例如：二号仓' : '单位名称，例如：米';
   const m = document.createElement('div');
   m.className = 'zhj-ss-datemask';
   m.innerHTML = `<div class="sheet"><div class="grp"></div>
@@ -9602,16 +10297,22 @@ function zhjMgAdd(asChild, parentName) {
   const save = async () => {
     const name = (inp.value || '').trim();
     if (!name) return toast('请填写名称', 'info');
+    if (isWh) {
+      m.remove();
+      try { await api('POST', '/api/warehouses', { name, code: '', remark: '' }); await reload(); toast('已新增仓库', 'success'); render(); }
+      catch (err) { toast(err.message, 'error'); }
+      return;
+    }
     const full = asChild && parentName ? (parentName + '/' + name) : name;
-    const key = isCat ? 'categories' : 'units';
-    const cur = [...(isCat ? catBase() : (Array.isArray(db.settings.units) ? db.settings.units : UNITS))];
+    const key = isCat ? 'categories' : isDept ? 'departments' : 'units';
+    const cur = [...(isCat ? catBase() : isDept ? depts() : (Array.isArray(db.settings.units) ? db.settings.units : UNITS))];
     if (cur.includes(full)) return toast('已经有这个名字了', 'info');
     cur.push(full);
     try {
       await api('PUT', '/api/' + key, { list: cur });
       await reload();
       m.remove();
-      toast('已新增' + (isCat ? '分类' : '单位'), 'success');
+      toast('已新增' + (isCat ? '分类' : isDept ? '部门' : '单位'), 'success');
       render();
     } catch (e) { toast(e.message, 'error'); }
   };
@@ -9622,15 +10323,19 @@ function zhjMgAdd(asChild, parentName) {
 }
 function zhjMgMore(name) {
   if (!name) return;
-  const isCat = (ui.mg && ui.mg.tab) !== 'unit';
+  const tab = (ui.mg && ui.mg.tab) || 'cat';
+  const isCat = tab === 'cat', isWh = tab === 'wh';
   const isChild = isCat && String(name).includes('/');
+  const w = isWh ? whs().find(x => x.id === name) : null;
+  const isDefWh = isWh && name === META.defaultWh;
   const hasChildren = isCat && db.products.some(p => false) || (isCat && [...new Set([...catBase(), ...db.products.map(p => p.category).filter(Boolean)])].some(v => v !== name && catMatch(v, name)));
   const m = document.createElement('div');
   m.className = 'zhj-mgmask';
   m.innerHTML = `<div class="zhj-mgsheet">
     ${isCat ? `<div class="it add" data-x="child">+ 新增子分类</div>` : ''}
-    <div class="it" data-x="edit">修改</div>
-    <div class="it del" data-x="del">删除</div>
+    ${isWh && !isDefWh ? `<div class="it add" data-x="def">设为默认仓库</div>` : ''}
+    <div class="it" data-x="edit">${isWh ? '修改仓库信息' : '修改'}</div>
+    ${isDefWh ? '' : `<div class="it del" data-x="del">删除</div>`}
     <div class="it cancel" data-x="cancel">取消</div>
   </div>`;
   document.body.appendChild(m);
@@ -9643,14 +10348,23 @@ function zhjMgMore(name) {
     if (k === 'child') return zhjMgAdd(true, name);
     if (k === 'edit') return zhjMgRename(name);
     if (k === 'del') return zhjMgDel(name);
+    if (k === 'def') {
+      try { await api('PUT', '/api/settings', { defaultWh: name }); await reload(); toast('已设为默认仓库', 'success'); render(); }
+      catch (err) { toast(err.message, 'error'); }
+    }
   };
 }
 function zhjMgRename(name) {
-  const isCat = (ui.mg && ui.mg.tab) !== 'unit';
+  const tab = (ui.mg && ui.mg.tab) || 'cat';
+  const isCat = tab === 'cat', isDept = tab === 'dept', isWh = tab === 'wh';
+  if (isWh) {   // 仓库要改名称 + 编码 + 备注，用专门的弹层
+    const w = whs().find(x => x.id === name);
+    if (w) return zhjWhEdit(w.id);
+  }
   const m = document.createElement('div');
   m.className = 'zhj-ss-datemask';
   m.innerHTML = `<div class="sheet"><div class="grp"></div>
-    <div class="hd"><span>修改${isCat ? '分类' : '单位'}</span><i data-x="c">&#215;</i></div>
+    <div class="hd"><span>修改${isCat ? '分类' : isDept ? '部门' : '单位'}</span><i data-x="c">&#215;</i></div>
     <div class="dates" style="padding:0 14px 10px"><input id="mgRe" value="${esc(name)}" maxlength="40" style="flex:1"></div>
     <div class="ft"><button class="btn" data-x="c">取消</button><button class="btn btn primary" data-x="ok">保存</button></div>
   </div>`;
@@ -9673,6 +10387,12 @@ function zhjMgRename(name) {
           const nc = p.category === name ? nn : nn + String(p.category).slice(name.length);
           try { await api('PUT', '/api/products/' + p.id, { ...p, category: nc }); } catch (e) { }
         }
+      } else if (isDept) {
+        // 部门：改部门列表 + 该部门下的员工一起改
+        const list = depts().map(v => v === name ? nn : v);
+        await api('PUT', '/api/departments', { list });
+        const hit = db.employees.filter(e => e.dept === name);
+        for (const e of hit) { try { await api('PUT', '/api/employees/' + e.id, { ...e, dept: nn }); } catch (err) { } }
       } else {
         const cur = [...new Set([...(Array.isArray(db.settings.units) ? db.settings.units : UNITS)])].map(v => v === name ? nn : v);
         await api('PUT', '/api/units', { list: cur });
@@ -9689,17 +10409,24 @@ function zhjMgRename(name) {
   m.onclick = e => { if (e.target === m) m.remove(); };
 }
 function zhjMgDel(name) {
-  const isCat = (ui.mg && ui.mg.tab) !== 'unit';
+  const tab = (ui.mg && ui.mg.tab) || 'cat';
+  const isCat = tab === 'cat', isDept = tab === 'dept', isWh = tab === 'wh';
+  if (isWh) return zhjWhDel(name);   // 仓库有自己的一套删除保护
   const n = isCat
     ? db.products.filter(p => catMatch(p.category, name)).length
+    : isDept ? db.employees.filter(e => e.dept === name).length
     : db.products.filter(p => p.unit === name).length;
-  if (n > 0) return toast(`还有 ${n} 个商品在用「${name}」，先改成别的${isCat ? '分类' : '单位'}再删`, 'info');
-  confirmBox(`确定删除${isCat ? '分类' : '单位'}「${name}」？`, async () => {
+  const whatUnit = isDept ? '名员工' : '个商品';
+  if (n > 0) return toast(`还有 ${n} ${whatUnit}在用「${name}」，先改成别的${isCat ? '分类' : isDept ? '部门' : '单位'}再删`, 'info');
+  confirmBox(`确定删除${isCat ? '分类' : isDept ? '部门' : '单位'}「${name}」？`, async () => {
     try {
       if (isCat) {
         const next = [...new Set([...catBase(), ...db.products.map(p => p.category).filter(Boolean)])]
           .filter(v => v !== name && !v.startsWith(name + '/'));
         await api('PUT', '/api/categories', { list: next });
+      } else if (isDept) {
+        const next = depts().filter(v => v !== name);
+        await api('PUT', '/api/departments', { list: next });
       } else {
         const next = [...new Set([...(Array.isArray(db.settings.units) ? db.settings.units : UNITS)])].filter(v => v !== name);
         await api('PUT', '/api/units', { list: next });
@@ -9718,9 +10445,30 @@ function zhjPickProduct(onPick, onAdd, opts = {}) {
   const cart = (opts.cart0 || []).map(x => ({ ...x }));
   // 进货价：商品档案里填了就按它显示，没填就退回成本价（不去猜最近一张进货单的价格）
   const buyOf = p => (+p.buyPrice > 0 ? +p.buyPrice : (+p.cost || 0));
-  // 销售：按客户价格等级取价（批发价 / 大客户价优先，没有就零售价）；采购：先进货价、再成本价
+  // 销售：这个客户最近一单这个商品的价 → 客户价格等级 → 零售价；采购：先进货价、再成本价
+  const lastPriceFor = p => {
+    if (isBuy || !opts.partyId) return null;
+    const plist = db.sales || [];
+    const sorted = plist.slice().sort((a, b) => String(b.date || '').localeCompare(String(a.date || ''))
+      || String(b.createdAt || '').localeCompare(String(a.createdAt || '')));
+    for (const o of sorted) {
+      if (o.status === '已作废') continue;
+      if (o.customerId !== opts.partyId) continue;
+      const hit = (o.items || []).find(x => x.productId === p.id);
+      if (!hit) continue;
+      const v = +hit.price;
+      if (!Number.isFinite(v) || v <= 0) continue;
+      return v;
+    }
+    return null;
+  };
   const priceFor = p => {
     if (isBuy) return buyOf(p);
+    // 必须和 priceOf2 / renderRow 完全一致的优先级，否则「列表显示一个价、加进购物车另一个价」
+    const sp = specialPrice('customers', opts.partyId, p.id);
+    if (sp != null) return +sp;
+    const ll = lastPriceFor(p);
+    if (ll != null) return ll;
     const lv = levelPrice(p, opts.partyId, 'customers');
     if (lv != null) return lv;
     return pr ? (p.price || 0) : (p.cost || 0);
@@ -9906,14 +10654,17 @@ function zhjPickProduct(onPick, onAdd, opts = {}) {
       const lv = partyLevel(opts.partyId, 'customers');
       const lvPrice = levelPrice(p, opts.partyId, 'customers');
       const spPrice = specialPrice('customers', opts.partyId, p.id);
-      // 采购看进价；销售才看客户价格等级 / 专属价 / 零售价
+      const lpPrice = lastPriceFor(p);
+      // 只显示一个「实际成交会用到的价」，不再并列档案零售价（列表会花）
       const priceLine = isBuy
         ? `进货价：${ymoney(buyOf(p))}`
         : spPrice != null
-        ? `专属价：${ymoney(+spPrice)}<span style="color:#c2c8d0;margin-left:10px">${ymoney(p.price || 0)}</span>`
-        : lvPrice != null
-          ? `${esc(lv)}：${ymoney(lvPrice)}<span style="color:#c2c8d0;margin-left:10px">${ymoney(p.price || 0)}</span>`
-          : `零售价：${ymoney(p.price || 0)}`;
+        ? `专属价：${ymoney(+spPrice)}`
+        : lpPrice != null
+          ? `上次价：${ymoney(lpPrice)}`
+          : lvPrice != null
+            ? `${esc(lv)}：${ymoney(lvPrice)}`
+            : `零售价：${ymoney(p.price || 0)}`;
       return `<div class="zhj-party" style="align-items:flex-start;padding:14px 22px 14px 16px;border-bottom:1px solid #f0f2f5;display:flex;gap:12px;background:#fff">
         <div style="width:64px;height:64px;border-radius:8px;background:#f5f7fa;border:1px solid #e8ecf1;display:flex;align-items:center;justify-content:center;flex:none">${ic('box')}</div>
         <div style="flex:1;min-width:0" data-editp="${p.id}">
@@ -10012,6 +10763,7 @@ function zhjPartyView(type, id) {
     <div class="zhj-group">
       ${link(isC ? '销售单' : '进货单', 'zhjPartyOrders')}
       ${link('对账单', 'zhjPartyStmt')}
+      ${can(kind) ? `<div class="zhj-row tap" data-act="zhjPartyPrices" data-id="${type}|${r.id}"><label>专属价</label><span class="v" style="flex:1;text-align:right;color:#9aa3ad">${(() => { const n = Object.keys(r.prices || {}).length; return n ? n + ' 个商品' : '未设置'; })()}</span><i class="zarrow"></i></div>` : ''}
     </div>
     <div class="zhj-group">
       <div class="zhj-row" style="align-items:flex-start;padding-top:14px;padding-bottom:14px"><label>备注</label><span class="v" style="text-align:left;color:#333">${esc(r.remark || '')}</span></div>
@@ -10022,6 +10774,179 @@ function zhjPartyView(type, id) {
     <a href="tel:${tel}"><svg viewBox="0 0 24 24"><path d="M22 16.9v3a2 2 0 01-2.2 2 19.8 19.8 0 01-8.6-3.1 19.5 19.5 0 01-6-6A19.8 19.8 0 012 4.2 2 2 0 014 2h3a2 2 0 012 1.7c.1.9.4 1.8.7 2.6a2 2 0 01-.5 2.1L8.1 9.6a16 16 0 006 6l1.2-1.1a2 2 0 012.1-.5c.8.3 1.7.6 2.6.7a2 2 0 011.7 2z"/></svg>打电话</a>
   </div>` : ''}`, 'lg');
   document.documentElement.classList.add('modal-fullscreen', 'zhj-form-page');
+}
+/* 手机端：客户/供应商专属价（整屏页，列表 + 点行改价 + 底部添加） */
+function zhjPartyPrices(type, id) {
+  const isC = type === 'customers', r = byId(db[type], id);
+  if (!r) return;
+  const rows = Object.entries(r.prices || {}).map(([pid, v]) => ({ pid, v: +v })).filter(x => byId(db.products, x.pid));
+  const wrap = document.createElement('div');
+  wrap.className = 'zhj-pick-mask';
+  const kw = { q: '' };
+  let dirty = false;              // 有没有未保存的改动（增 / 删 / 改价都会置位）
+  const money2 = v => (Math.round(+v * 100) / 100).toFixed(2);
+  // 这个客户「不打专属价时」会用的价 —— 就是客户详情里「价格等级」对应的价（批发价 / 大客户价 / 零售价）
+  // 采购侧按档案进价
+  const basePrice = p => {
+    if (!isC) return +(p.cost || 0);
+    const lv = levelPrice(p, id, 'customers');
+    return lv != null ? +lv : +(p.price || 0);
+  };
+  // 标签跟客户详情里的「价格等级」叫法一致；这个商品没单独定等级价时说明按零售价算
+  const baseLabel = () => {
+    if (!isC) return '进价';
+    const lv = r.level || '零售价';
+    return lv;
+  };
+  const draw = () => {
+    const q = kw.q.trim().toLowerCase();
+    const list = q ? rows.filter(x => { const p = byId(db.products, x.pid) || {}; return ((p.name || '') + (p.sku || '') + (p.barcode || '') + (p.spec || '')).toLowerCase().includes(q); }) : rows;
+    wrap.innerHTML = `<div class="zhj-pick">
+      <div class="m-head zhj-ob-head">
+        <span class="nv-l" id="sppBack"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></span>
+        <span class="nv-t">专属价</span>
+        <span class="nv-r"><span class="ico" id="sppAdd">${ic('plus')}</span></span>
+      </div>
+      <div class="zhj-catbar">
+        <div class="sbox">${ic('search')}<input class="pk-kw" id="sppKw" placeholder="商品编码 / 名称 / 规格" value="${esc(kw.q)}"></div>
+      </div>
+      <div class="zhj-pick-body" style="padding-bottom:70px">
+        <div class="zhj-row" style="padding:12px 14px;border-bottom:1px solid #f0f2f5"><label style="color:#98a0aa;font-size:13px">${esc(r.name)} · 价格等级 ${esc(isC ? (r.level || '零售价') : (r.category || '-'))}</label></div>
+        ${list.length ? list.map(x => { const p = byId(db.products, x.pid) || {};
+          return `<div class="zhj-row tap" data-sp="${x.pid}" style="padding:14px;border-bottom:1px solid #f0f2f5;align-items:center">
+            <div style="flex:1;min-width:0">
+              <div style="font-size:16px;color:#333;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(p.name || '')}</div>
+              <div style="font-size:13px;color:#9aa3ad;margin-top:3px">${esc(p.sku || '')}${p.spec ? ' · ' + esc(p.spec) : ''}　${baseLabel(p)} ${money2(basePrice(p))}</div>
+            </div>
+            <div style="flex:none;text-align:right;margin-left:10px">
+              <div style="font-size:16px;color:#31bfcf;font-weight:500">${money2(x.v)}</div>
+              <div style="font-size:12px;color:#c2c8d0">/ ${esc(p.unit || '')}</div>
+            </div>
+            <button class="icon-btn sm" data-rm="${x.pid}" style="flex:none;margin-left:6px">${ic('trash')}</button>
+          </div>`; }).join('')
+          : `<div style="padding:50px 0;text-align:center;color:#98a0aa">${q ? '没有匹配的商品' : '还没有专属价'}<div style="font-size:13px;margin-top:8px">点右上角 ＋ 添加，开单时按专属价填</div></div>`}
+      </div>
+      <div class="zhj-ob-foot" style="position:absolute;left:0;right:0;bottom:0;background:#fff;border-top:1px solid #eceff3;padding:8px 12px;display:flex;gap:10px">
+        <button class="btn" id="sppImp" style="flex:0 0 96px">${ic('upload')}导入</button>
+        <button class="btn primary" id="sppSave" style="flex:1">${ic('check')}保存</button>
+      </div>
+    </div>`;
+    wrap.querySelector('#sppBack').onclick = () => {
+      if (!dirty) { wrap.remove(); return; }
+      const c = document.createElement('div');
+      c.className = 'spp-confirm';
+      c.style.cssText = 'position:absolute;left:0;right:0;bottom:0;background:#fff;border-top:1px solid #eceff3;padding:14px 16px;z-index:9;box-shadow:0 -4px 16px rgba(0,0,0,.08)';
+      c.innerHTML = `<div style="font-size:15px;color:#333;margin-bottom:14px">改动还没保存，确定放弃？</div>
+        <div style="display:flex;gap:10px"><button class="btn" data-cf="no" style="flex:1">继续编辑</button><button class="btn danger" data-cf="yes" style="flex:1">放弃</button></div>`;
+      wrap.appendChild(c);
+      c.querySelector('[data-cf="no"]').onclick = () => c.remove();
+      c.querySelector('[data-cf="yes"]').onclick = () => wrap.remove();
+    };
+    wrap.querySelector('#sppKw').oninput = e => { kw.q = e.target.value; const v = e.target.value; draw(); const el = wrap.querySelector('#sppKw'); if (el) { el.focus(); el.setSelectionRange(v.length, v.length); } };
+    wrap.querySelector('#sppAdd').onclick = () => addOne();
+    wrap.querySelector('#sppImp').onclick = () => { wrap.remove(); priceImport(type); };
+    wrap.querySelectorAll('[data-rm]').forEach(b => b.onclick = ev => {
+      ev.stopPropagation();
+      const pid = b.dataset.rm;
+      const i = rows.findIndex(x => x.pid === pid);
+      if (i < 0) return;
+      // 直接移除，不弹确认 —— 反正要按「保存」才落库，误删了点返回放弃就行
+      rows.splice(i, 1);
+      dirty = true;
+      draw();
+    });
+    wrap.querySelectorAll('[data-sp]').forEach(el => el.onclick = () => editOne(el.dataset.sp));
+    wrap.querySelector('#sppSave').onclick = () => save(() => { wrap.remove(); });
+  };
+  // 直接落库。注意不能用 mutate()：它会 closeModal() + render()，
+  // 而 render() 会把本页 .zhj-pick-mask 一起重绘掉，用户就「点保存没反应」。
+  const save = async cb => {
+    try {
+      const payload = Object.fromEntries(rows.map(x => [x.pid, +x.v]));
+      await api('PUT', `/api/prices/${type}/${id}`, { prices: payload });
+      await reload();
+      // reload() 会重建 db 对象，r 是旧引用 → 必须重新取一次再写，否则客户详情里的「N 个商品」不会更新
+      const fresh = byId(db[type], id);
+      if (fresh) fresh.prices = payload;
+      dirty = false;
+      toast('专属价已保存');
+      if (cb) cb();
+    } catch (e) { toast(e.message, 'error'); }
+  };
+  // 点某一行 → 只改这一条的价格
+  const editOne = pid => {
+    const p = byId(db.products, pid) || {};
+    const cur = rows.find(x => x.pid === pid);
+    const m2 = document.createElement('div');
+    m2.className = 'zhj-item-mask';
+    m2.innerHTML = `<div class="zhj-item-dlg">
+      <div class="ttl">${esc(p.name || '')}</div>
+      <div class="ir"><label>${baseLabel(p)}</label><input type="text" readonly value="${money2(basePrice(p))}"><span class="u">元</span></div>
+      <div class="ir"><label>专属价</label><input id="spOneIn" type="text" inputmode="decimal" value="${cur ? money2(cur.v) : ''}"><span class="u">/ ${esc(p.unit || '')}</span></div>
+      <div class="ibs"><button data-x="cancel">取消</button><button class="ok" data-x="ok">确定</button></div>
+    </div>`;
+    document.body.appendChild(m2);
+    const inp = m2.querySelector('#spOneIn');
+    inp.focus(); try { inp.setSelectionRange(0, inp.value.length); } catch (e) { }
+    inp.addEventListener('focus', () => { try { inp.setSelectionRange(0, String(inp.value).length); } catch (e) { } });
+    m2.onclick = e => {
+      const b = e.target.closest('[data-x]');
+      if (!b && e.target !== m2) return;
+      const act = b ? b.dataset.x : 'cancel';
+      m2.remove();
+      if (act !== 'ok') return;
+      const v = inp.value.trim();
+      if (v === '' || +v < 0) return toast('请填写专属价', 'error');
+      const i = rows.findIndex(x => x.pid === pid);
+      if (i >= 0) rows[i].v = +v; else rows.unshift({ pid, v: +v });
+      dirty = true;
+      // 只改本地待提交数据，不落库 —— 必须点底部「保存」才写，
+      // 否则「加完没点保存就返回」也会被静默存进去
+      draw();
+    };
+  };
+  // 右上角 ＋ → 搜索选商品 → 填专属价
+  const addOne = () => {
+    const pw = document.createElement('div');
+    pw.className = 'zhj-pick-mask';
+    const st = { q: '' };
+    const pdraw = () => {
+      const q = st.q.trim().toLowerCase();
+      let arr = [...db.products].sort((a, b) => (a.name || '').localeCompare(b.name || '', 'zh'));
+      if (q) arr = arr.filter(p => ((p.sku || '') + (p.name || '') + (p.barcode || '') + (p.spec || '')).toLowerCase().includes(q));
+      arr = arr.slice(0, 200);
+      const has = new Set(rows.map(x => x.pid));
+      pw.innerHTML = `<div class="zhj-pick">
+        <div class="m-head zhj-ob-head">
+          <span class="nv-l" id="ppBack"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></span>
+          <span class="nv-t">选择货品</span>
+          <span class="nv-r"></span>
+        </div>
+        <div class="zhj-catbar"><div class="sbox">${ic('search')}<input class="pk-kw" id="ppKw" placeholder="货品代码/品名规格" value="${esc(st.q)}"></div></div>
+        <div class="zhj-pick-body">
+          ${arr.length ? arr.map(p => `<div class="zhj-row tap" data-p="${p.id}" style="padding:13px 14px;border-bottom:1px solid #f0f2f5;align-items:center">
+            <div style="flex:1;min-width:0">
+              <div style="font-size:16px;color:#333;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(p.name || '')}</div>
+              <div style="font-size:13px;color:#9aa3ad;margin-top:3px">${esc(p.sku || '')}　${baseLabel(p)} ${money2(basePrice(p))}</div>
+            </div>
+            ${has.has(p.id) ? '<span style="flex:none;font-size:12px;color:#31bfcf">已设</span>' : ''}
+          </div>`).join('') : `<div style="padding:50px 0;text-align:center;color:#98a0aa">没有匹配的商品</div>`}
+        </div>
+      </div>`;
+      pw.querySelector('#ppBack').onclick = () => pw.remove();
+      const kwEl = pw.querySelector('#ppKw');
+      kwEl.oninput = e => { st.q = e.target.value; const v = e.target.value; pdraw(); const el = pw.querySelector('#ppKw'); if (el) { el.focus(); el.setSelectionRange(v.length, v.length); } };
+      pw.querySelectorAll('[data-p]').forEach(el => el.onclick = () => {
+        const pid = el.dataset.p;
+        pw.remove();
+        editOne(pid);
+      });
+    };
+    pdraw();
+    document.body.appendChild(pw);
+  };
+  draw();
+  document.body.appendChild(wrap);
 }
 /* 应收/应付对账单：期初 + 每张单的增减，滚动出每笔期末（照智慧记） */
 function zhjStmt(type, id) {
@@ -10365,7 +11290,61 @@ function empTpl() {
     else X.writeFile(wb, name);
   }).catch(e => toast(e.message, 'error'));
 }
+/* ---------- 手机端人事管理 ---------- */
+function hrMobile() {
+  document.documentElement.classList.add('zhj-set2-page', 'zhj-ship-page');
+  const all = db.employees || [];
+  const on = all.filter(e => e.status !== '离职');
+  const q = String(ui.hrQ || '').trim().toLowerCase();
+  const fDept = ui.hrDept || '', fSt = ui.hrSt || '';
+  let list = all.slice();
+  if (fDept) list = list.filter(e => (e.dept || '') === fDept);
+  if (fSt) list = list.filter(e => (e.status || '在职') === fSt);
+  if (q) list = list.filter(e => ((e.name || '') + (e.no || '') + (e.position || '') + (e.phone || '')).toLowerCase().includes(q));
+  const deptOpts = [...new Set([...depts(), ...(all.some(e => !e.dept) ? [''] : [])])];
+  const STC = { '在职': '#47c479', '试用期': '#f0a92e', '离职': '#9aa3ad' };
+  const rowHtml = e => `<div class="hr-row" data-act="hrView" data-id="${esc(e.id)}">
+    <div class="av" style="background:${STC[e.status || '在职'] || '#9aa3ad'}">${esc((e.name || '?').slice(0, 1))}</div>
+    <div class="bd">
+      <div class="nm">${esc(e.name)}<span class="st" style="color:${STC[e.status || '在职'] || '#9aa3ad'}">${esc(e.status || '在职')}</span></div>
+      <div class="ln">${esc(e.dept || '未分配部门')}${e.position ? ' · ' + esc(e.position) : ''}</div>
+      <div class="ln">${e.phone ? esc(e.phone) : ''}${e.salary ? (e.phone ? ' · ' : '') + '月薪 ' + money(e.salary) : ''}</div>
+    </div>
+    <span class="ar"></span>
+  </div>`;
+  $('#view').innerHTML = `<div class="zhj-page zhj-mg" style="background:#f2f4f8">
+    <div class="zhj-nav">
+      <span class="nv-l" data-act="go" data-id="more"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></span>
+      <span class="nv-t">人事管理</span>
+      <span class="nv-r">${can('hr') ? `<span class="ico" data-act="hrNew">${ic('plus')}</span>` : ''}</span>
+    </div>
+    <div class="hr-hero">
+      <div class="r1"><b>${on.length}</b><em>在职人数</em></div>
+      <div class="r2">
+        <span><b>${new Set(on.map(e => e.dept).filter(Boolean)).size}</b><em>部门数</em></span>
+        <span><b>${moneyK(sum(on, e => e.salary))}</b><em>月薪总额</em></span>
+        <span><b>${money(on.length ? sum(on, e => e.salary) / on.length : 0)}</b><em>平均月薪</em></span>
+      </div>
+    </div>
+    <div class="sh-filter">
+      <select data-hrfilter="dept"><option value="">全部部门</option>${deptOpts.map(d => `<option value="${esc(d)}" ${d === fDept ? 'selected' : ''}>${esc(d || '未分配部门')}</option>`).join('')}</select>
+      <select data-hrfilter="st"><option value="">全部状态</option>${['在职', '试用期', '离职'].map(k => `<option value="${k}" ${k === fSt ? 'selected' : ''}>${k}</option>`).join('')}</select>
+    </div>
+    <div class="sb"><div class="box">${ic('search')}<input id="hrQ" value="${esc(ui.hrQ || '')}" placeholder="姓名 / 工号 / 职位 / 手机"></div></div>
+    <div class="hr-list">${list.length ? list.map(rowHtml).join('') : '<div class="empty" style="padding:60px 0;text-align:center;color:#98a0aa">暂无员工</div>'}</div>
+    <div class="foot" style="padding:12px"><button data-act="deptMgrHr">管理部门</button></div>
+  </div>`;
+  const qi = document.getElementById('hrQ');
+  if (qi) qi.oninput = e => { ui.hrQ = e.target.value; render(); };
+  document.querySelectorAll('[data-hrfilter]').forEach(el => {
+    el.onchange = () => {
+      if (el.dataset.hrfilter === 'dept') ui.hrDept = el.value; else ui.hrSt = el.value;
+      render();
+    };
+  });
+}
 function pageEmployees() {
+  if (IS_MOBILE) return hrMobile();
   const on = db.employees.filter(e => e.status !== '离职');
   const filters = [{key:'dept', label:'全部部门', options:[...depts(), ...(db.employees.some(e => !e.dept) ? ['未分配部门'] : [])], test:(e, v) => (e.dept || '未分配部门') === v}, {key:'st', label:'全部状态', options:['在职', '试用期', '离职'], test:(e, v) => e.status === v}];
   $('#view').innerHTML = pageHead('人事管理', '员工档案、部门与薪资') + `
@@ -10950,6 +11929,8 @@ function ssState() {
   if (s.to == null) s.to = '';
   if (!s.mk || typeof s.mk !== 'string') s.mk = s.from ? monthKey(s.from) : ssTodayMk();
   if (s.day == null) s.day = s.from ? +String(s.from).slice(8, 10) : ssDefaultDay(s.mk);
+  if (!s.dayDate) s.dayDate = today();
+  if (!s.weekStart) s.weekStart = zhjRptWeek().from;
   if (s.cat == null) s.cat = '';
   if (s.cust == null) s.cust = '';
   if (s.q == null) s.q = '';
@@ -10958,6 +11939,7 @@ function ssState() {
 function ssReset() {
   ui.ss = {
     view: 'main', range: 'month', mk: ssTodayMk(), day: +today().slice(8, 10), from: '', to: '',
+    dayDate: today(), weekStart: zhjRptWeek().from,
     cat: '', cust: '', pid: '', q: '', pick: false, cal: false, calFrom: '', search: false,
   };
 }
@@ -10969,7 +11951,28 @@ function ssSales(range, mk) {
     const f = s.from || '0000-00-00', t = s.to || '9999-99-99';
     return validSales().filter(o => String(o.date) >= f && String(o.date) <= t);
   }
-  return validSales().filter(o => zhjRptMatch(range, mk, o.date));
+  if (range === 'today' || range === 'day') {
+    const d = s.dayDate || today();
+    return validSales().filter(o => String(o.date) === d);
+  }
+  if (range === 'week') {
+    const wd = ssWeekRange(s.weekStart);
+    return validSales().filter(o => String(o.date) >= wd.from && String(o.date) <= wd.to);
+  }
+  // 年：mk 形如 '2026-01'，只比年份
+  if (range === 'year') { const y = String(mk).slice(0, 4); return validSales().filter(o => String(o.date).slice(0, 4) === y); }
+  // 其余档位（yesterday / lastWeek / lastMonth / quarter / lastYear / all）统一按 dateRange 算出的区间
+  const r = dateRange(range, range === 'custom' ? { from: s.from, to: s.to } : null);
+  if (r) return validSales().filter(o => { const d = String(o.date); return d >= r.from && d <= r.to; });
+  return validSales();
+}
+// 周区间：从 weekStart 起 7 天
+function ssWeekRange(start) {
+  const pad2 = n => String(n).padStart(2, '0');
+  const base = start || zhjRptWeek().from;
+  const d = new Date(base + 'T12:00:00'), e = new Date(d); e.setDate(e.getDate() + 6);
+  const f = x => x.getFullYear() + '-' + pad2(x.getMonth() + 1) + '-' + pad2(x.getDate());
+  return { from: f(d), to: f(e) };
 }
 // 时间范围文字（照智慧记底部「2025.10.01 - 2026.11.24」）
 function ssRangeText() {
@@ -10979,7 +11982,16 @@ function ssRangeText() {
     if (s.from) return String(s.from).replace(/-/g, '.') + ' -';
     return '';
   }
-  return { today: '今日', week: '本周', month: String(s.mk).replace('-', '.'), year: String(s.mk).slice(0, 4) + '年', all: '全部时间' }[s.range] || '';
+  const F = d => String(d).replace(/-/g, '.');
+  if (s.range === 'today') return '今日 ' + F(today());
+  if (s.range === 'week') { const w = ssWeekRange(s.weekStart); return F(w.from) + ' - ' + F(w.to); }
+  if (s.range === 'month') return '本月 ' + String(s.mk).replace(/-/g, '.');
+  if (s.range === 'year') return '本年 ' + String(s.mk).slice(0, 4) + '年';
+  if (s.range === 'all') return '全部时间';
+  // 其它档位（昨天 / 上周 / 上月 / 本季度 / 上年）：直接用 dateRange 算出的区间
+  const r = dateRange(s.range);
+  if (r) return F(r.from) + ' - ' + F(r.to);
+  return '';
 }
 function ssDaily(mk) {
   const n = ssDays(mk), a = new Array(n).fill(0);
@@ -11044,10 +12056,13 @@ function ssFlow(pid) {
   const s = ssState();
   const out = [];
   ssSales(s.range, s.mk).forEach(o => {
+    // 选了客户就只看这个客户买的
+    if (s.cust && o.customerId !== s.cust) return;
     o.items.forEach(it => {
       if (it.productId !== pid) return;
       const p0 = byId(db.products, pid);
       out.push({
+        orderId: o.id,
         date: o.date, no: o.no, party: partyName('sales', o) || '散客',
         price: +it.price || 0, qty: +it.qty || 0, unit: it.unit || (p0 && p0.unit) || '',
         disc: +(+it.lineDiscount || 0).toFixed(2),
@@ -11061,6 +12076,29 @@ function ssFlow(pid) {
 // 曲线数据：按月→每天；按年→每月
 function ssSeries() {
   const s = ssState();
+  // 今日：一根柱子（曲线只有一个点）
+  if (s.range === 'today' || s.range === 'day') {
+    const d = s.dayDate || today();
+    const v = +sum(validSales().filter(o => String(o.date) === d), orderTotal).toFixed(2);
+    return { vals: [v], labels: [String(d).slice(5).replace('-', '.')], dateOf: () => (+String(d).slice(5, 7)) + '月' + String(d).slice(8, 10) + '日' };
+  }
+  // 本周：7 天
+  if (s.range === 'week') {
+    const wd = ssWeekRange(s.weekStart);
+    const pad2 = n => String(n).padStart(2, '0');
+    const days = [];
+    for (let i = 0; i < 7; i++) {
+      const d = new Date(wd.from + 'T12:00:00'); d.setDate(d.getDate() + i);
+      days.push(d.getFullYear() + '-' + pad2(d.getMonth() + 1) + '-' + pad2(d.getDate()));
+    }
+    const S = validSales();
+    const vals = days.map(d => +sum(S.filter(o => String(o.date) === d), orderTotal).toFixed(2));
+    return {
+      vals,
+      labels: days.map(d => pad2(+String(d).slice(5, 7)) + '.' + String(d).slice(8, 10)),
+      dateOf: i => (+String(days[i]).slice(5, 7)) + '月' + String(days[i]).slice(8, 10) + '日',
+    };
+  }
   if (s.range === 'year') {
     const y = String(s.mk).slice(0, 4);
     const vals = new Array(12).fill(0);
@@ -11071,12 +12109,77 @@ function ssSeries() {
       dateOf: i => y + '年' + (i + 1) + '月',
     };
   }
-  const mk = String(s.mk).slice(0, 7);
-  const vals = ssDaily(mk);
+  // 本月：按天
+  if (s.range === 'month' || !s.range) {
+    const mk = String(s.mk).slice(0, 7);
+    const vals = ssDaily(mk);
+    return {
+      vals,
+      labels: vals.map((v, i) => mk.slice(5, 7) + '.' + pad(i + 1)),
+      dateOf: i => (+mk.slice(5, 7)) + '月' + pad(i + 1) + '日',
+    };
+  }
+  // 其余档位（yesterday / lastWeek / lastMonth / quarter / lastYear / custom / all）：
+  // 按 dateRange 取区间，再按天数自动挑粒度（<= 31 天按天，<= 120 天按周，否则按月）
+  const r = dateRange(s.range, s.range === 'custom' ? { from: s.from, to: s.to } : null);
+  if (!r) {
+    // 全部时间：按月画
+    const all = validSales();
+    if (!all.length) return { vals: [0], labels: ['-'], dateOf: () => '-' };
+    const months = {};
+    all.forEach(o => { const k = monthKey(o.date); months[k] = (months[k] || 0) + orderTotal(o); });
+    const keys = Object.keys(months).sort();
+    return {
+      vals: keys.map(k => +months[k].toFixed(2)),
+      labels: keys.map(k => k.replace('-', '.')),
+      dateOf: i => keys[i] ? keys[i].replace('-', '年') + '月' : '-',
+    };
+  }
+  const d0 = new Date(r.from + 'T12:00:00'), d1 = new Date(r.to + 'T12:00:00');
+  const nDays = Math.round((d1 - d0) / 864e5) + 1;
+  const S = validSales();
+  const inR = o => { const d = String(o.date); return d >= r.from && d <= r.to; };
+  if (nDays <= 31) {
+    // 按天
+    const days = [];
+    for (let i = 0; i < nDays; i++) {
+      const d = new Date(d0); d.setDate(d.getDate() + i);
+      days.push(d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()));
+    }
+    const vals = days.map(d => +sum(S.filter(o => String(o.date) === d && inR(o)), orderTotal).toFixed(2));
+    return {
+      vals,
+      labels: days.map(d => d.slice(5, 7) + '.' + d.slice(8, 10)),
+      dateOf: i => (+days[i].slice(5, 7)) + '月' + days[i].slice(8, 10) + '日',
+    };
+  }
+  if (nDays <= 120) {
+    // 按周
+    const weeks = [];
+    let cur = new Date(d0);
+    while (cur <= d1) {
+      const wf = new Date(cur); const we = new Date(cur); we.setDate(we.getDate() + 6);
+      if (we > d1) we.setTime(d1.getTime());
+      weeks.push({
+        from: wf.getFullYear() + '-' + pad(wf.getMonth() + 1) + '-' + pad(wf.getDate()),
+        to: we.getFullYear() + '-' + pad(we.getMonth() + 1) + '-' + pad(we.getDate()),
+        lbl: pad(wf.getMonth() + 1) + '.' + pad(wf.getDate()),
+      });
+      cur.setDate(cur.getDate() + 7);
+    }
+    const vals = weeks.map(w => +sum(S.filter(o => String(o.date) >= w.from && String(o.date) <= w.to && inR(o)), orderTotal).toFixed(2));
+    return { vals, labels: weeks.map(w => w.lbl), dateOf: i => weeks[i] ? weeks[i].lbl.replace('.', '月') + '日起一周' : '-' };
+  }
+  // 按月
+  const mfrom = monthKey(r.from), mto = monthKey(r.to), months2 = {};
+  let cm = mfrom;
+  while (cm <= mto) { months2[cm] = 0; cm = zhjRptShift(cm, 1); }
+  S.filter(inR).forEach(o => { const k = monthKey(o.date); if (k in months2) months2[k] += orderTotal(o); });
+  const mkeys = Object.keys(months2).sort();
   return {
-    vals,
-    labels: vals.map((v, i) => mk.slice(5, 7) + '.' + pad(i + 1)),
-    dateOf: i => (+mk.slice(5, 7)) + '月' + pad(i + 1) + '日',
+    vals: mkeys.map(k => +months2[k].toFixed(2)),
+    labels: mkeys.map(k => k.replace('-', '.')),
+    dateOf: i => mkeys[i] ? mkeys[i].replace('-', '年') + '月' : '-',
   };
 }
 const SS_CHEV = '<svg viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg>';
@@ -11182,11 +12285,17 @@ function ssApplyDate(k, f, t) {
     s.to = t || s.to || s.from;
     s.mk = monthKey(s.from);
     s.day = +String(s.from).slice(8, 10);
+    s.dayDate = s.from; s.weekStart = zhjRptWeek().from;
   } else {
     s.range = k;
     const r = dateRange(k);
     if (r) { s.from = r.from; s.to = r.to; s.mk = monthKey(r.from); s.day = +String(r.from).slice(8, 10); }
     else { s.mk = ssTodayMk(); s.day = ssDefaultDay(s.mk); }
+    // 今日 / 本周 / 本月 / 本年 各自定位到当前
+    if (k === 'today') { s.dayDate = today(); s.mk = ssTodayMk(); }
+    else if (k === 'week') { s.weekStart = zhjRptWeek().from; s.mk = monthKey(zhjRptWeek().from); }
+    else if (k === 'year') { s.mk = String(today()).slice(0, 4) + '-01'; }
+    else if (k === 'month') { s.mk = ssTodayMk(); s.day = +today().slice(8, 10); }
   }
   render();
 }
@@ -11201,21 +12310,50 @@ function ssTypeMask() {
     </div>`).join('')}
   </div></div>`;
 }
+// 三格切换条：上一格 / 当前格 / 下一格。month=按月，year=按年，day=按日，week=按周
 function ssMonthBar() {
   const s = ssState();
-  const isYear = s.range === 'year';
-  const mkPrev = isYear ? String(+s.mk - 1) : zhjRptShift(s.mk, -1);
-  const mkNext = isYear ? String(+s.mk + 1) : zhjRptShift(s.mk, 1);
-  const t = v => isYear ? v + '年' : String(v).replace('-', '.');
+  const range = s.range;
+  const pad2 = n => String(n).padStart(2, '0');
+  // 统一成「当前格的 key」，再算前后格
+  const cur = range === 'year' ? String(s.mk).slice(0, 4)
+    : range === 'day' || range === 'today' ? (s.dayDate || today())
+    : range === 'week' ? (s.weekStart || zhjRptWeek().from)
+    : String(s.mk).slice(0, 7);
+  const shift = n => {
+    if (range === 'year') return String(+cur + n);
+    if (range === 'day' || range === 'today') {
+      const d = new Date(cur + 'T12:00:00'); d.setDate(d.getDate() + n);
+      return d.getFullYear() + '-' + pad2(d.getMonth() + 1) + '-' + pad2(d.getDate());
+    }
+    if (range === 'week') {
+      const d = new Date(cur + 'T12:00:00'); d.setDate(d.getDate() + n * 7);
+      return d.getFullYear() + '-' + pad2(d.getMonth() + 1) + '-' + pad2(d.getDate());
+    }
+    return zhjRptShift(cur, n);
+  };
+  const label = v => {
+    if (range === 'year') return v + '年';
+    if (range === 'day' || range === 'today') return String(v).replace(/-/g, '.');
+    if (range === 'week') {
+      const d = new Date(v + 'T12:00:00'); const e = new Date(d); e.setDate(e.getDate() + 6);
+      return pad2(d.getMonth() + 1) + '.' + pad2(d.getDate()) + ' - ' + pad2(e.getMonth() + 1) + '.' + pad2(e.getDate());
+    }
+    return String(v).replace('-', '.');
+  };
+  const pv = shift(-1), nx = shift(1);
   return `<div class="zhj-rpt-month">
-    <span data-act="zhjSsMk" data-id="${mkPrev}">${t(mkPrev)}</span>
-    <span class="on">${t(s.mk)}</span>
-    <span data-act="zhjSsMk" data-id="${mkNext}">${t(mkNext)}</span>
+    <span data-act="zhjSsMk" data-id="${pv}">${label(pv)}</span>
+    <span class="on">${label(cur)}</span>
+    <span data-act="zhjSsMk" data-id="${nx}">${label(nx)}</span>
   </div>`;
 }
+// 只有「今天 / 本周 / 本月 / 本年」是可前后切换的三格条，
+// 其余（昨天 / 上周 / 上月 / 本季度 / 上年 / 自定义 / 全部）是固定区间，显示日期文字
+const SS_SHIFTABLE = ['today', 'week', 'month', 'year'];
 function ssBarHtml() {
   const s = ssState();
-  if (s.range === 'month' || s.range === 'year') return ssMonthBar();
+  if (SS_SHIFTABLE.includes(s.range)) return ssMonthBar();
   const t = ssRangeText();
   if (!t) return '';
   return `<div class="zhj-ss-rangetxt"><b data-act="zhjSsRange">${esc(t)}<svg viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></b></div>`;
@@ -11225,7 +12363,17 @@ function ssMainPage() {
   const s = ssState();
   const T = ssSum(ssSales(s.range, s.mk));
   const ser = ssSeries();
-  const idx = Math.max(0, Math.min(ser.vals.length - 1, (s.day || 1) - 1));
+  // 游标位置：今日=0；本周=今天是本周第几天；月=几号；年=几月
+  let idx;
+  if (s.range === 'today' || s.range === 'day') idx = 0;
+  else if (!SS_SHIFTABLE.includes(s.range)) idx = ser.vals.length - 1;   // 昨天/上周/…/自定义/全部：停在最后一格
+  else if (s.range === 'week') {
+    const wd = ssWeekRange(s.weekStart);
+    idx = Math.max(0, Math.min(6, Math.round((Date.parse(today() + 'T12:00:00') - Date.parse(wd.from + 'T12:00:00')) / 864e5)));
+    if (today() < wd.from || today() > wd.to) idx = 0;
+  }
+  else if (s.range === 'year') idx = Math.max(0, Math.min(11, +(String(today()).slice(5, 7)) - 1));
+  else idx = Math.max(0, Math.min(ser.vals.length - 1, (s.day || 1) - 1));
   const ymax = Math.max(0, ...ser.vals);
   $('#view').innerHTML = `<div class="zhj-page zhj-ss">
     ${ssNav({ title: '销售统计', back: 'home', pill: true })}
@@ -11253,6 +12401,8 @@ function ssMainPage() {
 function ssDrawChart(ser, idx) {
   const el = document.getElementById('ssChart');
   if (!el || !window.Chart || !ser.vals.length) return;
+  // 只有一个点（今日）时，Chart.js 画不出线；补一个同值点让曲线可见
+  if (ser.vals.length === 1) { ser = { ...ser, vals: [ser.vals[0], ser.vals[0]], labels: [ser.labels[0], ser.labels[0]] }; }
   const ctx = el.getContext('2d');
   const grad = ctx.createLinearGradient(0, 0, 0, 204);
   grad.addColorStop(0, 'rgba(255,255,255,.46)');
@@ -11319,47 +12469,156 @@ function ssSetDay(i) {
 // 时间用整段区间时（自定义 / 全部），左列取「区间的上一个月」，右列取「区间内全部」——照智慧记的双列对比
 function ssRankPage(by) {
   const s = ssState();
+  requestAnimationFrame(() => { try { window.scrollTo(0, 0); } catch (e) { } });
   const isProd = by === 'prod';
-  const mkCur = String(s.mk).slice(0, 7);
-  const wholeRange = s.range === 'custom' || s.range === 'all';
-  const mkPrev = zhjRptShift(mkCur, -1);
-  const L = ssRank(mkPrev, by);
-  const R = wholeRange ? ssRankByRange(by) : ssRank(mkCur, by);
-  const n = Math.min(100, Math.max(L.length, R.length));
-  const maxL = L.length ? L[0].amt : 0, maxR = R.length ? R[0].amt : 0;
-  let list = '';
-  for (let i = 0; i < n; i++) {
-    const a = L[i], b = R[i], c = SS_PALETTE[i % SS_PALETTE.length];
-    const wa = a && maxL > 0 ? Math.max(0, Math.min(100, a.amt / maxL * 100)) : 0;
-    const wb = b && maxR > 0 ? Math.max(0, Math.min(100, b.amt / maxR * 100)) : 0;
-    const ta = a ? '¥ ' + ssMoney(a.amt) : '', tb = b ? '¥ ' + ssMoney(b.amt) : '';
-    const ua = a && isProd ? ' (' + (+a.qty || 0).toFixed(2) + (a.unit || '') + ')' : '';
-    const ub = b && isProd ? ' (' + (+b.qty || 0).toFixed(2) + (b.unit || '') + ')' : '';
-    const la = (ta + ua).length, lb = (tb + ub).length;
-    const oa = a && (la * 7.4) > (2.47 * wa) * 0.9;
-    const ob = b && (lb * 7.4) > (2.47 * wb) * 0.9;
-    list += `<div class="zhj-ss-item">
-      <div class="nm"><span>${a ? esc(a.name) : ''}</span><span class="r">${b ? esc(b.name) : ''}</span></div>
-      <div class="zhj-ss-bars">
-        <div class="trk l"><i style="width:${wa}%;background:${c}"></i><b class="${oa ? 'out' : ''}">${ta}${esc(ua)}</b></div>
-        <div class="no" style="border-color:${c};color:${c}">${i + 1}</div>
-        <div class="trk r"><i style="width:${wb}%;background:${c}"></i><b class="${ob ? 'out' : ''}">${tb}${esc(ub)}</b></div>
-      </div>
-    </div>`;
+  const shiftable = SS_SHIFTABLE.includes(s.range);
+  // 单列模式：自定义 / 全部 / 超过一年的区间 —— 照智慧记只显示一排
+  const oneCol = !shiftable;
+
+  let rows = [], capL = '', capR = '', emptyTxt = '';
+  if (oneCol) {
+    // 单列：当前区间一列
+    rows = ssRankOfRange(by).map((x, i) => ({ ...x, _rank: i + 1 }));
+    emptyTxt = '这个区间没有销售';
+  } else {
+    // 双列：上一格 vs 当前格
+    const curKey = s.range === 'year' ? String(s.mk).slice(0, 4) : s.range === 'today' ? (s.dayDate || today()) : s.range === 'week' ? (s.weekStart || zhjRptWeek().from) : String(s.mk).slice(0, 7);
+    const prevKey = (() => {
+      if (s.range === 'year') return String(+curKey - 1);
+      if (s.range === 'today') { const d = new Date(curKey + 'T12:00:00'); d.setDate(d.getDate() - 1); return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()); }
+      if (s.range === 'week') { const d = new Date(curKey + 'T12:00:00'); d.setDate(d.getDate() - 7); return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()); }
+      return zhjRptShift(curKey, -1);
+    })();
+    const L = ssRankByKey(prevKey, s.range, by);
+    const R = ssRankByKey(curKey, s.range, by);
+    const n = Math.min(100, Math.max(L.length, R.length));
+    const maxL = L.length ? L[0].amt : 0, maxR = R.length ? R[0].amt : 0;
+    const PAD = n => String(n).padStart(2, '0');
+    const lab = k => {
+      if (s.range === 'year') return k + '年';
+      if (s.range === 'today') return (+k.slice(5, 7)) + '月' + k.slice(8, 10) + '日';
+      if (s.range === 'week') return k.slice(5).replace('-', '.') + '周';
+      return k.replace('-', '.');
+    };
+    capL = lab(prevKey); capR = lab(curKey);
+    emptyTxt = '这两个周期都没有销售';
+    const list = [];
+    for (let i = 0; i < n; i++) {
+      const a = L[i], b = R[i], c = SS_PALETTE[i % SS_PALETTE.length];
+      const wa = a && maxL > 0 ? Math.max(0, Math.min(100, a.amt / maxL * 100)) : 0;
+      const wb = b && maxR > 0 ? Math.max(0, Math.min(100, b.amt / maxR * 100)) : 0;
+      const ta = a ? '¥ ' + ssMoney(a.amt) : '', tb = b ? '¥ ' + ssMoney(b.amt) : '';
+      const ua = a && isProd ? ' (' + (+a.qty || 0).toFixed(2) + (a.unit || '') + ')' : '';
+      const ub = b && isProd ? ' (' + (+b.qty || 0).toFixed(2) + (b.unit || '') + ')' : '';
+      const oa = a && (ta + ua).length * 7.4 > (2.47 * wa) * 0.9;
+      const ob = b && (tb + ub).length * 7.4 > (2.47 * wb) * 0.9;
+      list.push(`<div class="zhj-ss-item">
+        <div class="nm"><span>${a ? esc(a.name) : ''}</span><span class="r">${b ? esc(b.name) : ''}</span></div>
+        <div class="zhj-ss-bars">
+          <div class="trk l"><i style="width:${wa}%;background:${c}"></i><b class="${oa ? 'out' : ''}">${ta}${esc(ua)}</b></div>
+          <div class="no" style="border-color:${c};color:${c}">${i + 1}</div>
+          <div class="trk r"><i style="width:${wb}%;background:${c}"></i><b class="${ob ? 'out' : ''}">${tb}${esc(ub)}</b></div>
+        </div>
+      </div>`);
+    }
+    rows = list;
   }
-  const capR = wholeRange ? '区间' : '本月';
+
+  // 单列的 HTML（照智慧记图2：名次圆 + 名称在上 + 长条金额）
+  let body;
+  if (oneCol) {
+    const max = rows.length ? rows[0].amt : 0;
+    body = rows.map((x, i) => {
+      const c = SS_PALETTE[i % SS_PALETTE.length];
+      const w = max > 0 ? Math.max(0, Math.min(100, x.amt / max * 100)) : 0;
+      const u = isProd ? ' (' + (+x.qty || 0).toFixed(2) + (x.unit || '') + ')' : '';
+      return `<div class="zhj-ss-rkone">
+        <div class="nm">${esc(x.name)}</div>
+        <div class="bar"><span class="no" style="border-color:${c};color:${c}">${i + 1}</span><i style="--w:${w}%;background:${c}"><b>¥ ${ssMoney(x.amt)}${esc(u)}</b></i></div>
+      </div>`;
+    }).join('');
+  } else {
+    body = `<div class="caps"><span>${capL}</span><span class="r">${capR}</span></div>${rows.join('')}`;
+  }
+
   $('#view').innerHTML = `<div class="zhj-page zhj-ss">
     ${ssNav({ title: isProd ? '销售额排行/货品' : '销售额排行/客户', back: 'main' })}
-    
     ${ssBarHtml()}
     <div class="zhj-ss-rk">
-      <div class="caps"><span>上月</span><span class="r">${capR}</span></div>
-      ${list || '<div class="empty" style="padding:60px 0;text-align:center;color:#98a0aa">这两个月都没有销售</div>'}
-      ${n >= 100 ? '<div class="empty" style="padding:18px 0 6px;text-align:center;color:#b6bcc4;font-size:13px">只显示前 100 名</div>' : ''}
+      ${body || `<div class="empty" style="padding:60px 0;text-align:center;color:#98a0aa">${emptyTxt}</div>`}
+      ${rows.length >= 100 ? '<div class="empty" style="padding:18px 0 6px;text-align:center;color:#b6bcc4;font-size:13px">只显示前 100 名</div>' : ''}
     </div>
   </div>`;
+  // 颜色条进屏幕时再长出来（只播一次），离开再回来不重播
+  if (oneCol) {
+    const bars = document.querySelectorAll('.zhj-ss-rkone .bar>i');
+    if (!bars.length) return;
+    if (!('IntersectionObserver' in window)) { bars.forEach(b => b.classList.add('grow')); return; }
+    const io = new IntersectionObserver(es => {
+      es.forEach(en => {
+        if (en.isIntersecting) { en.target.classList.add('grow'); io.unobserve(en.target); }
+      });
+    }, { rootMargin: '0px 0px -8% 0px', threshold: 0.05 });
+    bars.forEach(b => io.observe(b));
+    window.__ssRankIO = io;
+  }
 }
-// 按整段区间汇总（排行右列用）
+// 按当前区间取排行（自定义 / 全部 / 超过一年）
+function ssRankOfRange(by) {
+  const s = ssState();
+  const r = s.range === 'custom' ? { from: s.from, to: s.to }
+    : dateRange(s.range);
+  const S = r ? validSales().filter(o => { const d = String(o.date); return d >= r.from && d <= r.to; })
+    : validSales();
+  const m = {};
+  S.forEach(o => {
+    if (by === 'prod') {
+      o.items.forEach(it => {
+        const p = byId(db.products, it.productId); if (!p) return;
+        const k = p.id;
+        m[k] = m[k] || { name: p.name, unit: p.unit, amt: 0, qty: 0 };
+        m[k].amt += (+it.qty || 0) * (+it.price || 0) - (+it.lineDiscount || 0);
+        m[k].qty += +it.qty || 0;
+      });
+    } else {
+      const c = byId(db.customers, o.customerId);
+      const k = o.customerId || '';
+      m[k] = m[k] || { name: c ? c.name : '散客', amt: 0, qty: 0 };
+      m[k].amt += orderTotal(o);
+      m[k].qty += sum(o.items, i => +i.qty || 0);
+    }
+  });
+  return Object.values(m).filter(x => x.amt > 0.001).sort((a, b) => b.amt - a.amt).slice(0, 100);
+}
+// 按某个 key（月/年/日/周）取排行
+function ssRankByKey(key, range, by) {
+  const S = validSales().filter(o => {
+    const d = String(o.date);
+    if (range === 'year') return d.slice(0, 4) === String(key);
+    if (range === 'today') return d === key;
+    if (range === 'week') { const w = ssWeekRange(key); return d >= w.from && d <= w.to; }
+    return monthKey(d) === String(key).slice(0, 7);
+  });
+  const m = {};
+  S.forEach(o => {
+    if (by === 'prod') {
+      o.items.forEach(it => {
+        const p = byId(db.products, it.productId); if (!p) return;
+        const k = p.id;
+        m[k] = m[k] || { name: p.name, unit: p.unit, amt: 0, qty: 0 };
+        m[k].amt += (+it.qty || 0) * (+it.price || 0) - (+it.lineDiscount || 0);
+        m[k].qty += +it.qty || 0;
+      });
+    } else {
+      const c = byId(db.customers, o.customerId);
+      const k = o.customerId || '';
+      m[k] = m[k] || { name: c ? c.name : '散客', amt: 0, qty: 0 };
+      m[k].amt += orderTotal(o);
+      m[k].qty += sum(o.items, i => +i.qty || 0);
+    }
+  });
+  return Object.values(m).filter(x => x.amt > 0.001).sort((a, b) => b.amt - a.amt).slice(0, 100);
+}
 function ssRankByRange(by) {
   const s = ssState();
   const g = {};
@@ -11387,6 +12646,8 @@ function ssRankByRange(by) {
 // 销售统计详细：类别 / 客户筛选 + 四格合计 + 按货品列
 function ssDetailPage() {
   const s = ssState();
+  // 每次进这个页都回到顶部（避免沿用上一个页面的滚动位置）
+  requestAnimationFrame(() => { try { window.scrollTo(0, 0); } catch (e) { } });
   const all = ssProdRows();
   const q = String(s.q || '').trim().toLowerCase();
   const rows = q ? all.filter(r => String(r.name).toLowerCase().includes(q)) : all;
@@ -11419,7 +12680,7 @@ function ssDetailPage() {
       <div><label>货品金额</label><b>${ymoney(amt)}</b></div>
       <div><label>运费</label><b>${ymoney(T.freight)}</b></div>
       <div><label>销售数量</label><b>${ssQty(qty)}</b></div>
-      <div><label>销售笔数</label><b>${(+T.cnt).toFixed(2)}</b></div>
+      <div data-act="zhjSsAllOrders" style="cursor:pointer"><label>销售笔数 <em style="font-style:normal;color:var(--zhj);font-size:11px">看单›</em></label><b>${(+T.cnt).toFixed(2)}</b></div>
     </div>
     <div class="zhj-ss-plist">
       ${rows.length ? rows.map(r => `<div class="zhj-ss-prow" data-act="zhjSsFlow" data-id="${esc(r.pid)}">
@@ -11454,14 +12715,16 @@ function ssDetailFilter(q) {
 // 货品销售流水：某个货品这段时间的每一笔（时间轴 + 卡片）
 function ssFlowPage() {
   const s = ssState();
+  requestAnimationFrame(() => { try { window.scrollTo(0, 0); } catch (e) { } });
   const p = byId(db.products, s.pid);
   const rows = ssFlow(s.pid);
   const name = p ? p.name : '已删除商品';
-  const TL = { today: '今日', week: '本周', month: String(s.mk).replace('-', '.'), year: String(s.mk).slice(0, 4), all: '全部', custom: '自定义' };
+  // 时间标签：直接用 ssRangeText 的结果，10 档都覆盖
+  const TLt = ssRangeText();
   let last = '';
   const body = rows.map(r => {
     const dt = r.date !== last ? (last = r.date, `<div class="dt">${esc(r.date)}</div>`) : '';
-    return dt + `<div class="zhj-ss-card2">
+    return dt + `<div class="zhj-ss-card2" data-act="zhjSsOrder" data-id="${esc(r.orderId || '')}">
       <div class="r r1"><span>${esc(r.no)}</span><span>${ymoney(r.amt)}</span></div>
       <div class="r r2"><span>${esc(r.party)}</span><span>${ymoney(r.price)} * ${ssQty(r.qty)}${esc(r.unit || '')}</span></div>
       <div class="r r3"><span>折扣额: ${ymoney(r.disc)}</span><span>折后金额: <b>${ymoney(r.amt)}</b></span></div>
@@ -11470,18 +12733,103 @@ function ssFlowPage() {
   $('#view').innerHTML = `<div class="zhj-page zhj-ss-flow">
     ${ssNav({ title: '货品销售流水', back: 'detail', noRange: true })}
     <div class="fhd">
-      <div class="th">${p && p.img ? pimg(p, 52, false) : '<svg viewBox="0 0 24 24"><path d="M3 17l5-6 4 5 3-3 6 8H3z"/><circle cx="8" cy="7" r="2"/></svg>'}</div>
-      <div class="bd"><div class="t1">${esc(name)}</div><div class="t2">时间: ${esc(TL[s.range] || '')}</div></div>
+      <div class="top">
+        <div class="th">${p && p.img ? pimg(p, 52, false) : '<svg viewBox="0 0 24 24"><path d="M3 17l5-6 4 5 3-3 6 8H3z"/><circle cx="8" cy="7" r="2"/></svg>'}</div>
+        <div class="bd">
+          <div class="t1">${esc(name)}</div>
+          <div class="t2">${esc(TLt || '')}</div>
+        </div>
+      </div>
+      <div class="stats">
+        <div><b>${ssQty(sum(rows, r => r.qty))}<em>${esc(p && p.unit || '')}</em></b><label>销售数量</label></div>
+        <div><b>${ymoney(sum(rows, r => r.amt))}</b><label>销售金额</label></div>
+        <div><b>${rows.length}<em>单</em></b><label>单据数</label></div>
+      </div>
     </div>
     <div class="zhj-ss-tl">${body || '<div style="padding:60px 0;text-align:center;color:#98a0aa">这段时间没有销售</div>'}</div>
   </div>`;
 }
+// 货品销售流水（全部商品）：按当前时间 + 类别 + 客户 过滤后，把所有商品的单据合并成一条时间线
+function ssFlowAllPage() {
+  const s = ssState();
+  requestAnimationFrame(() => { try { window.scrollTo(0, 0); } catch (e) { } });
+  // 收集：哪些商品、每单贡献了多少
+  const prodSet = {};
+  const rows = [];
+  const cat = s.cat || '';
+  ssSales(s.range, s.mk).forEach(o => {
+    if (s.cust && o.customerId !== s.cust) return;
+    const hits = o.items.filter(it => {
+      const p = byId(db.products, it.productId);
+      return !cat || ((p && p.category) || '未分类') === cat;
+    });
+    if (!hits.length) return;
+    hits.forEach(it => {
+      const p = byId(db.products, it.productId);
+      const pid = it.productId;
+      prodSet[pid] = prodSet[pid] || { name: p ? p.name : '已删除商品', unit: (p && p.unit) || it.unit || '', qty: 0, amt: 0 };
+      const lineAmt = (+it.qty || 0) * (+it.price || 0) - (+it.lineDiscount || 0);
+      prodSet[pid].qty += +it.qty || 0;
+      prodSet[pid].amt += lineAmt;
+      rows.push({
+        orderId: o.id, date: o.date, no: o.no, party: partyName('sales', o) || '散客',
+        productName: p ? p.name : '已删除商品',
+        price: +it.price || 0, qty: +it.qty || 0, unit: it.unit || (p && p.unit) || '',
+        disc: +(+it.lineDiscount || 0).toFixed(2), amt: +lineAmt.toFixed(2),
+      });
+    });
+  });
+  rows.sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : 0));
+  const prods = Object.values(prodSet);
+  const totQty = +sum(prods, x => x.qty).toFixed(2);
+  const totAmt = +sum(prods, x => x.amt).toFixed(2);
+  const orderN = new Set(rows.map(r => r.orderId)).size;
+  const TLt = ssRangeText();
+  const catTxt = cat || '全部类别';
+  const custName = s.cust ? ((byId(db.customers, s.cust) || {}).name || '') : '';
+  // 分页：一次渲染 120 条，底部「显示更多」
+  const PER = 120, pg = Math.max(1, +s.flowPage || 1);
+  const shown = rows.slice(0, PER * pg);
+  let last = '';
+  const body = shown.map(r => {
+    const dt = r.date !== last ? (last = r.date, `<div class="dt">${esc(r.date)}</div>`) : '';
+    return dt + `<div class="zhj-ss-card2" data-act="zhjSsOrder" data-id="${esc(r.orderId || '')}">
+      <div class="r r1"><span>${esc(r.no)}</span><span>${ymoney(r.amt)}</span></div>
+      <div class="r r2"><span>${esc(r.party)}</span><span>${esc(r.productName)}</span></div>
+      <div class="r r3"><span>${ymoney(r.price)} * ${ssQty(r.qty)}${esc(r.unit)}</span><span>折后金额: <b>${ymoney(r.amt)}</b></span></div>
+    </div>`;
+  }).join('');
+  const more = rows.length > shown.length
+    ? `<div class="zhj-ss-more" data-act="zhjSsFlowMore" style="margin:12px 0 20px"><b>显示更多（还有 ${rows.length - shown.length} 条）</b></div>` : '';
+
+  $('#view').innerHTML = `<div class="zhj-page zhj-ss-flow">
+    ${ssNav({ title: '货品销售流水', back: 'detail', noRange: true })}
+    <div class="fhd">
+      <div class="top">
+        <div class="th"><svg viewBox="0 0 24 24"><path d="M3 17l5-6 4 5 3-3 6 8H3z"/><circle cx="8" cy="7" r="2"/></svg></div>
+        <div class="bd">
+          <div class="t1">${esc(catTxt)}${custName ? ' · ' + esc(custName) : ''}</div>
+          <div class="t2">${esc(TLt || '')}</div>
+        </div>
+      </div>
+      <div class="stats">
+        <div><b>${ssQty(totQty)}</b><label>销售数量</label></div>
+        <div><b>${ymoney(totAmt)}</b><label>销售金额</label></div>
+        <div><b>${prods.length}<em>种</em></b><label>商品数</label></div>
+        <div><b>${orderN}<em>单</em></b><label>单据数</label></div>
+      </div>
+    </div>
+    <div class="zhj-ss-tl">${body || '<div style="padding:60px 0;text-align:center;color:#98a0aa">这段时间没有销售</div>'}${more}</div>
+  </div>`;
+}
 function pageSalesStat() {
+  if (IS_MOBILE) document.documentElement.classList.add('zhj-ss-page');
   const s = ssState();
   if (s.view === 'rankCust') return ssRankPage('cust');
   if (s.view === 'rankProd') return ssRankPage('prod');
   if (s.view === 'detail') return ssDetailPage();
   if (s.view === 'flow') return ssFlowPage();
+  if (s.view === 'flowAll') return ssFlowAllPage();
   return ssMainPage();
 }
 function pageReports() {
@@ -11556,6 +12904,12 @@ function tipModal() {
 let DAV = null;
 const davSize = n => n >= 1024 ** 2 ? (n / 1024 ** 2).toFixed(1) + ' MB' : n >= 1024 ? Math.ceil(n / 1024) + ' KB' : (n || 0) + ' B';
 function pageCloud() {
+  if (IS_MOBILE) {
+    // 来处已经由 go('cloud') 记在 ui.davFrom 里了（那时 hash 还没改），这里只兜底
+    if (!ui.davFrom) ui.davFrom = 'more';
+    document.documentElement.classList.add('zhj-ob-page', 'zhj-dav-page');
+    return davMobile();
+  }
   $('#view').innerHTML = pageHead('WebDAV 备份', '用自己的网盘（群晖 WebDAV、坚果云、Nextcloud 等）自动备份数据库，NAS 坏了也能还原回来',
     `<button class="btn" data-act="davRefresh">${ic('refresh')}刷新</button><button class="btn primary" data-act="davBackup">${ic('upload')}立即备份</button>`) + '<div id="davBody"><div class="card"><div class="card-body"><div class="empty">加载中…</div></div></div></div>';
   davLoad();
@@ -11568,6 +12922,111 @@ async function davLoad() {
     return;
   }
   davDraw();
+}
+/* ---------- 手机端 WebDAV 页（行式布局 + 底部主按钮，和 App 其它页一致） ---------- */
+function davMobile() {
+  if (!ui.dav) ui.dav = { status: null, err: '', loading: true };
+  const R = ui.dav;
+  const go2 = () => { document.documentElement.classList.remove('zhj-ob-page'); render(); };
+  // 顶栏 + 骨架先出来，数据到了再填
+  const shell = inner => `<div class="zhj-page zhj-dav">
+    <div class="zhj-nav">
+      <span class="nv-l" data-act="davBack"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></span>
+      <span class="nv-t">WebDAV 备份</span>
+      <span class="nv-r"><span class="ico" data-act="davRefreshM">${ic('refresh')}</span></span>
+    </div>
+    <div class="dav-body">${inner}</div>
+    <div class="zhj-ob-foot"><button class="btn" data-act="davTestM">测试连接</button><button class="btn ok" data-act="davBackupM">立即备份</button></div>
+  </div>`;
+  // 开关行每次重绘后都要重新绑定：draw() 会重建整个 #view，旧元素的 onclick 随 DOM 一起丢掉
+  const bindDavSw = () => {
+    document.querySelectorAll('[data-davsw]').forEach(el => {
+      el.onclick = async () => {
+        const D = R.status; if (!D) return;
+        const key = el.dataset.davsw;
+        const next = { auto: !!D.auto, incr: D.incr !== false, live: !!D.live };
+        next[key] = !next[key];
+        const swEl = el.querySelector('.ck-switch');
+        if (swEl) swEl.classList.toggle('on', next[key]);
+        const body = { url: D.url || '', user: D.user || '', dir: D.dir || 'xerp-backup',
+          keep: +D.keep || 7, times: +D.times || 1, fullEvery: +D.fullEvery || 1, ...next };
+        try {
+          await api('POST', '/api/webdav/config', body);
+          await reload();
+          toast(next[key] ? '已开启' : '已关闭', 'success');
+        } catch (e) {
+          if (swEl) swEl.classList.toggle('on', !next[key]);
+          toast(e.message, 'error');
+        }
+      };
+    });
+  };
+  const draw = () => {
+    const D = R.status;
+    if (R.loading && !D) { $('#view').innerHTML = shell('<div class="dav-empty">加载中…</div>'); return; }
+    if (R.err && !D) { $('#view').innerHTML = shell(`<div class="dav-err">${esc(R.err)}</div>`); return; }
+    const files = D.files || [];
+    const on = v => v ? ' on' : '';
+    const row = (icon, label, value, act, id, sub) => `<div class="dav-row"${act ? ` data-act="${act}"${id != null ? ` data-id="${esc(id)}"` : ''}` : ''}>
+      <span class="ri">${ic(icon)}</span>
+      <label>${label}${sub ? `<em>${sub}</em>` : ''}</label>
+      <span class="rv">${value}</span>
+      ${act ? '<span class="ar"></span>' : ''}
+    </div>`;
+    // incr 是「不等于 false 即开启」，其余是真值判断
+    const swOn = k => k === 'incr' ? D.incr !== false : !!D[k];
+    const sw = (label, key, desc) => `<div class="dav-sw" data-davsw="${key}">
+      <div class="tx"><b>${label}</b>${desc ? `<small>${desc}</small>` : ''}</div>
+      <span class="ck-switch${swOn(key) ? ' on' : ''}"><i></i></span>
+    </div>`;
+    $('#view').innerHTML = shell(`
+      <div class="dav-hero">
+        <div class="h1">${D.last ? '备份正常' : '还没有备份过'}</div>
+        <div class="h2">${D.last ? '上次 ' + esc(fmtTime(D.last)) + (D.live && D.liveCount ? ' · 今天已备份 ' + (+D.liveCount) + ' 次' : '') : '配好网盘地址后点下方「立即备份」'}</div>
+        <div class="hstat">
+          <span><b>${files.length}</b><em>云端文件</em></span>
+          <span><b>${+D.keep || 7}</b><em>保留天数</em></span>
+          <span><b>${D.live && D.auto ? '实时+定时' : D.live ? '实时' : D.auto ? (+D.times || 1) + '/天' : '手动'}</b><em>备份方式</em></span>
+        </div>
+      </div>
+      ${D.error ? `<div class="dav-warn">${esc(D.error)}</div>` : ''}
+      <div class="dav-grp">连接设置</div>
+      <div class="dav-card">
+        ${row('cloud', '服务器地址', esc(D.url || '未设置'), 'davEdit', 'url')}
+        ${row('user', '用户名', esc(D.user || '未设置'), 'davEdit', 'user')}
+        ${row('id', '密码', D.hasPass ? '••••••' : '未设置', 'davEdit', 'pass')}
+      </div>
+      <div class="dav-grp">备份策略</div>
+      <div class="dav-card">
+        ${row('list', '备份目录', esc(D.dir || 'xerp-backup'), 'davEdit', 'dir')}
+        ${row('clock', '每天备份几次', (+D.times || 1) + ' 次', 'davEdit', 'times')}
+        ${row('calendar', '保留最近几天', (+D.keep || 7) + ' 天', 'davEdit', 'keep')}
+        ${row('refresh', '全量间隔', '每 ' + (+D.fullEvery || 1) + ' 天', 'davEdit', 'fullEvery')}
+      </div>
+      <div class="dav-grp">自动备份</div>
+      <div class="dav-card">
+        ${sw('定时备份', 'auto', D.auto ? `每天 ${+D.times || 1} 次，约每 ${Math.max(5, Math.round(24 * 60 / (+D.times || 1)))} 分钟一次` : '关闭时只在手动点击时备份')}
+        ${sw('增量备份', 'incr', D.incr !== false ? '只传变化的记录，数据没变就跳过' : '每次都是完整文件')}
+        ${sw('实时备份', 'live', D.live ? '数据一有变化就备份' + (D.liveLast ? '，最近 ' + esc(fmtTime(D.liveLast)) : '') + (+D.liveCount ? '，今天 ' + (+D.liveCount) + ' 次' : '') : '开启后任何操作约 25 秒内自动备份')}
+      </div>
+      ${D.live && D.liveError ? `<div class="dav-warn">实时备份出错：${esc(D.liveError)}${D.liveErrorAt ? ' · ' + esc(fmtTime(D.liveErrorAt)) : ''}</div>` : ''}
+      <div class="dav-grp">备份文件</div>
+      <div class="dav-card">
+        ${row('download', '云端备份文件', files.length + ' 个', 'davFilesM')}
+        ${row('download', '下载到本机', '存一份到手机或 U 盘', 'davLocalM')}
+      </div>
+      <div class="dav-note">按天保留：只留最近 N 天，更早的自动删除；最新全量及其后的增量永远保留。还原会覆盖当前数据，执行前会自动在本地 backups 目录留一份现状。</div>`);
+    bindDavSw();
+  };
+  const reload = async () => {
+    R.loading = true;
+    try { R.status = await api('GET', '/api/webdav/status'); R.err = ''; }
+    catch (e) { R.err = e.message; }
+    R.loading = false; draw();
+  };
+  window.__davMobile = { draw, reload, get D() { return R.status; } };
+  draw();
+  if (!R.status) reload();
 }
 function davDraw() {
   const box = $('#davBody'); if (!box || !DAV) return;
@@ -11908,6 +13367,374 @@ function gspPage(body) {
   $('#gspOnlyExp').onchange = draw;
   $('#gspTraceBtn').onclick = trace;
 }
+/* ---------- 手机端设置首页：分组列表，点进去是二级页 ---------- */
+// keepScroll=true 时保留当前滚动位置（从二级页返回用），否则回到顶部（从别的页面进来用）
+function setMobileHome(keepScroll) {
+  const keepY = keepScroll ? (ui.setScroll || 0) : 0;
+  document.documentElement.classList.add('zhj-set2-page');
+  const st = db.settings;
+  const platLabel = st.platform === 'fnos' ? '飞牛 fnOS' : st.platform === 'win32' ? 'Windows' : st.platform === 'docker' ? 'Docker' : (st.platform || '');  const row = (icon, label, val, sub, act, id) => `<div class="set-row"${act ? ` data-act="${act}"${id != null ? ` data-id="${esc(id)}"` : ''}` : ''}>
+    <span class="ri">${ic(icon)}</span>
+    <div class="tx"><b>${label}</b>${sub ? `<small>${sub}</small>` : ''}</div>
+    ${val != null ? `<span class="rv">${val}</span>` : ''}
+    ${act ? '<span class="ar"></span>' : ''}
+  </div>`;
+  const grp = (title, rows) => `<div class="set-grp">${title}</div><div class="set-card">${rows.join('')}</div>`;
+  const themeName = { light: '浅色', dark: '深色', auto: '跟随系统' }[st.theme] || '浅色';
+
+  const accountRows = [
+    row('wallet', '登录密码', '', '定期修改可提升账户安全', 'changePwd'),
+    row('swap', '退出登录', '', CLIENT_MODE ? '退出后可切换账号或服务器' : '退出当前账号', 'logout'),
+    row('cloud', '服务器', esc(SERVER_ADDR), `服务端 v${esc(st.version || '-')}${platLabel ? ' · ' + esc(platLabel) : ''}`, NATIVE ? 'nativeServer' : null),
+  ].filter(Boolean);
+
+  const uiRows = [
+    row('sun', '界面主题', themeName, '', 'setPick', 'theme'),
+    row('list', '每页显示条数', (+st.pageSize || 10) + ' 条', '', 'setPick', 'pageSize'),
+    row('image', '公司名称', esc(st.company || ''), isAdmin() ? '显示在单据抬头' : '仅管理员可修改', isAdmin() ? 'setEditCompany' : null),
+  ].filter(Boolean);
+
+  const bizRows = [
+    row('flow', '开单规则', '', '自动发货 / 自动入库 / 自动完成', 'setPage', 'orderRule'),
+    row('coin', '成本核算', (st.costMethod === 'fifo' ? '先进先出' : '移动加权平均'), '', 'setPage', 'cost'),
+    row('checkdoc', '报销审批流程', '', '部门负责人 → 财务 → 总经理', 'setPage', 'expFlow'),
+    row('box', '基础资料', '', '仓库 / 分类 / 单位 / 部门', 'setPage', 'basic'),
+    row('bell', '首页公告', (st.notices || []).filter(Boolean).length ? (st.notices || []).filter(Boolean).length + ' 条' : '未设置', '', 'setPage', 'notice'),
+  ];
+
+  const adminRows = [];
+  if (isAdmin()) {
+    adminRows.push(row('users', '用户管理', '', '账号与角色分配', 'setPage', 'users'));
+    adminRows.push(row('id', '角色管理', '', '预置角色与自定义权限', 'setPage', 'roles'));
+    adminRows.push(row('grid', '功能模块', (st.modules || []).length + ' 个已启用', '', 'setPage', 'modules'));
+    adminRows.push(row('download', '数据管理', '', '备份导出 / 导入 / 清理', 'setPage', 'data'));
+    adminRows.push(row('clock', '操作日志', '', '谁在什么时候做了什么', 'setPage', 'audit'));
+  }
+  if (isAdmin() || can('tpl.edit')) adminRows.push(row('printer', '打印模板', '', '单据抬头、列宽、字体', 'setPage', 'print'));
+  if (isAdmin()) adminRows.push(row('bell', '通知推送', '', '企业微信 / 钉钉 / 飞书 / Webhook', 'setPage', 'notify'));
+  if (shipOn() && isAdmin()) adminRows.push(row('truck', '快递鸟', '', '电子面单与物流轨迹', 'setPage', 'kdn'));
+  if (medOn()) adminRows.push(row('alert', '医疗器械', '', '经营许可与器械档案', 'setPage', 'gsp'));
+  if (PORTAL && PORTAL_ADMIN) adminRows.push(row('warehouse', '公司管理', '', '多公司 / 多账套', 'setPage', 'companies'));
+
+  const otherRows = [
+    row('refresh', '版本更新', 'v' + esc(st.version || '-'), '', 'setPage', 'update'),
+    row('chart', '匿名使用统计', st.stats !== false ? '已参与' : '未参与', '', 'setPage', 'stats'),
+  ];
+
+  $('#view').innerHTML = `<div class="zhj-page zhj-set2">
+    <div class="zhj-nav">
+      <span class="nv-l" data-act="go" data-id="home"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></span>
+      <span class="nv-t">系统设置</span>
+      <span class="nv-r"></span>
+    </div>
+    <div class="set-body">
+      <div class="set-hero">
+        <div class="av">${esc((ME.name || 'U').slice(0, 1))}</div>
+        <div class="info">
+          <b>${esc(ME.name)}</b>
+          <small>账号 ${esc(ME.username)} · ${isAdmin() ? '系统管理员' : esc(ME.roleName || '操作员')}</small>
+        </div>
+      </div>
+      ${grp('账户', accountRows)}
+      ${grp('界面', uiRows)}
+      ${grp('业务规则', bizRows)}
+      ${adminRows.length ? grp('管理', adminRows) : ''}
+      ${grp('其他', otherRows)}
+    </div>
+  </div>`;
+  // 进入设置页默认回到顶部；从二级页返回则停在原位置
+  requestAnimationFrame(() => { try { window.scrollTo(0, keepY); } catch (e) { } });
+}
+/* 手机端设置二级页：统一外壳（返回 + 标题），内容复用电脑端那套卡片 */
+function setSubPage(key) {
+  document.documentElement.classList.add('zhj-set2-page');
+  ui.setSub = key;
+  const st = db.settings;
+  const T = {
+    orderRule: '开单规则', cost: '成本核算', expFlow: '报销审批流程', basic: '基础资料', notice: '首页公告',
+    users: '用户管理', roles: '角色管理', modules: '功能模块', data: '数据管理', audit: '操作日志',
+    print: '打印模板', notify: '通知推送', kdn: '快递鸟', gsp: '医疗器械', companies: '公司管理',
+    update: '版本更新', stats: '匿名使用统计',
+  }[key] || '系统设置';
+  // 后端会把内容写进 #setBody，这里先建外壳
+  $('#view').innerHTML = `<div class="zhj-page zhj-set2">
+    <div class="zhj-nav">
+      <span class="nv-l" data-act="setBack"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></span>
+      <span class="nv-t">${esc(T)}</span>
+      <span class="nv-r"></span>
+    </div>
+    <div class="set-body set-sub"><div id="setBody"></div></div>
+  </div>`;
+  const body = $('#setBody');
+  if (key === 'orderRule') setOrderRule(body);
+  else if (key === 'cost') setCost(body);
+  else if (key === 'expFlow') setExpFlow(body);
+  else if (key === 'basic') setBasic(body);
+  else if (key === 'notice') setNotice(body);
+  else if (key === 'modules') setModules(body);
+  else if (key === 'update') setUpdate(body);
+  else if (key === 'stats') setStats(body);
+  else if (key === 'notify') body.innerHTML = `<div class="set-sec">${notifyCard(st)}</div>`;
+  else if (key === 'kdn') body.innerHTML = `<div class="set-sec">${kdnCard(st.kdn || {})}</div>`;
+  else if (key === 'print') printTplPage(body);
+  else if (key === 'gsp') gspPage(body);
+  else if (key === 'companies') companiesPage(body);
+  else if (key === 'users') setUsers(body);
+  else if (key === 'roles') setRoles(body);
+  else if (key === 'data') setData(body);
+  else if (key === 'audit') setAudit(body);
+  bindSetSwitches(key);
+  scrollTo(0, 0);
+}
+/* 设置二级页里的开关：拨动即保存 */
+function bindSetSwitches(key) {
+  const st = db.settings;
+  const put = async (patch, okMsg) => {
+    try { await api('PUT', '/api/settings', patch); await reload(); toast(okMsg || '已保存', 'success'); }
+    catch (e) { toast(e.message, 'error'); setSubPage(key); }
+  };
+  document.querySelectorAll('[data-setsw]').forEach(el => {
+    el.onclick = async () => {
+      const k = el.dataset.setsw;
+      const sw = el.querySelector('.ck-switch');
+      const on = sw.classList.contains('on');
+      sw.classList.toggle('on', !on);
+      const D = db.settings;
+      if (k === 'autoComplete') { await put({ autoComplete: !on }); return; }
+      // 这几个是「打勾 = 自动」，存的时候要反过来
+      if (k === 'purchaseApprove') { await put({ purchaseApprove: on }); return; }
+      if (k === 'apIn' || k === 'apOut') {
+        const cur = { in: !!(D.docApprove || {}).in, out: !!(D.docApprove || {}).out };
+        cur[k === 'apIn' ? 'in' : 'out'] = on;
+        await put({ docApprove: cur }); return;
+      }
+      await put({ [k]: !on });
+    };
+  });
+  document.querySelectorAll('[data-setcost]').forEach(el => {
+    el.onclick = () => put({ costMethod: el.dataset.setcost }, '成本口径已切换');
+  });
+  document.querySelectorAll('[data-setmod]').forEach(el => {
+    el.onclick = async () => {
+      const k = el.dataset.setmod;
+      const sw = el.querySelector('.ck-switch');
+      const on = sw.classList.contains('on');
+      const cur = (db.settings.modules || []).slice();
+      const next = on ? cur.filter(x => x !== k) : [...cur, k];
+      if (!next.length) return toast('至少启用一个模块', 'error');
+      sw.classList.toggle('on', !on);
+      await put({ modules: next });
+    };
+  });
+  const stSw = document.querySelector('[data-setstats]');
+  if (stSw) stSw.onclick = async () => {
+    const sw = stSw.querySelector('.ck-switch'), on = sw.classList.contains('on');
+    sw.classList.toggle('on', !on);
+    await put({ stats: !on });
+  };
+}
+/* ===== 手机端设置二级页的内容块（都用行式卡片，好点好改） ===== */
+// 开单规则：6 项，每项一行「标题 + 说明 + 开关」，拨动即保存
+function setOrderRule(body) {
+  const st = db.settings;
+  const SW = [
+    ['autoShip', '销售单自动发货', '保存后直接扣库存，不经过「待发货」；想分批发货就先关掉', !!st.autoShip],
+    ['allowNegStock', '允许负库存', '出库时不再校验库存够不够，卖了就卖', !!st.allowNegStock],
+    ['purchaseApprove', '采购单自动审核', '打勾后新建进货单直接是「已审核」，可马上入库', st.purchaseApprove === false],
+    ['autoInbound', '采购单自动入库', '保存后直接加库存，三个圆点全亮', !!st.autoInbound],
+    ['apIn', '入库单自动审核', '新开的入库单保存后直接生效并改库存', !(st.docApprove || {}).in],
+    ['apOut', '出库单自动审核', '新开的出库单保存后直接生效并改库存', !(st.docApprove || {}).out],
+  ];
+  body.innerHTML = `<div class="set-sec">
+    ${SW.map(([k, t, d, on]) => `<div class="set-swrow" data-setsw="${k}">
+      <div class="tx"><b>${t}</b><small>${d}</small></div>
+      <span class="ck-switch${on ? ' on' : ''}"><i></i></span>
+    </div>`).join('')}
+  </div>
+  <div class="set-sec">
+    <div class="set-swrow" data-setsw="autoComplete" style="border-bottom:1px solid #f2f4f7">
+      <div class="tx"><b>销售单自动完成</b><small>已发货 + 已付清 + 无退货，满 <em>${esc(st.autoCompleteDays != null ? st.autoCompleteDays : 30)}</em> 天后自动置为「已完成」</small></div>
+      <span class="ck-switch${st.autoComplete ? ' on' : ''}"><i></i></span>
+    </div>
+    <div class="set-row" data-act="setEditDays">
+      <span class="ri">${ic('calendar')}</span>
+      <div class="tx"><b>完成天数</b><small>开单日距今满这么多天</small></div>
+      <span class="rv">${esc(st.autoCompleteDays != null ? st.autoCompleteDays : 30)} 天</span>
+      <span class="ar"></span>
+    </div>
+  </div>
+  <div class="set-note">拨动开关立即生效。「采购单自动审核」「入库/出库单自动审核」打勾 = 不需要审核。</div>`;
+}
+function setCost(body) {
+  const st = db.settings, fifo = st.costMethod === 'fifo';
+  body.innerHTML = `<div class="set-sec">
+    <div class="set-opt ${fifo ? '' : 'on'}" data-setcost="avg">
+      <div class="tx"><b>移动加权平均</b><small>每次入库后按总结存重算平均成本，出库按当前平均成本结转</small></div>
+      ${fifo ? '' : '<span class="ck">✓</span>'}
+    </div>
+    <div class="set-opt ${fifo ? 'on' : ''}" data-setcost="fifo">
+      <div class="tx"><b>先进先出 FIFO</b><small>每次入库记一层成本，出库从最早那层开始结转，更接近实际进货批次</small></div>
+      ${fifo ? '<span class="ck">✓</span>' : ''}
+    </div>
+  </div>
+  <div class="set-note">切换为 FIFO 时，现有库存会按当前成本价生成期初成本层；历史单据和已结转成本不重算，只影响切换之后的出入库。</div>`;
+}
+function setBasic(body) {
+  const st = db.settings;
+  const hasHr = (st.modules || []).includes('hr');
+  const rows = [
+    ['grid', '商品分类', '改名会同步修改该分类下的商品', 'setBasicCat'],
+    ['box', '单位', '个、米、箱、码…改名同步修改商品', 'setBasicUnit'],
+  ];
+  if (hasHr) rows.push(['dashboard', '部门', '改名同步修改该部门下的员工', 'setBasicDept']);
+  rows.push(['warehouse', '仓库', '多仓库可调拨、按仓库看库存', 'setBasicWh']);
+  body.innerHTML = `<div class="set-sec">
+    ${rows.map(([ic2, t, d, act]) => `<div class="set-row" data-act="${act}">
+      <span class="ri">${ic(ic2)}</span>
+      <div class="tx"><b>${t}</b><small>${d}</small></div>
+      <span class="ar"></span>
+    </div>`).join('')}
+  </div>`;
+}
+function setNotice(body) {
+  const st = db.settings;
+  body.innerHTML = `<div class="set-sec" style="padding:14px 16px">
+    <label style="display:block;font-size:13px;color:#9aa3ad;margin-bottom:8px">公告内容，一行一条，最多 10 条</label>
+    <textarea id="sNotices" rows="5" placeholder="本月 30 号盘点，请提前报数&#10;新品已到店，欢迎选购" style="width:100%;border:1px solid #dfe4ea;border-radius:8px;padding:12px;font-size:15px;font-family:inherit;box-sizing:border-box;resize:vertical">${esc((st.notices || []).join('\n'))}</textarea>
+  </div>
+  <div class="set-sec">
+    <div class="set-row" data-act="setEditSpeed">
+      <span class="ri">${ic('clock')}</span>
+      <div class="tx"><b>滚动间隔</b><small>多条公告轮播时每条停留的秒数</small></div>
+      <span class="rv">${esc(st.noticeSpeed || 4)} 秒</span>
+      <span class="ar"></span>
+    </div>
+  </div>
+  <div class="set-note">手机首页销售额下面那条。多条会向上轮播，单条固定显示；留空就不显示。</div>
+  <div class="set-fix"><button class="btn ok" data-act="saveNotices">保存公告</button></div>`;
+}
+function setModules(body) {
+  const st = db.settings;
+  body.innerHTML = `<div class="set-sec">
+    ${Object.entries(META.modules).map(([k, l]) => `<div class="set-swrow" data-setmod="${k}">
+      <div class="tx"><b>${esc(l)}</b></div>
+      <span class="ck-switch${(st.modules || []).includes(k) ? ' on' : ''}"><i></i></span>
+    </div>`).join('')}
+  </div>
+  <div class="set-note">未启用的模块对所有账号（包括管理员）隐藏，相关接口也会拒绝访问；数据不会删除，重新启用即可恢复。拨动立即生效。</div>`;
+}
+function setUpdate(body) {
+  const st = db.settings;
+  const platLabel = st.platform === 'fnos' ? '飞牛 fnOS' : st.platform === 'win32' ? 'Windows' : st.platform === 'docker' ? 'Docker' : (st.platform || '未知平台');
+  body.innerHTML = `<div class="set-sec">
+    <div class="set-row"><span class="ri">${ic('info')}</span><div class="tx"><b>当前版本</b><small>v${esc(st.version || '-')} · ${esc(platLabel)}</small></div></div>
+    <div class="set-row" data-act="updateCheck" id="updCheck"><span class="ri">${ic('refresh')}</span><div class="tx"><b>检查更新</b><small>只检查版本、下载安装包，不会自动安装</small></div><span class="ar"></span></div>
+    ${NATIVE ? `<div class="set-row" data-act="apkUpdate"><span class="ri">${ic('download')}</span><div class="tx"><b>安卓客户端</b><small>当前 v${esc(NATIVE.version ? NATIVE.version() : '')}</small></div><span class="ar"></span></div>` : ''}
+  </div>
+  <div id="updBox" class="set-sec" style="padding:14px 16px"><div class="sub-t" style="font-size:13px;line-height:1.6">下载前会再次向你确认，安装仍由你在应用中心或安装程序里完成。</div></div>`;
+}
+function setStats(body) {
+  const st = db.settings;
+  body.innerHTML = `<div class="set-sec">
+    <div class="set-swrow" data-setstats="1">
+      <div class="tx"><b>参与匿名使用统计</b><small>每天报一次：随机安装编号、版本号、系统类型。不含公司名、账号、商品、单据等任何业务数据</small></div>
+      <span class="ck-switch${st.stats !== false ? ' on' : ''}"><i></i></span>
+    </div>
+  </div>
+  <div class="set-note">统计服务不保存 IP 原文：只用它识别大致所在城市，并做不可逆加密后把同一网络下的多台设备合并计数。连不上外网时自动跳过，不影响使用。</div>`;
+}
+function setExpFlow(body) {
+  const st = db.settings, F = st.expenseFlow || {}, M = F.modes || {};
+  body.innerHTML = `<div class="set-sec" style="padding:14px 16px">
+    <label style="display:block;font-size:13px;color:#9aa3ad;margin-bottom:8px">部门负责人（每行一个，格式：部门=用户名）</label>
+    <textarea id="efHeads" rows="4" placeholder="销售部=zhangsan&#10;仓库=wangwu" style="width:100%;border:1px solid #dfe4ea;border-radius:8px;padding:12px;font-size:15px;font-family:inherit;box-sizing:border-box;resize:vertical">${esc(Object.entries(F.deptHeads || {}).map(([d, u]) => d + '=' + [].concat(u).join(',')).join('\n'))}</textarea>
+  </div>
+  <div class="set-sec">
+    <div class="set-row" data-act="setEditFlow" data-id="finance">
+      <span class="ri">${ic('wallet')}</span>
+      <div class="tx"><b>财务审批人</b><small>多个用逗号分隔</small></div>
+      <span class="rv">${esc([].concat(F.finance || []).join(', ') || '未设置')}</span>
+      <span class="ar"></span>
+    </div>
+    <div class="set-row" data-act="setEditFlow" data-id="gm">
+      <span class="ri">${ic('id')}</span>
+      <div class="tx"><b>总经理审批人</b><small>多个用逗号分隔</small></div>
+      <span class="rv">${esc([].concat(F.gm || []).join(', ') || '未设置')}</span>
+      <span class="ar"></span>
+    </div>
+    <div class="set-row" data-act="setEditFlow" data-id="gmThreshold">
+      <span class="ri">${ic('coin')}</span>
+      <div class="tx"><b>总经理起点金额</b><small>0 = 每单都要总经理审</small></div>
+      <span class="rv">${esc(F.gmThreshold || 0)} 元</span>
+      <span class="ar"></span>
+    </div>
+  </div>
+  <div class="set-sec">
+    ${[['dept', '部门负责人节点'], ['finance', '财务节点'], ['gm', '总经理节点']].map(([k, l]) => `<div class="set-row" data-act="setEditMode" data-id="${k}">
+      <span class="ri">${ic('flow')}</span>
+      <div class="tx"><b>${l}</b><small>会签 = 全部同意；或签 = 任一人同意</small></div>
+      <span class="rv">${(M[k] === 'any') ? '或签' : '会签'}</span>
+      <span class="ar"></span>
+    </div>`).join('')}
+  </div>
+  <div class="set-note">申请人本人会自动跳过自己的节点。留空则按原来的单级审批。</div>
+  <div class="set-fix"><button class="btn ok" data-act="saveExpFlow">保存审批流程</button></div>`;
+}
+function setUsers(body) {
+  body.innerHTML = '<div class="empty" style="padding:40px 0;text-align:center;color:#9aa3ad">加载中…</div>';
+  Promise.all([api('GET', '/api/users'), api('GET', '/api/roles')]).then(([users, roles]) => {
+    USERS = users; ROLES = roles;
+    body.innerHTML = `<div class="set-sec" style="padding:12px 16px 4px"><button class="btn ok" data-act="userEdit" style="width:100%">+ 新增用户</button></div>
+    <div class="set-card" style="margin-top:10px">
+      ${users.map(u => `<div class="set-row" data-act="userEdit" data-id="${u.id}">
+        <span class="ri">${ic('user')}</span>
+        <div class="tx"><b>${esc(u.name)}${u.id === ME.id ? ' <span style="color:var(--zhj);font-size:12px">当前</span>' : ''}</b>
+          <small>${esc(u.username)} · ${esc(u.roleName)}${u.role === 'admin' ? ' · 全部权限' : ' · ' + u.perms.length + ' 项权限'}</small></div>
+        <span class="ar"></span>
+      </div>`).join('')}
+    </div>`;
+  }).catch(e => { body.innerHTML = `<div class="set-sec" style="padding:16px;color:var(--red)">${esc(e.message)}</div>`; });
+}
+function setRoles(body) {
+  body.innerHTML = '<div class="empty" style="padding:40px 0;text-align:center;color:#9aa3ad">加载中…</div>';
+  api('GET', '/api/roles').then(roles => {
+    ROLES = roles;
+    body.innerHTML = `<div class="set-sec" style="padding:12px 16px 4px"><button class="btn ok" data-act="roleEdit" style="width:100%">+ 新增角色</button></div>
+    <div class="set-card" style="margin-top:10px">
+      ${roles.map(r => `<div class="set-row" data-act="roleEdit" data-id="${r.id}">
+        <span class="ri">${ic('id')}</span>
+        <div class="tx"><b>${esc(r.name)}${r.builtin ? ' <span style="color:#9aa3ad;font-size:12px">预置</span>' : ''}</b>
+          <small>${esc(r.descr || '无说明')} · ${r.users} 个账号</small></div>
+        <span class="ar"></span>
+      </div>`).join('')}
+    </div>
+    <div class="set-note">「管理员」为系统内置角色，拥有全部权限，不在此列出。</div>`;
+  }).catch(e => { body.innerHTML = `<div class="set-sec" style="padding:16px;color:var(--red)">${esc(e.message)}</div>`; });
+}
+function setData(body) {
+  body.innerHTML = `<div class="set-sec">
+    <div class="set-row" data-act="backup"><span class="ri">${ic('download')}</span><div class="tx"><b>导出备份</b><small>全部业务数据导出为 JSON 保存到本机</small></div><span class="ar"></span></div>
+    <div class="set-row" data-act="restore"><span class="ri">${ic('upload')}</span><div class="tx"><b>导入备份</b><small>会覆盖服务器上的全部业务数据</small></div><span class="ar"></span></div>
+    <div class="set-row"><span class="ri">${ic('clock')}</span><div class="tx"><b>自动备份</b><small>每天自动备份，保留最近 30 天</small></div><span class="rv" style="color:var(--zhj)">已启用</span></div>
+  </div>
+  <div class="set-sec">
+    <div class="set-row" data-act="reset"><span class="ri">${ic('refresh')}</span><div class="tx"><b>重置演示数据</b><small>用示例数据覆盖当前业务数据</small></div><span class="ar"></span></div>
+    <div class="set-row" data-act="clearAll"><span class="ri">${ic('trash')}</span><div class="tx"><b style="color:var(--red)">清空业务数据</b><small>删除所有商品、单据、往来单位，账号保留</small></div><span class="ar"></span></div>
+  </div>
+  <div class="set-note">当前：商品 ${db.products.length} · 客户 ${db.customers.length} · 供应商 ${db.suppliers.length} · 销售单 ${db.sales.length} · 采购单 ${db.purchases.length} · 流水 ${db.finance.length + db.stockLogs.length} 条</div>`;
+}
+function setAudit(body) {
+  body.innerHTML = '<div class="empty" style="padding:40px 0;text-align:center;color:#9aa3ad">加载中…</div>';
+  api('GET', '/api/audit?limit=200').then(rows => {
+    body.innerHTML = rows.length ? `<div class="set-card">
+      ${rows.map(r => `<div class="set-log">
+        <div class="lt">${esc(fmtTime(r.time))}</div>
+        <div class="lm"><b>${esc(r.username)}</b> ${esc(r.action)}</div>
+        <div class="ld">${esc(r.detail || '')}</div>
+      </div>`).join('')}
+    </div>` : '<div class="empty" style="padding:40px 0;text-align:center;color:#9aa3ad">暂无日志</div>';
+  }).catch(e => { body.innerHTML = `<div class="set-sec" style="padding:16px;color:var(--red)">${esc(e.message)}</div>`; });
+}
 function pageSettings() {
   const items = [['general', '常规设置']];
   if (isAdmin() || can('tpl.edit')) items.push(['print', '打印模板']);
@@ -11917,6 +13744,8 @@ function pageSettings() {
   if (!items.some(i => i[0] === ui.setTab)) ui.setTab = 'general';
   const st = db.settings;
   const platLabel = st.platform === 'fnos' ? '飞牛 fnOS' : st.platform === 'win32' ? 'Windows' : st.platform === 'docker' ? 'Docker' : (st.platform || '未知平台');
+  // 手机端：设置首页是分组列表，点进去是二级页
+  if (IS_MOBILE) { ui.setScroll = 0; return setMobileHome(); }
   $('#view').innerHTML = pageHead('系统设置', '账户、偏好、用户权限与数据管理') + tabs('setTab', items) + '<div id="setBody"></div>';
   const body = $('#setBody');
   if (ui.setTab === 'print') printTplPage(body);
@@ -12630,7 +14459,16 @@ function go(p) {
   // 切页时清掉开单独立页的全局类，否则它的「隐藏底栏/顶栏」规则会带到别的页面
   document.documentElement.classList.remove('zhj-ob-page');
   document.documentElement.classList.remove('zhj-form-page');
+  document.documentElement.classList.remove('zhj-dav-page');
+  document.documentElement.classList.remove('zhj-set2-page');
+  document.documentElement.classList.remove('zhj-ss-page');
+  document.documentElement.classList.remove('zhj-ship-page');
   document.querySelectorAll('.zhj-pick-mask').forEach(n => n.remove());
+  // 进 WebDAV 页之前先记下来处（必须在改 hash 之前，否则读到的已经是 '#/cloud'）
+  if (p === 'cloud') {
+    const from = current();
+    ui.davFrom = (from && from !== 'cloud') ? from : 'more';
+  }
   // 从别处跳进「销售 / 采购」时记住来源，明细页据此切左侧 tab（同页内重复调用不设，避免盖掉用户手点的 tab）
   // __keepSide：用户刚点了左侧 tab 触发的 go('sales')，这时以用户的 tab 为准，不被来源覆盖
   if (ui.__keepSide) { ui.detailSide = ui.__keepSide; ui.__keepSide = ''; ui.__sideIntent = ''; }
@@ -12651,6 +14489,8 @@ function render() {
   // 不清的话从那些页面返回首页，底栏会被 display:none 的规则吃掉，一直不显示。
   document.documentElement.classList.remove('zhj-ob-page');
   document.documentElement.classList.remove('zhj-form-page');
+  document.documentElement.classList.remove('zhj-dav-page');
+  document.documentElement.classList.remove('zhj-set2-page');
   document.documentElement.classList.remove('modal-fullscreen');
   const sv = document.getElementById('sideVer');  if (sv && db.settings && db.settings.version) sv.textContent = 'v' + db.settings.version;
   charts.forEach(c => c.destroy()); charts = [];
@@ -12711,11 +14551,14 @@ function syncTabbar() {
   if (!hasOb) de.classList.remove('zhj-ob-page');
   if (!hasForm) { de.classList.remove('zhj-form-page'); de.classList.remove('modal-fullscreen'); }
   if (!bar) return;
-  const hide = !IS_MOBILE || hasOb || hasForm;
+  // 登录页（含「连接服务器」页）不显示底栏：那时候还没进系统，底栏上的按钮全点不动
+  const lg = document.getElementById('login');
+  const onLogin = !!(lg && lg.classList.contains('show'));
+  de.classList.toggle('zhj-login-page', onLogin);
+  const hide = !IS_MOBILE || onLogin || hasOb || hasForm;
   bar.style.display = hide ? 'none' : '';
   if (!hide && !bar.children.length) renderMTab(current());
-}
-window.addEventListener('pageshow', () => setTimeout(syncTabbar, 60));
+}window.addEventListener('pageshow', () => setTimeout(syncTabbar, 60));
 window.addEventListener('load', () => setTimeout(syncTabbar, 60));
 document.addEventListener('visibilitychange', () => { if (!document.hidden) setTimeout(syncTabbar, 60); });
 function updateBell() {
@@ -12849,7 +14692,19 @@ const A = {
     ui.__hashPage = 'sales';
     render();
   },
-  zhjDetailTab: v => { const [side, sub] = split(v); ui.detailSide = side; getState('detail_' + side).sub = sub; render(); },
+  // 明细页切换侧栏 / 子 tab。从别的页面（首页功能列表等）调用时，顺带把路由切到明细页，
+  // 否则只改 ui.detailSide 再 render() 会停在原来的页面上
+  zhjDetailTab: v => {
+    const [side, sub] = split(v);
+    ui.detailSide = side;
+    ui.__sideIntent = '';
+    if (sub) getState('detail_' + side).sub = sub;
+    if (current() !== 'sales') {
+      if (location.replace) location.replace('#/sales'); else location.hash = '#/sales';
+    }
+    ui.__hashPage = 'sales';
+    render();
+  },
   // 明细页右上角筛选（等同日期区间）
   zhjFilterSheet: k => A.zhjDate(k),
   // 报表页：切换类型 / 开关下拉 / 切月份或年份 / 时间范围
@@ -12859,7 +14714,21 @@ const A = {
     ui.rptM.pick = !ui.rptM.pick; ui.rptM.rangePick = false; render();
     if (ui.rptM.pick) { try { window.scrollTo(0, 0); } catch (_) { } }
   },
-  zhjRptType: id => { ui.rptM.type = id; ui.rptM.pick = false; render(); },
+  zhjRptType: id => {
+    // 报表页里选「销售统计」→ 跳到独立的销售统计页（图2），不要留在报表页显示旧内容
+    if (id === 'saleStat') {
+      ui.rptM.pick = false;
+      ssReset();
+      ssApplyDate('month');
+      if (location.hash !== '#/salesstat') {
+        if (location.replace) location.replace('#/salesstat'); else location.hash = '#/salesstat';
+      }
+      ui.__hashPage = 'salesstat';
+      render();
+      return;
+    }
+    ui.rptM.type = id; ui.rptM.pick = false; render();
+  },
   // 报表页右上角漏斗 → 同一个「选择日期区间」底部弹层
   // 报表的六项沿用报表自己的口径：今日/本周/本月/本年/自定义/全部
   zhjRptRange: () => {
@@ -12956,8 +14825,11 @@ const A = {
   },
   zhjSsMk: mk => {
     const s = ssState();
-    s.mk = String(mk);
-    s.day = ssDefaultDay(s.mk);
+    const v = String(mk);
+    if (s.range === 'year') { s.mk = v.slice(0, 4) + '-01'; }
+    else if (s.range === 'today' || s.range === 'day') { s.dayDate = v; s.mk = monthKey(v); s.day = +String(v).slice(8, 10); }
+    else if (s.range === 'week') { s.weekStart = v; s.mk = monthKey(v); }
+    else { s.mk = v; s.day = ssDefaultDay(v); }
     render();
   },
   zhjSsType: () => {
@@ -12969,7 +14841,7 @@ const A = {
   zhjSsTypeGo: id => {
     const s = ssState();
     s.pick = false;
-    if (id === 'saleStat') { render(); return; }
+    if (id === 'saleStat') { render(); return; }   // 已经在销售统计页，直接重绘
     // 其它报表类型交回统计报表页（那边已经有完整实现），时间范围带过去
     if (!ui.rptM) ui.rptM = { type: id, range: 'month', mk: ssTodayMk(), by: 'cust' };
     ui.rptM.type = id;
@@ -13021,9 +14893,43 @@ const A = {
   },
   // 客户筛选：直接复用「选择客户」那一页
   zhjSsCust: () => {
-    zhjPickParty('customers', id => { ssState().cust = id || ''; render(); });
+    // 销售统计专用：顶部多一个「全部客户」，选过客户后还能切回全部
+    const page = zhjPickParty('customers', id => { ssState().cust = id || ''; render(); });
+    if (!page) return;
+    setTimeout(() => {
+      const body = page.querySelector('.zhj-pick-body');
+      if (!body || body.querySelector('[data-allcust]')) return;
+      const bar = document.createElement('div');
+      bar.className = 'zhj-allcust';
+      bar.setAttribute('data-allcust', '1');
+      bar.innerHTML = `<span>全部客户</span><i></i>`;
+      bar.onclick = () => { ssState().cust = ''; page.remove(); render(); };
+      body.insertBefore(bar, body.firstChild);
+    }, 60);
   },
   zhjSsFlow: pid => { const s = ssState(); s.pid = pid; s.view = 'flow'; render(); },
+  // 明细页搜索框清除（明细页是 #/sales 这个整屏页，改状态后必须先确认 hash 对得上）
+  zhjSsClearInput: key => {
+    const st = getState(key);
+    st.q = ''; st.page = 1;
+    if (location.hash !== '#/sales') {
+      if (location.replace) location.replace('#/sales'); else location.hash = '#/sales';
+    }
+    ui.__hashPage = 'sales';
+    render();
+    setTimeout(() => { const el = document.querySelector('[data-search="' + key + '"]'); if (el) el.focus(); }, 80);
+  },
+  zhjSsFlowMore: () => { const s = ssState(); s.flowPage = (+s.flowPage || 1) + 1; render(); },
+  // 销售统计详细页 → 看当前筛选（时间 + 类别 + 客户）范围内的所有单据流水
+  zhjSsAllOrders: () => {
+    const s = ssState();
+    s.view = 'flowAll';
+    s.flowPage = 1;
+    requestAnimationFrame(() => { try { window.scrollTo(0, 0); } catch (e) { } });
+    render();
+  },
+  // 货品销售流水里点某一单 → 打开销售单详情
+  zhjSsOrder: id => { if (!id) return; closeModal(); orderView('sales', id); },
   // 首页：隐藏/显示金额
   zhjEye: () => { ui.hideMoney = !ui.hideMoney; render(); },
   // 结清状态筛选
@@ -13263,15 +15169,17 @@ const A = {
     FLTS.forEach(x => {
       html += '<div class="it' + (st.pflt === x[0] ? ' on' : '') + '" data-pflt="' + x[0] + '"><span>' + x[1] + '</span>' + (st.pflt === x[0] ? '<span class="ck">✓</span>' : '') + '</div>';
     });
+    if (can('parties')) html += '<div class="grp">合并重复档案</div><div class="it" data-merge="1"><span>合并' + (isC ? '客户' : '供应商') + '</span><span class="ck" style="color:#9aa3ad">›</span></div>';
     html += '<div class="cls" data-close="1">关闭</div></div>';
     const m = document.createElement('div');
     m.className = 'zhj-setmask';
     m.innerHTML = html;
     document.body.appendChild(m);
     m.onclick = e => {
-      const s = e.target.closest('[data-psort]'), f = e.target.closest('[data-pflt]');
+      const s = e.target.closest('[data-psort]'), f = e.target.closest('[data-pflt]'), mg = e.target.closest('[data-merge]');
       if (s) { st.psort = s.dataset.psort; m.remove(); render(); return; }
       if (f) { st.pflt = f.dataset.pflt; m.remove(); render(); return; }
+      if (mg) { m.remove(); mergePartyPage(type); return; }
       if (e.target === m || e.target.closest('[data-close]')) m.remove();
     };
   },
@@ -13285,6 +15193,7 @@ const A = {
     closeModal(); go(side);
   },
   zhjPartyStmt: v => { const [t, id] = split(v); closeModal(); zhjStmt(t, id); },
+  zhjPartyPrices: v => { const [t, id] = split(v); closeModal(); zhjPartyPrices(t, id); },
   zhjStmtYear: y => { const S = ui.stmt; if (S) { S.year = y; S.dr = { k: 'all' }; zhjStmt(S.type, S.id); } },
   zhjStmtMonth: m => {
     const S = ui.stmt; if (!S) return;
@@ -13460,6 +15369,168 @@ const A = {
   docImport: () => docImportOpen(),
   ssPrint, ledger:id => { closeModal(); ledger(id); },
   nativeServer: () => NATIVE && NATIVE.changeServer(),
+  // ===== 手机端设置页 =====
+  // 手机端物流 / 人事
+  hrNew: () => { closeModal(); editEntity('employees', null); },
+  hrView: id => { const e = byId(db.employees, id); if (!e) return; closeModal(); editEntity('employees', id); },
+  deptMgrHr: () => { if (!ui.mg) ui.mg = {}; if (!ui.mg.open) ui.mg.open = {}; ui.mg.tab = 'dept'; ui.mg.q = ''; window.mgReturnTo = () => { document.documentElement.classList.remove('zhj-mg-page'); go('employees'); }; go('mg'); },
+  setPage: k => {
+    // 记下设置首页的滚动位置，返回时恢复，避免老是跳回顶部
+    ui.setScroll = (window.pageYOffset || document.documentElement.scrollTop || 0);
+    setSubPage(k);
+  },
+  setBack: () => {
+    ui.setSub = '';
+    setMobileHome(true);   // 从二级页返回：停在进入前的位置
+  },
+  // 基础资料 → 分类 / 单位 / 仓库 / 部门 合并成同一个页面（四个 tab）
+  setBasicCat: () => { window.mgReturnTo = () => { document.documentElement.classList.remove('zhj-mg-page'); setSubPage('basic'); }; if (!ui.mg) ui.mg = {}; if (!ui.mg.open) ui.mg.open = {}; ui.mg.tab = 'cat'; ui.mg.q = ''; go('mg'); },
+  setBasicUnit: () => { window.mgReturnTo = () => { document.documentElement.classList.remove('zhj-mg-page'); setSubPage('basic'); }; if (!ui.mg) ui.mg = {}; if (!ui.mg.open) ui.mg.open = {}; ui.mg.tab = 'unit'; ui.mg.q = ''; go('mg'); },
+  setBasicDept: () => { window.mgReturnTo = () => { document.documentElement.classList.remove('zhj-mg-page'); setSubPage('basic'); }; if (!ui.mg) ui.mg = {}; if (!ui.mg.open) ui.mg.open = {}; ui.mg.tab = 'dept'; ui.mg.q = ''; go('mg'); },
+  setBasicWh: () => { window.mgReturnTo = () => { document.documentElement.classList.remove('zhj-mg-page'); setSubPage('basic'); }; if (!ui.mg) ui.mg = {}; if (!ui.mg.open) ui.mg.open = {}; ui.mg.tab = 'wh'; ui.mg.q = ''; go('mg'); },
+  zhjWhBack: () => { document.documentElement.classList.remove('zhj-mg-page'); setSubPage('basic'); },
+  zhjWhAdd: () => zhjMgAdd(false),
+  setPick: k => {
+    const st = db.settings;
+    if (k === 'theme') {
+      const CUR = st.theme || 'light';
+      const OPTS = [['light', '浅色'], ['dark', '深色'], ['auto', '跟随系统']];
+      const m = document.createElement('div'); m.className = 'zhj-sheet-mask';
+      m.innerHTML = `<div class="zhj-sheet"><div class="zs-hd">界面主题</div><div class="zs-body">
+        ${OPTS.map(([v, l]) => `<div class="acct-opt ${v === CUR ? 'on' : ''}" data-th="${v}">${l}${v === CUR ? '<i>✓</i>' : ''}</div>`).join('')}
+      </div><div class="zs-foot"><button id="thCancel">取消</button></div></div>`;
+      document.body.appendChild(m);
+      m.onclick = async e => {
+        const b = e.target.closest('[data-th]');
+        if (b) {
+          m.remove();
+          try { await api('PUT', '/api/settings', { theme: b.dataset.th }); st.theme = b.dataset.th; applyTheme(); await reload(); setMobileHome(); toast('已切换', 'success'); }
+          catch (err) { toast(err.message, 'error'); }
+          return;
+        }
+        if (e.target === m || e.target.id === 'thCancel') m.remove();
+      };
+    } else if (k === 'pageSize') {
+      const CUR = +st.pageSize || 10;
+      const m = document.createElement('div'); m.className = 'zhj-sheet-mask';
+      m.innerHTML = `<div class="zhj-sheet"><div class="zs-hd">每页显示条数</div><div class="zs-body">
+        ${[10, 15, 20, 50].map(n => `<div class="acct-opt ${n === CUR ? 'on' : ''}" data-ps="${n}">${n} 条${n === CUR ? '<i>✓</i>' : ''}</div>`).join('')}
+      </div><div class="zs-foot"><button id="psCancel">取消</button></div></div>`;
+      document.body.appendChild(m);
+      m.onclick = async e => {
+        const b = e.target.closest('[data-ps]');
+        if (b) {
+          m.remove();
+          try { await api('PUT', '/api/settings', { pageSize: +b.dataset.ps }); st.pageSize = +b.dataset.ps; await reload(); setMobileHome(); toast('已保存', 'success'); }
+          catch (err) { toast(err.message, 'error'); }
+          return;
+        }
+        if (e.target === m || e.target.id === 'psCancel') m.remove();
+      };
+    }
+  },
+  setEditCompany: () => {
+    const st = db.settings;
+    const m = document.createElement('div'); m.className = 'zhj-sheet-mask';
+    m.innerHTML = `<div class="zhj-sheet"><div class="zs-hd">公司名称</div>
+      <div style="padding:16px"><input id="setCompanyIn" value="${esc(st.company || '')}" style="width:100%;height:46px;border:1px solid #dfe4ea;border-radius:8px;padding:0 14px;font-size:16px;box-sizing:border-box"></div>
+      <div class="zs-foot"><button id="coCancel">取消</button><button id="coOk" style="color:var(--zhj);font-weight:600">保存</button></div></div>`;
+    document.body.appendChild(m);
+    const inp = m.querySelector('#setCompanyIn');
+    setTimeout(() => inp.focus(), 80);
+    m.onclick = async e => {
+      if (e.target === m || e.target.id === 'coCancel') { m.remove(); return; }
+      if (e.target.id === 'coOk') {
+        const v = inp.value.trim();
+        if (!v) return toast('公司名称不能为空', 'error');
+        m.remove();
+        try { await api('PUT', '/api/settings', { company: v }); await reload(); setMobileHome(); toast('已保存', 'success'); }
+        catch (err) { toast(err.message, 'error'); }
+      }
+    };
+  },
+  setEditDays: () => {
+    const st = db.settings, cur = st.autoCompleteDays != null ? st.autoCompleteDays : 30;
+    const m = document.createElement('div'); m.className = 'zhj-sheet-mask';
+    m.innerHTML = `<div class="zhj-sheet"><div class="zs-hd">满几天自动完成</div>
+      <div style="padding:16px"><input id="setDaysIn" type="number" min="0" max="3650" inputmode="numeric" value="${esc(cur)}" style="width:100%;height:46px;border:1px solid #dfe4ea;border-radius:8px;padding:0 14px;font-size:16px;box-sizing:border-box"></div>
+      <div class="zs-foot"><button id="dyCancel">取消</button><button id="dyOk" style="color:var(--zhj);font-weight:600">保存</button></div></div>`;
+    document.body.appendChild(m);
+    const inp = m.querySelector('#setDaysIn');
+    setTimeout(() => { inp.focus(); inp.select(); }, 80);
+    m.onclick = async e => {
+      if (e.target === m || e.target.id === 'dyCancel') { m.remove(); return; }
+      if (e.target.id === 'dyOk') {
+        const v = Math.min(3650, Math.max(0, Math.round(Number(inp.value) || 0)));
+        m.remove();
+        try { await api('PUT', '/api/settings', { autoCompleteDays: v }); await reload(); setSubPage('orderRule'); toast('已保存', 'success'); }
+        catch (err) { toast(err.message, 'error'); }
+      }
+    };
+  },
+  setEditSpeed: () => {
+    const st = db.settings, cur = st.noticeSpeed || 4;
+    const m = document.createElement('div'); m.className = 'zhj-sheet-mask';
+    m.innerHTML = `<div class="zhj-sheet"><div class="zs-hd">滚动间隔（秒/条）</div>
+      <div style="padding:16px"><input id="setSpeedIn" type="number" min="2" max="15" inputmode="numeric" value="${esc(cur)}" style="width:100%;height:46px;border:1px solid #dfe4ea;border-radius:8px;padding:0 14px;font-size:16px;box-sizing:border-box"></div>
+      <div class="zs-foot"><button id="spCancel">取消</button><button id="spOk" style="color:var(--zhj);font-weight:600">保存</button></div></div>`;
+    document.body.appendChild(m);
+    const inp = m.querySelector('#setSpeedIn');
+    setTimeout(() => { inp.focus(); inp.select(); }, 80);
+    m.onclick = async e => {
+      if (e.target === m || e.target.id === 'spCancel') { m.remove(); return; }
+      if (e.target.id === 'spOk') {
+        const v = Math.min(15, Math.max(2, Math.round(Number(inp.value) || 4)));
+        m.remove();
+        try { await api('PUT', '/api/settings', { noticeSpeed: v }); await reload(); setSubPage('notice'); toast('已保存', 'success'); }
+        catch (err) { toast(err.message, 'error'); }
+      }
+    };
+  },
+  setEditFlow: k => {
+    const st = db.settings, F = st.expenseFlow || {};
+    const LAB = { finance: '财务审批人', gm: '总经理审批人', gmThreshold: '总经理起点金额（元）' };
+    const cur = k === 'gmThreshold' ? (F.gmThreshold || 0) : [].concat(F[k] || []).join(', ');
+    const m = document.createElement('div'); m.className = 'zhj-sheet-mask';
+    m.innerHTML = `<div class="zhj-sheet"><div class="zs-hd">${LAB[k]}</div>
+      <div style="padding:16px"><input id="setFlowIn" type="${k === 'gmThreshold' ? 'number' : 'text'}" value="${esc(cur)}" placeholder="${k === 'gmThreshold' ? '0 = 每单都要' : '多个用逗号分隔'}" style="width:100%;height:46px;border:1px solid #dfe4ea;border-radius:8px;padding:0 14px;font-size:16px;box-sizing:border-box"></div>
+      <div class="zs-foot"><button id="flCancel">取消</button><button id="flOk" style="color:var(--zhj);font-weight:600">保存</button></div></div>`;
+    document.body.appendChild(m);
+    const inp = m.querySelector('#setFlowIn');
+    setTimeout(() => inp.focus(), 80);
+    m.onclick = async e => {
+      if (e.target === m || e.target.id === 'flCancel') { m.remove(); return; }
+      if (e.target.id === 'flOk') {
+        const nf = { ...F };
+        if (k === 'gmThreshold') nf.gmThreshold = Math.max(0, Number(inp.value) || 0);
+        else nf[k] = inp.value.split(/[,，\s]+/).map(x => x.trim()).filter(Boolean);
+        m.remove();
+        try { await api('PUT', '/api/settings', { expenseFlow: nf }); await reload(); setSubPage('expFlow'); toast('已保存', 'success'); }
+        catch (err) { toast(err.message, 'error'); }
+      }
+    };
+  },
+  setEditMode: k => {
+    const st = db.settings, F = st.expenseFlow || {}, M = F.modes || {};
+    const cur = M[k] === 'any' ? 'any' : 'all';
+    const m = document.createElement('div'); m.className = 'zhj-sheet-mask';
+    m.innerHTML = `<div class="zhj-sheet"><div class="zs-hd">审批方式</div><div class="zs-body">
+      <div class="acct-opt ${cur === 'all' ? 'on' : ''}" data-md="all">会签（全部同意才通过）${cur === 'all' ? '<i>✓</i>' : ''}</div>
+      <div class="acct-opt ${cur === 'any' ? 'on' : ''}" data-md="any">或签（任一人同意就通过）${cur === 'any' ? '<i>✓</i>' : ''}</div>
+    </div><div class="zs-foot"><button id="mdCancel">取消</button></div></div>`;
+    document.body.appendChild(m);
+    m.onclick = async e => {
+      const b = e.target.closest('[data-md]');
+      if (b) {
+        m.remove();
+        const nf = { ...F, modes: { ...M, [k]: b.dataset.md } };
+        try { await api('PUT', '/api/settings', { expenseFlow: nf }); await reload(); setSubPage('expFlow'); toast('已保存', 'success'); }
+        catch (err) { toast(err.message, 'error'); }
+        return;
+      }
+      if (e.target === m || e.target.id === 'mdCancel') m.remove();
+    };
+  },
   goBatches: () => { $('#bellDrop').classList.remove('show'); ui.invTab = 'batch'; const st = getState('batches'); st.f = {}; go('inventory'); },
   empImport: () => {
     openModal(`${modalHead('导入员工')}<div class="m-body">
@@ -13550,6 +15621,123 @@ const A = {
     catch (e) { setConn(false); toast('还是连不上：' + e.message, 'error'); }
   },
   davRefresh: () => davLoad(),
+  // ===== 手机端 WebDAV 页 =====
+  // 返回：只 remove class 不行，render() 会看 hash 又渲染回 WebDAV 页
+  // 必须把 hash 改回去（来处是哪就回哪，默认回「我的」）
+  davBack: () => {
+    document.documentElement.classList.remove('zhj-ob-page', 'zhj-dav-page');
+    const from = ui.davFrom || 'more';
+    ui.davFrom = '';
+    if (location.hash !== '#/' + from) {
+      if (location.replace) location.replace('#/' + from); else location.hash = '#/' + from;
+    }
+    ui.__hashPage = from;
+    render();
+  },
+  davRefreshM: () => { const M = window.__davMobile; if (!M) return; toast('正在刷新…', 'info'); M.reload().then(() => toast('已刷新', 'success')); },
+  davEdit: key => {
+    const M = window.__davMobile, D = M && M.D;
+    if (!D) return;
+    const F = {
+      url:      { t: '服务器地址', v: D.url || '', ph: 'https://dav.jianguoyun.com/dav/', type: 'url' },
+      user:     { t: '用户名', v: D.user || '', ph: 'WebDAV 用户名', type: 'text' },
+      pass:     { t: '密码', v: '', ph: D.hasPass ? '已保存，留空则不修改' : 'WebDAV 密码', type: 'password' },
+      dir:      { t: '备份目录', v: D.dir || 'xerp-backup', ph: 'xerp-backup', type: 'text' },
+      times:    { t: '每天备份几次', v: +D.times || 1, ph: '1-24', type: 'number' },
+      keep:     { t: '保留最近几天', v: +D.keep || 7, ph: '1-30', type: 'number' },
+      fullEvery:{ t: '每隔几天补一份全量', v: +D.fullEvery || 1, ph: '1-30', type: 'number' },
+    }[key];
+    if (!F) return;
+    const inp = `<input id="davEd" type="${F.type}" value="${esc(F.v)}" placeholder="${esc(F.ph)}"
+      ${F.type === 'number' ? 'inputmode="numeric" min="1" max="' + (key === 'times' ? 24 : 30) + '"' : ''}
+      ${key === 'pass' ? 'autocomplete="new-password"' : ''}
+      style="width:100%;height:46px;border:1px solid #dfe4ea;border-radius:8px;padding:0 14px;font-size:16px;box-sizing:border-box">`;
+    const m = document.createElement('div');
+    m.className = 'zhj-sheet-mask';
+    m.innerHTML = `<div class="zhj-sheet">
+      <div class="zs-hd">${F.t}</div>
+      <div style="padding:16px">${inp}</div>
+      <div class="zs-foot"><button id="davEdCancel">取消</button><button id="davEdOk" style="color:var(--zhj);font-weight:600">保存</button></div>
+    </div>`;
+    document.body.appendChild(m);
+    const el = m.querySelector('#davEd');
+    setTimeout(() => { el.focus(); if (key !== 'pass') el.select(); }, 80);
+    const close = () => m.remove();
+    m.onclick = e => { if (e.target === m || e.target.id === 'davEdCancel') close(); };
+    m.querySelector('#davEdOk').onclick = async () => {
+      const val = String(el.value || '').trim();
+      if (key !== 'pass' && !val) { toast('不能为空', 'error'); return; }
+      const body = { url: D.url || '', user: D.user || '', dir: D.dir || 'xerp-backup', keep: +D.keep || 7, times: +D.times || 1,
+        fullEvery: +D.fullEvery || 1, auto: !!D.auto, incr: D.incr !== false, live: !!D.live };
+      if (key === 'pass') { if (val) body.pass = val; }
+      else if (key === 'times') body.times = Math.min(24, Math.max(1, +val || 1));
+      else if (key === 'keep') body.keep = Math.min(30, Math.max(1, +val || 7));
+      else if (key === 'fullEvery') body.fullEvery = Math.min(30, Math.max(1, +val || 1));
+      else body[key] = val;
+      close();
+      try {
+        await api('POST', '/api/webdav/config', body);
+        if (M) await M.reload();
+        toast('已保存', 'success');
+      } catch (e) { toast(e.message, 'error'); }
+    };
+  },
+  davFilesM: () => {
+    const M = window.__davMobile, D = M && M.D;
+    if (!D) return;
+    const files = D.files || [];
+    const rows = files.length ? files.map(f => {
+      const isFull = String(f.name).includes('-full-');
+      const t = f.mtime && !isNaN(new Date(f.mtime)) ? fmtTime(f.mtime) : '-';
+      return `<div class="dav-file">
+        <span class="fh">${ic('download')}</span>
+        <div class="fb"><b>${esc(t)}</b><small>${isFull ? '全量' : '增量'} · ${davSize(f.size)} · ${esc(String(f.name).slice(-18))}</small></div>
+        <div class="fop"><button data-act="davRestore" data-id="${esc(f.name)}">还原</button><button class="del" data-act="davDeleteM" data-id="${esc(f.name)}">删除</button></div>
+      </div>`;
+    }).join('') : '<div class="dav-empty">还没有备份文件，点下方「立即备份」</div>';
+    $('#view').innerHTML = `<div class="zhj-page zhj-dav">
+      <div class="zhj-nav">
+        <span class="nv-l" data-act="davFilesBack"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></span>
+        <span class="nv-t">云端备份文件</span>
+        <span class="nv-r"><span class="ico" data-act="davRefreshM">${ic('refresh')}</span></span>
+      </div>
+      <div class="dav-body" style="padding-bottom:24px">
+        <div class="dav-grp">共 ${files.length} 个 · 目录 <code>${esc(D.dir || 'xerp-backup')}</code></div>
+        <div class="dav-card">${rows}</div>
+        <div class="dav-note">点「还原」会用该文件覆盖当前数据。还原增量时会自动往前找到对应的全量再依次重放。</div>
+      </div>
+    </div>`;
+  },
+  davFilesBack: () => { if (window.__davMobile) window.__davMobile.draw(); },
+  davDeleteM: id => confirmBox('删除网盘上的这份备份？删除后不能再还原。', async () => {
+    try {
+      await api('DELETE', '/api/webdav/file/' + encodeURIComponent(id));
+      toast('已删除');
+      const M = window.__davMobile;
+      if (M) { await M.reload(); A.davFilesM(); }
+    } catch (e) { toast(e.message, 'error'); }
+  }, { title: '删除备份文件', okText: '删除' }),
+  davLocalM: () => A.backup(),
+  davTestM: async () => {
+    const M = window.__davMobile, D = M && M.D;
+    if (!D) return;
+    toast('正在测试连接…', 'info');
+    try {
+      const r = await api('POST', '/api/webdav/test', { url: D.url || '', user: D.user || '', dir: D.dir || 'xerp-backup' });
+      toast(r.ok === false ? (r.error || '连接失败') : '连接正常', r.ok === false ? 'error' : 'success');
+    } catch (e) { toast(e.message, 'error'); }
+  },
+  davBackupM: async () => {
+    const M = window.__davMobile, D = M && M.D;
+    if (!D) return;
+    if (!D.url) return A.davEdit('url');
+    toast('正在备份…', 'info');
+    try {
+      const r = await api('POST', '/api/webdav/backup', {});
+      toast(r && r.name ? '已备份：' + r.name : '备份完成', 'success');
+      if (M) await M.reload();
+    } catch (e) { toast(e.message, 'error'); }
+  },
   davSave: () => davSave(),
   davTest: () => davTest(),
   davBackup: () => davBackup(false),

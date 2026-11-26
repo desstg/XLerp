@@ -1,4 +1,4 @@
-# XLerp 2.14.5
+# XLerp 2.2.0
 
 轻量级自托管进销存 / ERP，数据留在自己机器里，完全离线可用。
 
@@ -23,10 +23,10 @@
 
 | 平台 | 文件 | 说明 |
 |---|---|---|
-| Docker（AMD64） | `xlerp-2.14.5-docker-amd64.tar.gz` | 群晖、威联通、Unraid、绿联、极空间、飞牛等 x86 NAS |
-| Docker（ARM64） | `xlerp-2.14.5-docker-arm64.tar.gz` | 树莓派、ARM 架构 NAS |
-| Windows | `xlerp-2.14.5-windows-x64-setup.exe` | Windows 10 / 11 64 位，双击安装，自带 Node.js |
-| Android | `xlerp-2.14.5-android.apk` | Android 7.0 及以上 |
+| Docker（AMD64） | `xlerp-2.2.0-docker-amd64.tar.gz` | 群晖、威联通、Unraid、绿联、极空间、飞牛等 x86 NAS |
+| Docker（ARM64） | `xlerp-2.2.0-docker-arm64.tar.gz` | 树莓派、ARM 架构 NAS |
+| Windows | `xlerp-2.2.0-windows-x64-setup.exe` | Windows 10 / 11 64 位，双击安装，自带 Node.js |
+| Android | `xlerp-2.2.0-android.apk` | Android 7.0 及以上 |
 
 在线拉取镜像：`ghcr.io/desstg/xlerp:latest`（amd64 + arm64 多架构）
 
@@ -44,7 +44,7 @@ docker run -d --name xlerp --restart unless-stopped \
 **国内拉不动 ghcr.io** 时用离线镜像包：
 
 ```bash
-docker load -i xlerp-2.14.5-docker-amd64.tar.gz
+docker load -i xlerp-2.2.0-docker-amd64.tar.gz
 docker run -d --name xlerp --restart unless-stopped \
   -p 8686:8686 -v ./xlerp-data:/data \
   -e XERP_ADMIN_PASSWORD=你的初始密码 \
@@ -53,7 +53,7 @@ docker run -d --name xlerp --restart unless-stopped \
 
 ## Windows 安装
 
-双击 `xlerp-2.14.5-windows-x64-setup.exe`，向导里设端口（默认 8686）和管理员密码。
+双击 `xlerp-2.2.0-windows-x64-setup.exe`，向导里设端口（默认 8686）和管理员密码。
 
 - 以后台服务运行（任务计划程序「XLerp」，SYSTEM 身份开机自启，崩溃自动重启），不用登录 Windows
 - 自动在防火墙放行该端口，仅限同一局域网
@@ -61,13 +61,13 @@ docker run -d --name xlerp --restart unless-stopped \
 
 ## Android 安装
 
-安装 `xlerp-2.14.5-android.apk`，手机连上和服务端同一个 Wi-Fi，首次打开填服务端地址，或点「自动查找」扫描局域网。
+安装 `xlerp-2.2.0-android.apk`，手机连上和服务端同一个 Wi-Fi，首次打开填服务端地址，或点「自动查找」扫描局域网。
 
 - 右下角扫码按钮支持 EAN-13/8、UPC、Code 128/39/93、ITF、Codabar、QR、Data Matrix
 - 扫到的码会填进当前输入框并自动回车，开出入库单、盘点、搜索都能用
 - 服务端升级后手机端界面自动更新，一般不用重装
 
-> **签名说明**：本版起使用正式密钥签名，可正常覆盖升级。如果你装过 2.14.5 的早期测试包（临时证书签的），需要先卸载再装。
+> **签名说明**：本版起使用正式密钥签名，可正常覆盖升级。如果你装过 2.2.0 的早期测试包（临时证书签的），需要先卸载再装。
 
 ## 功能
 
