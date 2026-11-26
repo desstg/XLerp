@@ -48,12 +48,16 @@ if ($ks -and $pp) {
 
 if (-not $decoded) {
   Write-Host '::warning::Signing with a temporary keystore. This APK cannot upgrade an already-installed release build.'
+  # 只用字母数字，避免 $ / 引号 / 反斜杠在 keytool 与 apksigner 之间被转义吃掉
   $chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789'.ToCharArray()
   $pw = -join (1..24 | ForEach-Object { $chars | Get-Random })
+  # 必须用 JKS：PKCS12 会忽略 -keypass，导致 apksigner --key-pass 对不上（keystore password was incorrect）
   $keytool = Join-Path $env:JAVA_HOME 'bin\keytool.exe'
-  & $keytool -genkeypair -v -keystore $ksFile -alias xerp -keyalg RSA -keysize 2048 -validity 10000 `
+  & $keytool -genkeypair -v -storetype JKS -keystore $ksFile -alias xerp `
+      -keyalg RSA -keysize 2048 -validity 10000 `
       -storepass $pw -keypass $pw -dname 'CN=XLerp,O=XLerp,C=CN'
   if ($LASTEXITCODE -ne 0) { throw 'keytool failed' }
+  # analyzeCredentials 让 apksigner 用 --ks-pass 同时解开 store 与 key，避免两条密码不一致
   $lines = @(
     'storeFile=' + $ksFile,
     'storePassword=' + $pw,
