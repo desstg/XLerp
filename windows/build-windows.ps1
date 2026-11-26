@@ -135,5 +135,5 @@ $iss = Join-Path $Stage 'xerp.iss'
 [IO.File]::WriteAllText($iss, [IO.File]::ReadAllText((Join-Path $Win 'xerp.iss'), [Text.Encoding]::UTF8), $Utf8Bom)
 & $Iscc /Q "/DAppVersion=$Version" "/DStageDir=$Stage" "/DOutDir=$Dist" $iss
 if ($LASTEXITCODE -ne 0) { throw "ISCC 失败（$LASTEXITCODE）" }
-$exe = Join-Path $Dist "xerp-$Version-windows-x64-setup.exe"
+$exe = Join-Path $Dist "xlerp-$Version-windows-x64-setup.exe"
 Step ("Done: $exe ({0:N1} MB)" -f ((Get-Item $exe).Length / 1MB))

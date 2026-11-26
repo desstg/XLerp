@@ -1,4 +1,4 @@
-﻿# 构建 XLerp 收款助手 APK：dist\xerp-payrelay-1.0.0.apk
+﻿# 构建 XLerp 收款助手 APK：dist\xlerp-payrelay-1.0.0.apk
 # 只需要 JDK 17+、Android SDK（platforms;android-36、build-tools;36.1.0），不需要 Gradle
 $ErrorActionPreference = 'Stop'
 $Root  = Split-Path $PSScriptRoot -Parent
@@ -69,7 +69,7 @@ $KeyDir = Join-Path $env:USERPROFILE '.xerp-android'
 $Ks = Join-Path $KeyDir 'release.jks'; $KsProps = Join-Path $KeyDir 'keystore.properties'
 if (-not (Test-Path $Ks)) { throw '找不到签名密钥，先构建 XLerp 安卓客户端生成' }
 $pw = (@(Get-Content $KsProps | Where-Object { $_ -match '^storePassword=' })[0] -replace '^storePassword=', '').Trim()
-$Apk = Join-Path $Dist "xerp-payrelay-$Version.apk"
+$Apk = Join-Path $Dist "xlerp-payrelay-$Version.apk"
 Step 'Signing'
 Run (Join-Path $Bt 'apksigner.bat') sign --ks $Ks --ks-key-alias xerp --ks-pass "pass:$pw" --key-pass "pass:$pw" --out $Apk "$B\aligned.apk"
 Run (Join-Path $Bt 'apksigner.bat') verify $Apk

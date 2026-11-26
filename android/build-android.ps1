@@ -110,7 +110,7 @@ if (-not (Test-Path $Ks)) {
   Set-Content -Path $KsProps -Value "storePassword=$pw" -Encoding ASCII
 }
 $pw = (@(Get-Content $KsProps | Where-Object { $_ -match '^storePassword=' })[0] -replace '^storePassword=', '').Trim()
-$Apk = Join-Path $Dist "xerp-$Version-android.apk"
+$Apk = Join-Path $Dist "xlerp-$Version-android.apk"
 Step 'Signing'
 Run (Join-Path $Bt 'apksigner.bat') sign --ks $Ks --ks-key-alias xerp --ks-pass "pass:$pw" --key-pass "pass:$pw" --out $Apk "$B\aligned.apk"
 Run (Join-Path $Bt 'apksigner.bat') verify $Apk

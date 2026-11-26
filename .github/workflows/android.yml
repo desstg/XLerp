@@ -80,7 +80,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: xlerp-android-apk
-          path: dist/*-android.apk
+          path: dist/xlerp-*-android.apk
           if-no-files-found: error
 
       - name: 上传安装包到 GitHub Release
@@ -89,6 +89,6 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          $apk = Get-ChildItem dist\*erp-*-android.apk | Select-Object -First 1
+          $apk = Get-ChildItem dist\xlerp-*-android.apk | Select-Object -First 1
           if (-not $apk) { throw 'Android APK not found' }
           gh release upload "$env:TAG" $apk.FullName --clobber

@@ -139,13 +139,13 @@ jobs:
           # 每种架构单独导出（docker save 导不出非本机架构的镜像）；镜像名和 docker-compose.yml 里一致，导入后不用改配置
           for arch in amd64 arm64; do
             docker buildx build --platform "linux/$arch" -t "$IMAGE:$VER" -t "$IMAGE:latest" \
-              --output "type=docker,dest=xerp-$VER-docker-$arch.tar" .
-            gzip -9 "xerp-$VER-docker-$arch.tar"
+              --output "type=docker,dest=xlerp-$VER-docker-$arch.tar" .
+            gzip -9 "xlerp-$VER-docker-$arch.tar"
           done
-          ls -lh xerp-*-docker-*.tar.gz
+          ls -lh xlerp-*-docker-*.tar.gz
           # 检查离线包真能用：导入 amd64 包，跑起来能访问
           docker rmi -f "$IMAGE:$VER" "$IMAGE:latest" 2>/dev/null || true
-          docker load -i "xerp-$VER-docker-amd64.tar.gz"
+          docker load -i "xlerp-$VER-docker-amd64.tar.gz"
           docker run -d --name xerp-load -p 8687:8686 -e XERP_STATS_URL= -e XERP_FEEDBACK_URL= "$IMAGE:latest"
           ok=0
           for i in $(seq 30); do if curl -sf http://127.0.0.1:8687/api/ping >/dev/null 2>&1; then ok=1; break; fi; sleep 1; done
@@ -155,17 +155,17 @@ jobs:
           case "$PING2" in *"\"version\":\"$VER\""*) ;; *) echo "版本号不是 $VER"; exit 1;; esac
           docker rm -f xerp-load
           # arm64 包至少要有镜像清单和像样的大小
-          test "$(stat -c %s "xerp-$VER-docker-arm64.tar.gz")" -gt 10000000
-          tar -tzf "xerp-$VER-docker-arm64.tar.gz" > /tmp/arm64-list.txt
+          test "$(stat -c %s "xlerp-$VER-docker-arm64.tar.gz")" -gt 10000000
+          tar -tzf "xlerp-$VER-docker-arm64.tar.gz" > /tmp/arm64-list.txt
           grep -q manifest.json /tmp/arm64-list.txt
           # Release 可能由本地脚本稍后才建好，等一会儿
           for i in $(seq 30); do gh release view "$TAG" >/dev/null 2>&1 && break; sleep 20; done
-          gh release upload "$TAG" xerp-*-docker-*.tar.gz --clobber
+          gh release upload "$TAG" xlerp-*-docker-*.tar.gz --clobber
 
       - name: 上传离线镜像包（Artifacts）
         if: env.TAG != ''
         uses: actions/upload-artifact@v4
         with:
           name: xlerp-docker-images
-          path: xerp-*-docker-*.tar.gz
+          path: xlerp-*-docker-*.tar.gz
           if-no-files-found: error

@@ -1,4 +1,4 @@
-﻿# 构建飞牛 fnOS 应用包：dist\xerp-<版本>.fpk（应用名“XLerp”）
+﻿# 构建飞牛 fnOS 应用包：dist\xlerp-<版本>.fpk（应用名“XLerp”）
 # 需要：Windows、Node.js、联网（首次运行自动下载官方 fnpack 打包工具）
 $ErrorActionPreference = 'Stop'
 $Root   = Split-Path $PSScriptRoot -Parent
@@ -68,7 +68,7 @@ try {
 $fpk = Get-ChildItem (Split-Path $Stage), $Stage -Filter *.fpk -File | Sort-Object LastWriteTime -Descending | Select-Object -First 1
 if (-not $fpk) { throw '未找到生成的 .fpk 文件' }
 $version = ((Get-Content (Join-Path $Stage 'manifest') | Where-Object { $_ -match '^\s*version\s*=' }) -split '=', 2)[1].Trim()
-$final = Join-Path $Dist "xerp-$version.fpk"
+$final = Join-Path $Dist "xlerp-$version.fpk"
 Move-Item $fpk.FullName $final -Force
 # 修正 Windows 打包导致的文件权限与换行
 & node (Join-Path $Fnos 'fix-fpk.js') $final | Out-Host

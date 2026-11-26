@@ -2,15 +2,36 @@
 
 [![License: AGPL-3.0](https://img.shields.io/badge/license-AGPL--3.0-blue.svg)](LICENSE)
 [![Release](https://img.shields.io/github/v/release/desstg/XLerp)](https://github.com/desstg/XLerp/releases/latest)
+[![Docker](https://img.shields.io/badge/ghcr.io-desstg%2Fxlerp-blue)](https://github.com/desstg/XLerp/pkgs/container/xlerp)
 
-轻量级企业资源计划（ERP）系统，面向中小企业，可部署在 **飞牛 fnOS NAS**、**Docker**（群晖、威联通等任意 NAS）或任意装有 Node.js 22+ 的机器上，通过浏览器多人同时使用。进销存、财务、人事一站搞定，全部免费，完全离线可用，数据留在你自己手里。
+**XLerp** 是一套轻量级、可自托管的进销存 / ERP 系统，面向中小企业与门店。进销存、财务、人事、报表一站搞定，**数据全部留在自己的机器里**，完全离线可用。
 
-- **在线演示**：[demo.zhaoyoucai.xyz](https://demo.zhaoyoucai.xyz)（账号 `admin`，密码 `admin123`；所有人共用，数据每小时重置）
-- **下载**：[Releases](https://github.com/desstg/XLerp/releases)（Docker 离线镜像 / Windows 安装包 / Android APK / 飞牛 fpk）
-- **飞牛一键安装 / 自动更新**：装好 [FnDepot](https://github.com/EWEDLCM/FnDepot) 后添加应用源 `https://github.com/desstg/XLerp`（连不上 GitHub 就填 `https://www.zhaoyoucai.xyz/xerp/fnpack.json`），搜索 XLerp 安装，有新版本会提示更新
-- **应用内检查更新**：系统设置 → 版本更新，手动检查新版本；确认后只下载安装包，不会自动安装，飞牛 / Windows 会显示保存路径和安装步骤
+前端是单页应用，后端只依赖 Node.js 内置模块（数据库用内置 `node:sqlite`），所以：
 
-> **English**: XLerp is a free, open-source (AGPL-3.0) self-hosted inventory / ERP for small businesses — products, purchase & sales orders, returns, payments, multi-warehouse stock, finance and reports. Runs on fnOS, Docker (Synology, QNAP, Unraid, CasaOS / ZimaOS) or any machine with Node.js 22+. The UI is in Simplified Chinese.
+- 一台 NAS（群晖、威联通、Unraid、绿联、极空间、飞牛）跑个 Docker 就能开工
+- 或者任意装了 Node.js 22+ 的 Windows / Linux / macOS 机器直接 `node src/portal.js`
+- 手机、平板、电脑用浏览器同时在线，界面自动适配
+
+> **English**: XLerp is a lightweight, self-hosted inventory / ERP for small businesses — products, purchase & sales orders, returns, payments, multi-warehouse stock, finance, HR and reports. Runs on Docker (Synology, QNAP, Unraid, ZimaOS) or any machine with Node.js 22+, all data stays local in SQLite. The UI is in Simplified Chinese.
+
+## 手机上就能用
+
+<div align="center">
+<table>
+  <tr>
+    <td align="center"><img src="docs/screenshots/m-home.jpg" width="200" alt="首页"><br><sub>首页九宫格</sub></td>
+    <td align="center"><img src="docs/screenshots/m-order.jpg" width="200" alt="开单"><br><sub>开单 / 扫码</sub></td>
+    <td align="center"><img src="docs/screenshots/m-products.jpg" width="200" alt="货品库存"><br><sub>货品库存</sub></td>
+  </tr>
+  <tr>
+    <td align="center"><img src="docs/screenshots/m-detail.jpg" width="200" alt="明细"><br><sub>明细流水</sub></td>
+    <td align="center"><img src="docs/screenshots/m-report.jpg" width="200" alt="报表"><br><sub>销售统计</sub></td>
+    <td align="center"><img src="docs/screenshots/m-mine.jpg" width="200" alt="我的"><br><sub>我的</sub></td>
+  </tr>
+</table>
+</div>
+
+## 电脑端
 
 | 工作台 | 库存 |
 |---|---|
@@ -18,7 +39,30 @@
 | **销售** | **收款记录** |
 | ![销售](docs/screenshots/sales.png) | ![收款记录](docs/screenshots/payments.png) |
 
-<p align="center"><img src="docs/screenshots/mobile.png" width="260" alt="手机端"></p>
+## 快速开始
+
+```bash
+docker run -d --name xlerp --restart unless-stopped \
+  -p 8686:8686 -v ./xlerp-data:/data \
+  -e XERP_ADMIN_PASSWORD=你的初始密码 \
+  ghcr.io/desstg/xlerp:latest
+```
+
+浏览器打开 `http://NAS地址:8686`，账号 `admin`，密码是上面设的（不设则 `admin123`，登录后请立刻修改）。
+
+其他安装方式和全部功能见下方各章节，或直接到 [Releases](https://github.com/desstg/XLerp/releases) 下载离线镜像 / Windows 安装包 / Android APK。
+
+## 关于本项目
+
+XLerp 基于开源项目 **[x.erp](https://github.com/Zyc009234/x.erp)** 二次开发，在其基础上：
+
+- 重构了手机端界面，对齐智慧记的操作习惯（首页九宫格、开单页、货品库存、明细流水、收支记账、盘点）
+- 新增销售单自动完成、采购单自动入库、开单规则统一为「打勾即自动」
+- 新增开单页「其他收入 / 其他支出」统一框架，带票据影像
+- 盘点单改为「点保存才建单」，避免留一堆空单
+- 品牌与构建产物更名为 XLerp / `xlerp-*`
+
+上游项目与本项目均以 AGPL-3.0 发布，感谢原作者。
 
 ## 功能
 
@@ -84,11 +128,11 @@ node src/portal.js --data ./data --port 8686
 
 ## Docker 部署（群晖 / 威联通 / Unraid / 绿联 / 极空间等）
 
-镜像 `ghcr.io/desstg/xlerp`，Docker Hub 上同步一份 `desstg/xlerp`（群晖 Container Manager、威联通 Container Station、绿联、极空间的镜像仓库里搜 `xerp` 就能找到），支持 amd64 和 arm64。数据全部在容器的 `/data` 目录（数据库、每日自动备份、日志），挂载出来后升级镜像不丢数据。
+镜像 `ghcr.io/desstg/xlerp`，Docker Hub 上同步一份 `desstg/xlerp`（群晖 Container Manager、威联通 Container Station、绿联、极空间的镜像仓库里搜 `xlerp` 就能找到），支持 amd64 和 arm64。数据全部在容器的 `/data` 目录（数据库、每日自动备份、日志），挂载出来后升级镜像不丢数据。
 
 ```bash
-docker run -d --name xerp --restart unless-stopped \
-  -p 8686:8686 -v ./xerp-data:/data \
+docker run -d --name xlerp --restart unless-stopped \
+  -p 8686:8686 -v ./xlerp-data:/data \
   -e XERP_ADMIN_PASSWORD=你的初始密码 \
   ghcr.io/desstg/xlerp:latest
 ```
@@ -96,7 +140,7 @@ docker run -d --name xerp --restart unless-stopped \
 或者用仓库里的 [`docker-compose.yml`](docker-compose.yml)：`docker compose up -d`。浏览器打开 `http://NAS地址:8686`，账号 `admin`，密码是 `XERP_ADMIN_PASSWORD`（不设置则为 `admin123`，登录后请及时修改；这个变量只在第一次启动时生效）。
 
 - **升级**：`docker pull ghcr.io/desstg/xlerp:latest` 后重建容器（compose：`docker compose pull && docker compose up -d`）
-- **国内拉不动 ghcr.io**：到 [Releases](https://github.com/desstg/XLerp/releases/latest) 或官网下载离线镜像包 `xerp-<版本>-docker-amd64.tar.gz`（ARM 设备用 `arm64`），执行 `docker load -i xerp-<版本>-docker-amd64.tar.gz` 导入，之后同上
+- **国内拉不动 ghcr.io**：到 [Releases](https://github.com/desstg/XLerp/releases/latest) 或官网下载离线镜像包 `xlerp-<版本>-docker-amd64.tar.gz`（ARM 设备用 `arm64`），执行 `docker load -i xlerp-<版本>-docker-amd64.tar.gz` 导入，之后同上
 - **环境变量**：`XERP_ADMIN_PASSWORD` 首次启动的管理员密码；`XERP_STATS_URL=`（留空）关闭匿名使用统计，也可以在 系统设置 里关；`TZ` 默认 `Asia/Shanghai`
 - **Unraid**：Docker 页面底部的 Template Repositories 里加上 `https://github.com/desstg/XLerp` 并保存，然后 Add Container → Template 选 XLerp；模板见 [`unraid/xerp.xml`](unraid/xerp.xml)
 - **CasaOS / ZimaOS**：已提交到官方应用商店，上架后在应用商店搜索 XLerp 即可安装
@@ -118,18 +162,18 @@ node --test tests/api.test.mjs
 
 ## Windows 安装版
 
-从 [Releases](https://github.com/desstg/XLerp/releases) 下载 `xerp-<版本>-windows-x64-setup.exe`（Windows 10 / 11 64 位），双击安装：
+从 [Releases](https://github.com/desstg/XLerp/releases) 下载 `xlerp-<版本>-windows-x64-setup.exe`（Windows 10 / 11 64 位），双击安装：
 
 - 安装向导里设置端口（默认 8686）和管理员密码；自带 Node.js，不用另装任何东西
 - 以后台服务运行（任务计划程序「XLerp」，SYSTEM 身份开机自启，崩溃自动重启），不用登录 Windows
 - 自动在防火墙放行该端口，仅限同一局域网；局域网其他电脑访问 `http://本机IP:8686`
 - 数据在 `C:\ProgramData\XERP`；覆盖安装新版即可升级，升级和卸载都不删数据
 
-构建：`powershell -ExecutionPolicy Bypass -File windows\build-windows.ps1`（需要 x64 Node.js 22.13+ 和 Inno Setup 6：`winget install JRSoftware.InnoSetup`），产物为 `dist\xerp-<版本>-windows-x64-setup.exe`。
+构建：`powershell -ExecutionPolicy Bypass -File windows\build-windows.ps1`（需要 x64 Node.js 22.13+ 和 Inno Setup 6：`winget install JRSoftware.InnoSetup`），产物为 `dist\xlerp-<版本>-windows-x64-setup.exe`。
 
 ## 安卓客户端
 
-下载 `xerp-<版本>-android.apk`（Android 7.0 及以上）安装。手机连上和服务端同一个 Wi-Fi，首次打开填写服务端地址，或点「自动查找」扫描局域网。
+下载 `xlerp-<版本>-android.apk`（Android 7.0 及以上）安装。手机连上和服务端同一个 Wi-Fi，首次打开填写服务端地址，或点「自动查找」扫描局域网。
 
 - 右下角扫码按钮：用摄像头扫商品条码 / 二维码（EAN-13/8、UPC、Code 128/39/93、ITF、Codabar、QR、Data Matrix），结果填进当前输入框并自动回车，开出入库单、盘点、搜索都能用；没有选中输入框时直接查这个商品的库存
 - 导出的 CSV / 备份 / 导入模板会让你选择保存位置；导入时可从手机选文件；单据、标签可走手机的系统打印（打印机或另存 PDF）
@@ -151,11 +195,11 @@ node --test tests/api.test.mjs
 powershell -ExecutionPolicy Bypass -File fnos\build-fnos.ps1
 ```
 
-产物为 `dist\xerp-<版本>.fpk`，在飞牛 Web 界面 → 应用中心 → 手动安装。
+产物为 `dist\xlerp-<版本>.fpk`，在飞牛 Web 界面 → 应用中心 → 手动安装。
 
 - 依赖飞牛官方运行环境 `nodejs_v22`（安装时自动安装），包本身为纯 JS，x86 / ARM 通用
 - 安装向导中设置管理员密码
-- 数据目录为应用数据目录（`/vol*/@appdata/xerp`），升级不丢失
+- 数据目录为应用数据目录（`/vol*/@appdata/xerp`，包名沿用上游标识以便升级），升级不丢失
 - `fnos/fix-fpk.js` 用于修正 Windows 上 fnpack 打包后的文件权限与换行
 
 发布新版本时修改 `fnos/pkg/manifest` 中的 `version` 与 `changelog`。
@@ -164,24 +208,6 @@ powershell -ExecutionPolicy Bypass -File fnos\build-fnos.ps1
 
 参见 [官方上架文档](https://developer.fnnas.com/docs/quick-started/publish-application/)：目前通过飞牛官网的微信群联系社区主理人，加入“应用中心开发者先锋交流群”后提交 `.fpk`、图标、真实界面截图与测试材料。
 
-
-## 请作者喝杯咖啡
-XLerp 完全免费、核心功能不锁，也不会弹窗要打赏。如果你用它省了时间、省了钱，欢迎自愿支持一下，打赏用于优先修你提的 Bug、优先做你想要的功能。
-| 打赏 | 回报 |
-| --- | --- |
-| 8.88 元 | 请作者喝杯咖啡 |
-| 88 元 | 进交流群（打赏后加作者微信） |
-| 288 元 | 一对一帮你部署一次 |
-
-<table>
-  <tr>
-    <td align="center">微信<br><img src="docs/donate-wechat.png" width="200" alt="微信收款码"></td>
-    <td align="center">支付宝<br><img src="docs/donate-alipay.png" width="200" alt="支付宝收款码"></td>
-  </tr>
-</table>
-
-进交流群：打赏 88 元后，扫下方二维码加作者微信，拉你进交流群。
-<img src="docs/wechat-contact.jpg" width="200" alt="作者微信">
 
 ## 许可证
 
