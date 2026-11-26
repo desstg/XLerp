@@ -50,23 +50,48 @@ jobs:
           KS_B64: ${{ secrets.ANDROID_KEYSTORE_B64 }}
           PROPS_B64: ${{ secrets.ANDROID_KEYSTORE_PROPS_B64 }}
         run: |
+          $ErrorActionPreference = 'Stop'
           $dir = Join-Path $env:USERPROFILE '.xerp-android'
           New-Item -ItemType Directory -Force -Path $dir | Out-Null
-          if ($env:KS_B64 -and $env:PROPS_B64) {
-            Write-Host '使用仓库 Secrets 里的正式签名证书'
-            [IO.File]::WriteAllBytes((Join-Path $dir 'release.jks'), [Convert]::FromBase64String($env:KS_B64))
-            [IO.File]::WriteAllBytes((Join-Path $dir 'keystore.properties'), [Convert]::FromBase64String($env:PROPS_B64))
-            exit 0
+          # Secret 里粘贴的 base64 常带换行 / 空格 / BOM，甚至有 data:...;base64, 前缀，统一清洗后再解码
+          function Clean-B64([string]$s) {
+            if (-not $s) { return '' }
+            $s = $s -replace '^\uFEFF', ''
+            $s = $s -replace '^data:[^,]*,', ''
+            $s = $s -replace '\s', ''
+            return $s
           }
-          # 没配 Secrets：生成一次性证书，保证能出包（这样的包不能覆盖安装已装的正式版）
-          Write-Host '::warning::未配置 ANDROID_KEYSTORE_B64 / ANDROID_KEYSTORE_PROPS_B64，本次用临时证书签名，不能覆盖升级已安装的应用'
+          $ks = Clean-B64 $env:KS_B64
+          $pp = Clean-B64 $env:PROPS_B64
+          $decoded = $false
+          if ($ks -and $pp) {
+            try {
+              $ksBytes = [Convert]::FromBase64String($ks)
+              $ppBytes = [Convert]::FromBase64String($pp)
+              # release.jks 至少得是个像样的二进制（几千字节以上）
+              if ($ksBytes.Length -lt 1024) { throw "release.jks 只有 $($ksBytes.Length) 字节，不像有效的密钥库" }
+              [IO.File]::WriteAllBytes((Join-Path $dir 'release.jks'), $ksBytes)
+              [IO.File]::WriteAllBytes((Join-Path $dir 'keystore.properties'), $ppBytes)
+              Write-Host "使用仓库 Secrets 里的正式签名证书（jks $($ksBytes.Length) 字节）"
+              $propsText = [Text.Encoding]::UTF8.GetString($ppBytes)
+              if ($propsText -notmatch 'storePassword' -or $propsText -notmatch 'keyAlias') {
+                throw 'keystore.properties 里缺少 storePassword / keyAlias，内容不对'
+              }
+              $decoded = $true
+            } catch {
+              Write-Host "::warning::Secrets 不是有效的 base64（$($_.Exception.Message)），本次改用临时证书签名"
+            }
+          }
+          if ($decoded) { exit 0 }
+          # 没配 Secrets 或内容无效：生成一次性证书，保证能出包（这样的包不能覆盖安装已装的正式版）
+          Write-Host '::warning::未使用正式签名证书，本次用临时证书签名，不能覆盖升级已安装的应用'
           $chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789'.ToCharArray()
           $pw = -join (1..24 | ForEach-Object { $chars | Get-Random })
-          $ks = Join-Path $dir 'release.jks'
+          $ksF = Join-Path $dir 'release.jks'
           $keytool = Join-Path $env:JAVA_HOME 'bin\keytool.exe'
-          & $keytool -genkeypair -v -keystore $ks -alias xerp -keyalg RSA -keysize 2048 -validity 10000 -storepass $pw -keypass $pw -dname 'CN=XLerp,O=XLerp,C=CN'
+          & $keytool -genkeypair -v -keystore $ksF -alias xerp -keyalg RSA -keysize 2048 -validity 10000 -storepass $pw -keypass $pw -dname 'CN=XLerp,O=XLerp,C=CN'
           if ($LASTEXITCODE -ne 0) { throw 'keytool 生成证书失败' }
-          $props = "storeFile=$ks`nstorePassword=$pw`nkeyAlias=xerp`nkeyPassword=$pw`n"
+          $props = "storeFile=$ksF`nstorePassword=$pw`nkeyAlias=xerp`nkeyPassword=$pw`n"
           [IO.File]::WriteAllText((Join-Path $dir 'keystore.properties'), $props, (New-Object Text.UTF8Encoding $false))
 
       - name: 打包并签名 Android APK
