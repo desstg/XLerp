@@ -43,7 +43,7 @@ Stop-Xerp
 $node = Join-Path $AppDir 'node.exe'
 $pwdFile = Join-Path $DataDir 'admin-password.txt'
 
-# Run mode comes from config.json (written by 系统设置 -> 运行模式):
+# Run mode comes from config.json (written by Settings -> Run mode):
 #   server (default) -> portal.js, data lives in $DataDir, LAN clients can connect
 #   client           -> client.js, proxies everything to the remote server, no local data
 $mode = 'server'

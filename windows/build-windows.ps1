@@ -1,4 +1,4 @@
-# 构建 Windows 安装包：dist\xerp-<版本>-windows-x64-setup.exe
+﻿# 构建 Windows 安装包：dist\xerp-<版本>-windows-x64-setup.exe
 # 需要：Windows、本机已安装 Node.js（x64，会把 node.exe 一起打进安装包）、Inno Setup 6（winget install JRSoftware.InnoSetup）
 $ErrorActionPreference = 'Stop'
 $Root  = Split-Path $PSScriptRoot -Parent
