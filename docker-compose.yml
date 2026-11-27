@@ -2,13 +2,20 @@
 # 首次登录账号 admin，密码见 XERP_ADMIN_PASSWORD（不设置则为 admin123，登录后请及时修改）
 services:
   xlerp:
-    image: ghcr.io/desstg/xlerp:latest
+    image: desstg/xlerp:latest
     container_name: xlerp
     restart: unless-stopped
     ports:
       - "8686:8686"
     volumes:
-      - ./xlerp-data:/data         # 数据库、每日自动备份、日志都在这里，升级不丢
+      - ./xlerp-data:/data           # 数据库、每日自动备份、日志都在这里，升级不丢
     environment:
-      - XERP_ADMIN_PASSWORD=       # 首次启动时的管理员密码（至少 6 位），之后改这里不再生效
-      # - XERP_STATS_URL=          # 取消注释即关闭匿名使用统计（也可在 系统设置 里关）
+      - XERP_ADMIN_PASSWORD=         # 首次启动时的管理员密码（至少 6 位），之后改这里不再生效
+      - XERP_STATS_URL=              # 留空即关闭匿名使用统计（也可在 系统设置 里关）
+      - TZ=Asia/Shanghai
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:8686/api/ping').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      start_period: 20s
+      retries: 3

@@ -1,5 +1,5 @@
 # XLerp Docker 镜像：群晖、威联通、Unraid、绿联、极空间等任何能跑 Docker 的机器都能用
-#   docker run -d --name xerp -p 8686:8686 -v ./xerp-data:/data --restart unless-stopped ghcr.io/desstg/xlerp
+#   docker run -d --name xerp -p 8686:8686 -v ./xerp-data:/data --restart unless-stopped desstg/xlerp
 # 数据全部在 /data（数据库、每日自动备份、日志），升级镜像不丢数据。
 FROM node:22-alpine
 

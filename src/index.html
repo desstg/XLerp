@@ -1073,8 +1073,8 @@ html.mobile .zhj-ck-foot2 .ok{flex:none;width:34%;height:52px;border:none;backgr
 }
 .zhj-ck-dlg .ir .u{font-size:15px;color:#8c939b;flex:none}
 .zhj-ck-dlg .ibs{display:flex;border-top:1px solid #eef1f5;margin-top:10px}
-.zhj-ck-dlg .ibs button{flex:1;height:52px;border:none;background:none;font-size:17px;font-family:inherit;color:#31bfcf}
-.zhj-ck-dlg .ibs button:first-child{border-right:1px solid #eef1f5;color:#31bfcf}
+.zhj-ck-dlg .ibs button{flex:1;height:52px;border:none;background:none;font-size:17px;font-family:inherit;color:#31bfcf;padding:0 4px;white-space:nowrap}
+.zhj-ck-dlg .ibs button:not(:last-child){border-right:1px solid #eef1f5;color:#31bfcf}
 /* 整屏选择页（选择客户 / 选择货品）：盖住全屏，蓝色标题栏 */
 .zhj-pick-mask{position:fixed;inset:0;top:0;right:0;bottom:0;left:0;z-index:1200;background:#edf1f7;display:flex;flex-direction:column}
 .zhj-pick{display:flex;flex-direction:column;height:100%;position:relative}
@@ -1235,8 +1235,10 @@ html.mobile.order-mobile{padding-bottom:calc(70px + env(safe-area-inset-bottom,0
 html.mobile .zhj-ob-empty span{font-size:13px;color:#b6bcc4}
 /* 购物车行：图片 + 名称 / 数量：X 单位 / 价格：¥X   金额：¥X（照智慧记真机） */
 html.mobile .zhj-cart-item{display:flex;gap:14px;padding:16px;border-bottom:1px solid #f0f2f5;position:relative;background:#fff}
-html.mobile .zhj-cart-item .thumb{width:60px;height:60px;border-radius:8px;background:#f0f2f5;display:flex;align-items:center;justify-content:center;flex:none}
+html.mobile .zhj-cart-item .thumb{width:60px;height:60px;border-radius:8px;background:#f0f2f5;display:flex;align-items:center;justify-content:center;flex:none;overflow:hidden}
 html.mobile .zhj-cart-item .thumb svg{width:28px;height:28px;stroke:#d6dbe1;fill:none}
+/* 购物车行里的商品图铺满 60×60（.pimg 全局是 36px，不覆盖会显示成小方块） */
+html.mobile .zhj-cart-item .thumb img,html.mobile .zhj-cart-item .thumb .pimg{width:100%;height:100%;object-fit:cover;display:block;border:none;border-radius:0}
 html.mobile .zhj-cart-item .info{flex:1;min-width:0;padding-top:2px}
 html.mobile .zhj-cart-item .nm{font-size:16px;color:#333;margin-bottom:9px;line-height:1.3;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 html.mobile .zhj-cart-item .meta{display:flex;font-size:14px;color:#9aa3ad;margin-top:7px;align-items:center;line-height:1.4}
@@ -1294,8 +1296,9 @@ html.mobile .zp-sw.on{background:#31bfcf}
 html.mobile .zp-sw.on::after{left:22px}
 html.mobile .zp-ck{color:#31bfcf;font-weight:700;font-size:16px}
 html.mobile .zhj-item-dlg .ibs{display:flex;margin:22px -20px 0;border-top:1px solid #eceff3}
-html.mobile .zhj-item-dlg .ibs button{flex:1;height:52px;border:none;background:none;font-size:17px;color:#666}
-html.mobile .zhj-item-dlg .ibs button:first-child{border-right:1px solid #eceff3}
+html.mobile .zhj-item-dlg .ibs button{flex:1;height:52px;border:none;background:none;font-size:17px;color:#666;padding:0 4px;white-space:nowrap}
+/* 每两个按钮之间都有一条竖线：除最后一个之外，每个按钮右边画一条 */
+html.mobile .zhj-item-dlg .ibs button:not(:last-child){border-right:1px solid #eceff3}
 html.mobile .zhj-item-dlg .ibs button.ok{color:var(--zhj)}
 /* 开单页汇总区：折后金额 / 折扣率 / 运费 / 本单应收 / 本次实收 / 结算账户 */
 html.mobile .zhj-ob-total{background:#fff;margin-top:10px}
@@ -1491,9 +1494,12 @@ html.mobile .zhead{display:flex;align-items:center;gap:16px;padding:16px;backgro
 html.mobile .zimg{
   width:76px;height:76px;border-radius:8px;border:1px solid #e2e7ed;background:#f8fafc;
   display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;flex:none;
-  color:#a8b0b9;font-size:11px;
+  color:#a8b0b9;font-size:11px;overflow:hidden;padding:0;
 }
 html.mobile .zimg svg{width:20px;height:20px;stroke:#b9c0c8;fill:none;stroke-width:1.6}
+/* 详情页头像位：有图就铺满 76×76，没图显示放大的山形占位 */
+html.mobile .zimg img,html.mobile .zimg .pimg{width:100%;height:100%;object-fit:cover;display:block;border:none;border-radius:0}
+html.mobile .zimg>svg{width:34px;height:34px;stroke:none}
 html.mobile .zimg .has{color:var(--zhj);font-size:11px}
 html.mobile .zheadline{flex:1;min-width:0}
 html.mobile .zheadline .t{font-size:16px;color:#333;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -2023,6 +2029,8 @@ html.mobile .zhj-dtdtl{background:#fff;padding:12px 14px;border-bottom:1px solid
 html.mobile .zhj-dtdtl .thumb{width:68px;height:68px;border-radius:8px;border:1px solid #e8ecf1;background:#f7f9fb;flex:none;display:flex;align-items:center;justify-content:center;overflow:hidden}
 html.mobile .zhj-dtdtl .thumb img,html.mobile .zhj-dtdtl .thumb .pimg{width:100%;height:100%;object-fit:cover;display:block}
 html.mobile .zhj-dtdtl .thumb svg{width:28px;height:28px;stroke:#c8cdd4;fill:none;stroke-width:1.4}
+/* 货品库存列表的缩略图：图片铺满 64×64 方框（默认图居中，由 prodNoImg 控制大小） */
+html.mobile .zhj-pthumb img,html.mobile .zhj-pthumb .pimg{width:100%;height:100%;object-fit:cover;display:block;border:none;border-radius:0}
 html.mobile .zhj-dtdtl .dbody{flex:1;min-width:0}
 html.mobile .zhj-dtdtl .nm2{font-size:16px;color:#333;line-height:1.35;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 html.mobile .zhj-dtdtl .qtyc2{display:inline-block;margin-top:5px;padding:0 11px;height:25px;line-height:23px;border:1px solid #e2e7ed;border-radius:13px;color:#8e959e;font-size:13px;white-space:nowrap}
@@ -2602,7 +2610,7 @@ html.mobile .zhj-rpt-cap{font-size:16px}
   <aside class="sidebar">
     <div class="brand"><div class="logo">XL</div><span class="brand-name">XLerp</span></div>
     <nav id="nav"></nav>
-<div class="side-foot"><span id="sideVer">v2.20.0</span> · 数据保存在服务器</div>
+<div class="side-foot"><span id="sideVer">v2.20.1</span> · 数据保存在服务器</div>
   </aside>
   <div class="backdrop" data-act="toggleSide"></div>
   <div class="main">
@@ -2785,6 +2793,8 @@ function rptDateBar(kind) {
 const ICONS = {
   dashboard:'<rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/>',
   box:'<path d="M21 8l-9-5-9 5 9 5 9-5z"/><path d="M3 8v8l9 5 9-5V8"/><path d="M12 13v8"/>',
+  // 商品无图时的占位图（照智慧记：两座山 + 小太阳，淡灰蓝填充，无描边）
+  noimg:'<circle cx="7.2" cy="8.6" r="1.5"/><path d="M20.4 19H3.6l5.2-8.4 3.1 4.6 2.4-3.2z"/>',
   warehouse:'<path d="M3 21V8l9-5 9 5v13"/><path d="M7 21v-8h10v8"/><path d="M7 17h10"/>',
   cart:'<circle cx="9" cy="20" r="1.5"/><circle cx="18" cy="20" r="1.5"/><path d="M2 3h3l2.5 12h11L21 7H6"/>',
   sales:'<path d="M3 17l6-6 4 4 8-8"/><path d="M14 7h7v7"/>',
@@ -2838,6 +2848,11 @@ const ICONS = {
   funnel:'<path d="M3 4h18l-7 8.4V21l-4-2.2v-6.4L3 4z"/>',
 };
 const ic = n => `<svg class="i" viewBox="0 0 24 24">${ICONS[n] || ''}</svg>`;
+// 商品无图时的默认图：淡灰蓝实心（照智慧记），与描边类图标区分开，所以单独一个函数
+function prodNoImg(size) {
+  const w = size ? size + 'px' : '58%';
+  return `<svg viewBox="0 0 24 24" style="width:${w};height:${w};fill:#dbe3ec;stroke:none;display:block"><circle cx="6.6" cy="6.6" r="2"/><path d="M22.5 21.4H1.5l7.2-12.6 4.3 7.2 3-4.4z"/></svg>`;
+}
 const emptySvg = '<svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="10" y="18" width="44" height="34" rx="4"/><path d="M10 28h44M24 18l4-8h8l4 8"/><path d="M26 40h12"/></svg>';
 
 /* ================= 常量 ================= */
@@ -4024,7 +4039,7 @@ function pageProducts() {
     listHtml = letters.map(L => `<div class="zhj-letter" id="zhjL_${L}">${L}</div>` + gTmp[L].map(p => {
       const low = p.stock < p.safety || p.stock <= 0;
       return `<div class="zhj-party" data-act="zhjProd" data-id="${p.id}" style="align-items:flex-start;padding:14px 16px 14px 16px;border-bottom:1px solid #f0f2f5;display:flex;gap:12px;background:#fff">
-        <div style="width:64px;height:64px;border-radius:8px;background:#f5f7fa;display:flex;align-items:center;justify-content:center;flex:none;border:1px solid #e8ecf1">${ic('box')}</div>
+        <div class="zhj-pthumb" style="width:64px;height:64px;border-radius:8px;background:#f5f7fa;display:flex;align-items:center;justify-content:center;flex:none;border:1px solid #e8ecf1;overflow:hidden">${p.img ? pimg(p, 64, false) : prodNoImg(32)}</div>
         <div style="flex:1;min-width:0;padding-right:14px">
           <div style="font-size:16px;color:#333;margin-bottom:8px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(p.name)}</div>
           <div style="display:flex;font-size:13px;color:#9aa3ad;line-height:1.5"><span style="flex:1">批发价：${p.wholesale != null ? ymoney(p.wholesale) : '-'}</span><span style="flex:1;text-align:right">成本价：${ymoney(p.cost || 0)}</span></div>
@@ -7930,7 +7945,7 @@ function orderModal(kind, id, srcId0) {
         const p = byId(db.products, it.productId) || { name: '已删除商品', unit: '' };
         const idx = draft.items.indexOf(it);
         return `<div class="zhj-cart-item" data-row="${idx}" data-act="obItemEdit" data-id="${idx}">
-          <div class="thumb">${ic('box')}</div>
+          <div class="thumb">${p.img ? pimg(p, 60, false) : prodNoImg(30)}</div>
           <div class="info">
             <div class="nm">${esc(p.name)}</div>
             <div class="meta"><span>数量：<span class="qv">${num(lineQty(it))}</span>${esc(lineUnit(it, p))}</span></div>
@@ -7965,7 +7980,7 @@ function orderModal(kind, id, srcId0) {
         <div class="ir"><label>单价</label><input id="iiPrice" type="text" inputmode="decimal" value="0"><span class="u">元</span></div>
         <div class="ir"><label>金额</label><input id="iiAmt" type="text" readonly value="0"><span class="u">元</span></div>
         <div class="ir"><label>备注</label><input id="iiNote" type="text" value="${esc(it.note || '')}"><span class="u"></span></div>
-        <div class="ibs"><button data-x="cancel">取消</button><button class="ok" data-x="ok">保存</button><button data-x="del" style="flex:0 0 62px;color:#fa3757">删除</button></div>
+        <div class="ibs"><button data-x="cancel">取消</button><button class="ok" data-x="ok">保存</button><button data-x="del" style="color:#fa3757">删除</button></div>
       </div>`;
       document.body.appendChild(m);
       const qIn = m.querySelector('#iiQty'), pIn = m.querySelector('#iiPrice'), aIn = m.querySelector('#iiAmt'), nIn = m.querySelector('#iiNote'), uLbl = m.querySelector('#iiU'), uSel = m.querySelector('#iiUnit');
@@ -8367,7 +8382,7 @@ function orderModal(kind, id, srcId0) {
           const p = byId(db.products, it.productId) || { name: '已删除商品', unit: '' };
           const idx = draft.items.indexOf(it);
           return `<div class="zhj-cart-item">
-            <div class="thumb">${ic('box')}</div>
+            <div class="thumb">${p.img ? pimg(p, 60, false) : prodNoImg(30)}</div>
             <div class="info">
               <div class="nm">${esc(p.name)}</div>
               <div class="meta">
@@ -8571,7 +8586,7 @@ function orderView(kind, id) {
           const p = byId(db.products, i.productId) || { name: '已删除商品', unit: '' };
           const amt = i.qty * i.price - (i.lineDiscount || 0);
           return `<div class="zhj-cart-item" style="border-bottom:1px solid #f2f4f7">
-            <div class="thumb">${ic('box')}</div>
+            <div class="thumb">${p.img ? pimg(p, 60, false) : prodNoImg(30)}</div>
             <div class="info">
               <div class="nm">${esc(p.name)}</div>
               <div class="meta"><span>数量：<span class="qv">${num(lineQty(i))}</span>${esc(lineUnit(i, p))}</span></div>
@@ -9792,7 +9807,7 @@ function zhjItemDialog({ name, unit, units, qty, price, lineDiscount, note, onSa
     <div class="ir"><label>单价</label><input id="iiPrice" type="text" inputmode="decimal" value="${(+price || 0).toFixed(2)}"><span class="u">元</span></div>
     <div class="ir"><label>金额</label><input id="iiAmt" type="text" inputmode="decimal" value="${((+qty || 0) * (+price || 0) - disc).toFixed(2)}"><span class="u">元</span></div>
     <div class="ir"><label>备注</label><input id="iiNote" type="text" value="${esc(note || '')}"><span class="u"></span></div>
-    <div class="ibs">${onDelete ? '<button data-x="del" style="flex:0 0 70px;color:#fa3757">删除</button>' : ''}<button data-x="cancel">取消</button><button class="ok" data-x="ok">保存</button></div>
+    <div class="ibs"><button data-x="cancel">取消</button><button class="ok" data-x="ok">保存</button>${onDelete ? '<button data-x="del" style="color:#fa3757">删除</button>' : ''}</div>
   </div>`;
   document.body.appendChild(m);
   const qIn = m.querySelector('#iiQty'), pIn = m.querySelector('#iiPrice'), aIn = m.querySelector('#iiAmt'), nIn = m.querySelector('#iiNote'), uLbl = m.querySelector('#iiU'), uSel = m.querySelector('#iiUnit');
@@ -10666,7 +10681,7 @@ function zhjPickProduct(onPick, onAdd, opts = {}) {
             ? `${esc(lv)}：${ymoney(lvPrice)}`
             : `零售价：${ymoney(p.price || 0)}`;
       return `<div class="zhj-party" style="align-items:flex-start;padding:14px 22px 14px 16px;border-bottom:1px solid #f0f2f5;display:flex;gap:12px;background:#fff">
-        <div style="width:64px;height:64px;border-radius:8px;background:#f5f7fa;border:1px solid #e8ecf1;display:flex;align-items:center;justify-content:center;flex:none">${ic('box')}</div>
+        <div class="zhj-pthumb" style="width:64px;height:64px;border-radius:8px;background:#f5f7fa;border:1px solid #e8ecf1;display:flex;align-items:center;justify-content:center;flex:none;overflow:hidden">${p.img ? pimg(p, 64, false) : prodNoImg(32)}</div>
         <div style="flex:1;min-width:0" data-editp="${p.id}">
           <div style="font-size:16px;color:#333;margin-bottom:8px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(p.name)}</div>
           ${(pr || isBuy) ? `<div style="font-size:13px;color:#9aa3ad;line-height:1.5">${priceLine}</div>` : ''}
@@ -10708,7 +10723,7 @@ function zhjProdView(id) {
     </div>
     <div class="zform">
       <div class="zgroup" style="margin-top:0"><div class="zhead">
-        <button type="button" class="zimg" id="pvImg">${p.img ? '<span class="has">查看图片</span>' : ic('image')}<span>${p.img ? '' : '无图片'}</span></button>
+        <button type="button" class="zimg" id="pvImg">${p.img ? pimg(p, 64, false) : prodNoImg(30)}</button>
         <div class="zheadline">
           <div class="t">${esc(p.name)}</div>
           <div class="s">${p.barcode ? '条形码 ' + esc(p.barcode) : '编码 ' + esc(p.sku || '')}</div>
@@ -11633,7 +11648,7 @@ function rptRankHtml(rpt) {
   const item = (x, i) => {
     const isProd = by === 'prod';
     const prod = isProd ? db.products.find(p => p.name === x.name) : null;
-    const thumb = isProd ? `<div class="thumb">${prod && prod.img ? pimg(prod, 64, false) : `<svg viewBox="0 0 24 24"><path d="M3 17l5-6 4 5 3-3 6 8H3z"/><circle cx="8" cy="7" r="2"/></svg>`}</div>` : '';
+    const thumb = isProd ? `<div class="thumb">${prod && prod.img ? pimg(prod, 64, false) : prodNoImg()}</div>` : '';
     const qtyc = isProd ? `<span class="qtyc">${num(+(x.qty || 0))}${prod && prod.unit ? esc(prod.unit) : ''}</span>` : '';
     const body = `<div class="${isProd ? 'body' : 'body2'}">
       <div class="nm">${(isProd || more) ? '' : `<i class="dot" style="color:${RPT_PALETTE[i % RPT_PALETTE.length]}"></i>`}${esc(x.name)}</div>
@@ -11890,7 +11905,7 @@ function zhjRptDetail(by, name) {
     const bar = r.date !== lastDate ? (lastDate = r.date, `<div class="zhj-dtbar">${esc(r.date)}</div>`) : '';
     const rate = r.amt > 0.005 ? (r.gp / r.amt * 100).toFixed(2) : '0.00';
     const prod = isProd ? selfProd : byId(db.products, r.pid);
-    const thumb = prod && prod.img ? pimg(prod, 64, false) : `<svg viewBox="0 0 24 24"><path d="M3 17l5-6 4 5 3-3 6 8H3z"/><circle cx="8" cy="7" r="2"/></svg>`;
+    const thumb = prod && prod.img ? pimg(prod, 64, false) : prodNoImg();
     return bar + `<div class="zhj-dtdtl">
       <div class="thumb">${thumb}</div>
       <div class="dbody">
@@ -11918,12 +11933,41 @@ function zhjRptDetail(by, name) {
    页面结构：销售统计 → 销售额排行/客户 · 销售额排行/货品 · 销售统计详细 → 货品销售流水
    时间过滤沿用报表页右上角漏斗那一套（zhj-rpt-range-*），月份条沿用 zhj-rpt-month */
 const SS_PALETTE = ['#31bfcf', '#e7d16b', '#f47272', '#92be0a', '#dd6589', '#90a9e0', '#ffaa49', '#d390d8', '#efc160', '#6ecdc1'];
+// 业务类型：sz=销售统计，pz=进货统计。同一套页面，只换数据源和文案。
+const ssKind = () => (ssState().kind === 'pur' ? 'pur' : 'sales');
+// 当前业务下的有效单据（销售单 / 进货单，都排除已作废）
+function ssValid() {
+  if (ssKind() === 'pur') return db.purchases.filter(o => o.status !== '已作废');
+  return validSales();
+}
+// 文案：所有「销售」字样都从这里取，进货页自动变成「进货」
+function ssWord() {
+  const pur = ssKind() === 'pur';
+  return {
+    pur,
+    title: pur ? '进货统计' : '销售统计',
+    amt: pur ? '进货额' : '销售额',
+    qty: pur ? '进货数量' : '销售数量',
+    cnt: pur ? '进货笔数' : '销售笔数',
+    detail: pur ? '进货统计详细' : '销售统计详细',
+    flow: pur ? '货品进货流水' : '货品销售流水',
+    party: pur ? '供应商' : '客户',
+    partyOf: pur ? 'purchase' : 'sales',
+    none: pur ? '散商' : '散客',
+    empty: pur ? '这段时间没有进货' : '这段时间没有销售',
+    emptyRange: pur ? '这个区间没有进货' : '这个区间没有销售',
+    emptyBoth: pur ? '这两个周期都没有进货' : '这两个周期都没有销售',
+    rankParty: pur ? '进货额排行/供应商' : '销售额排行/客户',
+    rankProd: pur ? '进货额排行/货品' : '销售额排行/货品',
+  };
+}
 const ssTodayMk = () => monthKey(today());
 function ssDefaultDay(mk) { return String(mk).slice(0, 7) === ssTodayMk() ? +today().slice(8, 10) : 1; }
 function ssState() {
   if (!ui.ss) ui.ss = {};
   const s = ui.ss;
   if (!s.view) s.view = 'main';
+  if (s.kind !== 'pur') s.kind = 'sales';
   if (!s.range) s.range = 'month';
   if (s.from == null) s.from = '';
   if (s.to == null) s.to = '';
@@ -11936,35 +11980,36 @@ function ssState() {
   if (s.q == null) s.q = '';
   return s;
 }
-function ssReset() {
+function ssReset(kind) {
   ui.ss = {
+    kind: kind || 'sales',
     view: 'main', range: 'month', mk: ssTodayMk(), day: +today().slice(8, 10), from: '', to: '',
     dayDate: today(), weekStart: zhjRptWeek().from,
     cat: '', cust: '', pid: '', q: '', pick: false, cal: false, calFrom: '', search: false,
   };
 }
 function ssDays(mk) { const y = +String(mk).slice(0, 4), m = +String(mk).slice(5, 7); return new Date(y, m, 0).getDate(); }
-function ssMonthSales(mk) { const k = String(mk).slice(0, 7); return validSales().filter(o => monthKey(o.date) === k); }
+function ssMonthSales(mk) { const k = String(mk).slice(0, 7); return ssValid().filter(o => monthKey(o.date) === k); }
 function ssSales(range, mk) {
   const s = ssState();
   if (range === 'custom') {
     const f = s.from || '0000-00-00', t = s.to || '9999-99-99';
-    return validSales().filter(o => String(o.date) >= f && String(o.date) <= t);
+    return ssValid().filter(o => String(o.date) >= f && String(o.date) <= t);
   }
   if (range === 'today' || range === 'day') {
     const d = s.dayDate || today();
-    return validSales().filter(o => String(o.date) === d);
+    return ssValid().filter(o => String(o.date) === d);
   }
   if (range === 'week') {
     const wd = ssWeekRange(s.weekStart);
-    return validSales().filter(o => String(o.date) >= wd.from && String(o.date) <= wd.to);
+    return ssValid().filter(o => String(o.date) >= wd.from && String(o.date) <= wd.to);
   }
   // 年：mk 形如 '2026-01'，只比年份
-  if (range === 'year') { const y = String(mk).slice(0, 4); return validSales().filter(o => String(o.date).slice(0, 4) === y); }
+  if (range === 'year') { const y = String(mk).slice(0, 4); return ssValid().filter(o => String(o.date).slice(0, 4) === y); }
   // 其余档位（yesterday / lastWeek / lastMonth / quarter / lastYear / all）统一按 dateRange 算出的区间
   const r = dateRange(range, range === 'custom' ? { from: s.from, to: s.to } : null);
-  if (r) return validSales().filter(o => { const d = String(o.date); return d >= r.from && d <= r.to; });
-  return validSales();
+  if (r) return ssValid().filter(o => { const d = String(o.date); return d >= r.from && d <= r.to; });
+  return ssValid();
 }
 // 周区间：从 weekStart 起 7 天
 function ssWeekRange(start) {
@@ -12013,7 +12058,7 @@ function ssRank(mk, by) {
   const g = {};
   ssMonthSales(mk).forEach(o => {
     if (by === 'cust') {
-      const k = partyName('sales', o) || '散客';
+      const k = partyName(ssWord().partyOf, o) || ssWord().none;
       const r = g[k] || (g[k] = { amt: 0, qty: 0, unit: '' });
       r.amt += orderTotal(o);
       r.qty += sum(o.items, i => +i.qty || 0);
@@ -12032,12 +12077,13 @@ function ssRank(mk, by) {
     .filter(x => x.amt > 0.004)
     .sort((a, b) => b.amt - a.amt);
 }
-// 销售统计详细：按货品汇总（受「类别 / 客户」筛选影响），按名称排
+// 销售 / 进货统计详细：按货品汇总（受「类别 / 往来单位」筛选影响），按名称排
 function ssProdRows() {
   const s = ssState();
   const g = {};
+  const partyKey = ssKind() === 'pur' ? 'supplierId' : 'customerId';
   ssSales(s.range, s.mk).forEach(o => {
-    if (s.cust && o.customerId !== s.cust) return;
+    if (s.cust && o[partyKey] !== s.cust) return;
     o.items.forEach(it => {
       const p = byId(db.products, it.productId);
       const name = p ? p.name : '已删除商品';
@@ -12057,13 +12103,13 @@ function ssFlow(pid) {
   const out = [];
   ssSales(s.range, s.mk).forEach(o => {
     // 选了客户就只看这个客户买的
-    if (s.cust && o.customerId !== s.cust) return;
+    if (s.cust && (o[ssKind() === 'pur' ? 'supplierId' : 'customerId']) !== s.cust) return;
     o.items.forEach(it => {
       if (it.productId !== pid) return;
       const p0 = byId(db.products, pid);
       out.push({
         orderId: o.id,
-        date: o.date, no: o.no, party: partyName('sales', o) || '散客',
+        date: o.date, no: o.no, party: partyName(ssWord().partyOf, o) || ssWord().none,
         price: +it.price || 0, qty: +it.qty || 0, unit: it.unit || (p0 && p0.unit) || '',
         disc: +(+it.lineDiscount || 0).toFixed(2),
         amt: +((+it.qty || 0) * (+it.price || 0) - (+it.lineDiscount || 0)).toFixed(2),
@@ -12079,7 +12125,7 @@ function ssSeries() {
   // 今日：一根柱子（曲线只有一个点）
   if (s.range === 'today' || s.range === 'day') {
     const d = s.dayDate || today();
-    const v = +sum(validSales().filter(o => String(o.date) === d), orderTotal).toFixed(2);
+    const v = +sum(ssValid().filter(o => String(o.date) === d), orderTotal).toFixed(2);
     return { vals: [v], labels: [String(d).slice(5).replace('-', '.')], dateOf: () => (+String(d).slice(5, 7)) + '月' + String(d).slice(8, 10) + '日' };
   }
   // 本周：7 天
@@ -12091,7 +12137,7 @@ function ssSeries() {
       const d = new Date(wd.from + 'T12:00:00'); d.setDate(d.getDate() + i);
       days.push(d.getFullYear() + '-' + pad2(d.getMonth() + 1) + '-' + pad2(d.getDate()));
     }
-    const S = validSales();
+    const S = ssValid();
     const vals = days.map(d => +sum(S.filter(o => String(o.date) === d), orderTotal).toFixed(2));
     return {
       vals,
@@ -12102,7 +12148,7 @@ function ssSeries() {
   if (s.range === 'year') {
     const y = String(s.mk).slice(0, 4);
     const vals = new Array(12).fill(0);
-    validSales().forEach(o => { if (String(o.date).slice(0, 4) === y) vals[+String(o.date).slice(5, 7) - 1] += orderTotal(o); });
+    ssValid().forEach(o => { if (String(o.date).slice(0, 4) === y) vals[+String(o.date).slice(5, 7) - 1] += orderTotal(o); });
     return {
       vals: vals.map(v => +v.toFixed(2)),
       labels: vals.map((v, i) => (+y) + '.' + pad(i + 1)),
@@ -12124,7 +12170,7 @@ function ssSeries() {
   const r = dateRange(s.range, s.range === 'custom' ? { from: s.from, to: s.to } : null);
   if (!r) {
     // 全部时间：按月画
-    const all = validSales();
+    const all = ssValid();
     if (!all.length) return { vals: [0], labels: ['-'], dateOf: () => '-' };
     const months = {};
     all.forEach(o => { const k = monthKey(o.date); months[k] = (months[k] || 0) + orderTotal(o); });
@@ -12137,7 +12183,7 @@ function ssSeries() {
   }
   const d0 = new Date(r.from + 'T12:00:00'), d1 = new Date(r.to + 'T12:00:00');
   const nDays = Math.round((d1 - d0) / 864e5) + 1;
-  const S = validSales();
+  const S = ssValid();
   const inR = o => { const d = String(o.date); return d >= r.from && d <= r.to; };
   if (nDays <= 31) {
     // 按天
@@ -12304,9 +12350,11 @@ function ssTypeMask() {
     ['资金报表', [['income', '收入分析'], ['expense', '支出分析'], ['balance', '收支概况'], ['profit', '利润统计'], ['staff', '营业员统计'], ['perf', '经营业绩']]],
     ['进销存报表', [['saleStat', '销售统计'], ['purStat', '进货统计'], ['stockStat', '库存统计'], ['stockWarn', '库存预警'], ['recv', '应收欠款'], ['pay', '应付欠款']]],
   ];
+  // 当前高亮：销售统计或进货统计，看 s.kind
+  const cur = ssKind() === 'pur' ? 'purStat' : 'saleStat';
   return `<div class="zhj-rpt-pickmask" data-act="zhjSsType"><div class="zhj-rpt-pick">
     ${GROUPS.map(([g, items]) => `<div class="ph">${g}</div><div class="pgrp">
-      ${items.map(([id, l]) => `<button class="${id === 'saleStat' ? 'on' : ''}" data-act="zhjSsTypeGo" data-id="${id}">${l}</button>`).join('')}
+      ${items.map(([id, l]) => `<button class="${id === cur ? 'on' : ''}" data-act="zhjSsTypeGo" data-id="${id}">${l}</button>`).join('')}
     </div>`).join('')}
   </div></div>`;
 }
@@ -12375,24 +12423,25 @@ function ssMainPage() {
   else if (s.range === 'year') idx = Math.max(0, Math.min(11, +(String(today()).slice(5, 7)) - 1));
   else idx = Math.max(0, Math.min(ser.vals.length - 1, (s.day || 1) - 1));
   const ymax = Math.max(0, ...ser.vals);
+  const W = ssWord();
   $('#view').innerHTML = `<div class="zhj-page zhj-ss">
-    ${ssNav({ title: '销售统计', back: 'home', pill: true })}
+    ${ssNav({ title: W.title, back: 'home', pill: true })}
     ${s.pick ? ssTypeMask() : ''}
     
     ${ssBarHtml()}
     <div class="zhj-ss-card">
-      <div class="hd"><b id="ssDayTxt">${esc(ser.dateOf(idx))}　销售额:￥${ssMoney(ser.vals[idx] || 0)}</b></div>
+      <div class="hd"><b id="ssDayTxt">${esc(ser.dateOf(idx))}　${W.amt}:￥${ssMoney(ser.vals[idx] || 0)}</b></div>
       <div class="zhj-ss-chart"><canvas id="ssChart"></canvas><span class="zhj-ss-max">${ssQty(ymax)}</span></div>
     </div>
     <div class="zhj-ss-kpi">
-      <div><label>销售额</label><b>${ymoney(T.amt)}</b></div>
-      <div><label>销售数量</label><b>${ssQty(T.qty)}</b></div>
-      <div><label>销售笔数</label><b>${(+T.cnt).toFixed(2)}<em>笔</em></b></div>
+      <div><label>${W.amt}</label><b>${ymoney(T.amt)}</b></div>
+      <div><label>${W.qty}</label><b>${ssQty(T.qty)}</b></div>
+      <div><label>${W.cnt}</label><b>${(+T.cnt).toFixed(2)}<em>笔</em></b></div>
       <div></div>
     </div>
     <div class="zhj-ss-rows">
-      <div class="zhj-ss-row" data-act="zhjSsTo" data-id="rankCust">销售额排行/客户<i>${SS_CHEV}</i></div>
-      <div class="zhj-ss-row" data-act="zhjSsTo" data-id="rankProd">销售额排行/货品<i>${SS_CHEV}</i></div>
+      <div class="zhj-ss-row" data-act="zhjSsTo" data-id="rankCust">${W.rankParty}<i>${SS_CHEV}</i></div>
+      <div class="zhj-ss-row" data-act="zhjSsTo" data-id="rankProd">${W.rankProd}<i>${SS_CHEV}</i></div>
     </div>
     <div class="zhj-ss-more"><b data-act="zhjSsTo" data-id="detail">查看详细${SS_CHEV}</b></div>
   </div>`;
@@ -12457,7 +12506,7 @@ function ssSetDay(i) {
   const s = ssState();
   s.day = i + 1;
   const t = document.getElementById('ssDayTxt');
-  if (t) t.textContent = ser.dateOf(i) + '　销售额:￥' + ssMoney(ser.vals[i] || 0);
+  if (t) t.textContent = ser.dateOf(i) + '　${ssWord().amt}:￥' + ssMoney(ser.vals[i] || 0);
   const ch = window.__ssChart;
   if (ch) {
     ch.data.datasets[0].pointRadius = ser.vals.map((v, k) => (k === i ? 5 : 0));
@@ -12479,7 +12528,7 @@ function ssRankPage(by) {
   if (oneCol) {
     // 单列：当前区间一列
     rows = ssRankOfRange(by).map((x, i) => ({ ...x, _rank: i + 1 }));
-    emptyTxt = '这个区间没有销售';
+    emptyTxt = ssWord().emptyRange;
   } else {
     // 双列：上一格 vs 当前格
     const curKey = s.range === 'year' ? String(s.mk).slice(0, 4) : s.range === 'today' ? (s.dayDate || today()) : s.range === 'week' ? (s.weekStart || zhjRptWeek().from) : String(s.mk).slice(0, 7);
@@ -12501,7 +12550,7 @@ function ssRankPage(by) {
       return k.replace('-', '.');
     };
     capL = lab(prevKey); capR = lab(curKey);
-    emptyTxt = '这两个周期都没有销售';
+    emptyTxt = ssWord().emptyBoth;
     const list = [];
     for (let i = 0; i < n; i++) {
       const a = L[i], b = R[i], c = SS_PALETTE[i % SS_PALETTE.length];
@@ -12542,7 +12591,7 @@ function ssRankPage(by) {
   }
 
   $('#view').innerHTML = `<div class="zhj-page zhj-ss">
-    ${ssNav({ title: isProd ? '销售额排行/货品' : '销售额排行/客户', back: 'main' })}
+    ${ssNav({ title: isProd ? ssWord().rankProd : ssWord().rankParty, back: 'main' })}
     ${ssBarHtml()}
     <div class="zhj-ss-rk">
       ${body || `<div class="empty" style="padding:60px 0;text-align:center;color:#98a0aa">${emptyTxt}</div>`}
@@ -12568,8 +12617,8 @@ function ssRankOfRange(by) {
   const s = ssState();
   const r = s.range === 'custom' ? { from: s.from, to: s.to }
     : dateRange(s.range);
-  const S = r ? validSales().filter(o => { const d = String(o.date); return d >= r.from && d <= r.to; })
-    : validSales();
+  const S = r ? ssValid().filter(o => { const d = String(o.date); return d >= r.from && d <= r.to; })
+    : ssValid();
   const m = {};
   S.forEach(o => {
     if (by === 'prod') {
@@ -12581,9 +12630,9 @@ function ssRankOfRange(by) {
         m[k].qty += +it.qty || 0;
       });
     } else {
-      const c = byId(db.customers, o.customerId);
-      const k = o.customerId || '';
-      m[k] = m[k] || { name: c ? c.name : '散客', amt: 0, qty: 0 };
+      const c = byId(db[ssKind() === 'pur' ? 'suppliers' : 'customers'], o[ssKind() === 'pur' ? 'supplierId' : 'customerId']);
+      const k = (o[ssKind() === 'pur' ? 'supplierId' : 'customerId']) || '';
+      m[k] = m[k] || { name: c ? c.name : ssWord().none, amt: 0, qty: 0 };
       m[k].amt += orderTotal(o);
       m[k].qty += sum(o.items, i => +i.qty || 0);
     }
@@ -12592,7 +12641,7 @@ function ssRankOfRange(by) {
 }
 // 按某个 key（月/年/日/周）取排行
 function ssRankByKey(key, range, by) {
-  const S = validSales().filter(o => {
+  const S = ssValid().filter(o => {
     const d = String(o.date);
     if (range === 'year') return d.slice(0, 4) === String(key);
     if (range === 'today') return d === key;
@@ -12610,9 +12659,9 @@ function ssRankByKey(key, range, by) {
         m[k].qty += +it.qty || 0;
       });
     } else {
-      const c = byId(db.customers, o.customerId);
-      const k = o.customerId || '';
-      m[k] = m[k] || { name: c ? c.name : '散客', amt: 0, qty: 0 };
+      const c = byId(db[ssKind() === 'pur' ? 'suppliers' : 'customers'], o[ssKind() === 'pur' ? 'supplierId' : 'customerId']);
+      const k = (o[ssKind() === 'pur' ? 'supplierId' : 'customerId']) || '';
+      m[k] = m[k] || { name: c ? c.name : ssWord().none, amt: 0, qty: 0 };
       m[k].amt += orderTotal(o);
       m[k].qty += sum(o.items, i => +i.qty || 0);
     }
@@ -12624,7 +12673,7 @@ function ssRankByRange(by) {
   const g = {};
   ssSales(s.range, s.mk).forEach(o => {
     if (by === 'cust') {
-      const k = partyName('sales', o) || '散客';
+      const k = partyName(ssWord().partyOf, o) || ssWord().none;
       const r = g[k] || (g[k] = { amt: 0, qty: 0, unit: '' });
       r.amt += orderTotal(o);
       r.qty += sum(o.items, i => +i.qty || 0);
@@ -12653,7 +12702,7 @@ function ssDetailPage() {
   const rows = q ? all.filter(r => String(r.name).toLowerCase().includes(q)) : all;
   // 运费 / 笔数按「筛选后的单据」算（客户 + 类别），金额与数量按货品行汇总
   const Sf = ssSales(s.range, s.mk).filter(o => {
-    if (s.cust && o.customerId !== s.cust) return false;
+    if (s.cust && (o[ssKind() === 'pur' ? 'supplierId' : 'customerId']) !== s.cust) return false;
     if (!s.cat) return true;
     return o.items.some(it => {
       const p = byId(db.products, it.productId);
@@ -12663,13 +12712,16 @@ function ssDetailPage() {
   const T = ssSum(Sf);
   const amt = +sum(all, r => r.amt).toFixed(2);
   const qty = +sum(all, r => r.qty).toFixed(2);
-  const custName = s.cust ? ((byId(db.customers, s.cust) || {}).name || '全部客户') : '全部客户';
+  // 进货页的往来单位是供应商，客户筛选面板也跟着取对应表
+  const partyCol = ssKind() === 'pur' ? 'suppliers' : 'customers';
+  const partyAll = ssWord().pur ? '全部供应商' : '全部客户';
+  const custName = s.cust ? ((byId(db[partyCol], s.cust) || {}).name || partyAll) : partyAll;
   const thumb = r => {
     const p = byId(db.products, r.pid);
-    return p && p.img ? pimg(p, 44, false) : '<svg viewBox="0 0 24 24"><path d="M3 17l5-6 4 5 3-3 6 8H3z"/><circle cx="8" cy="7" r="2"/></svg>';
+    return p && p.img ? pimg(p, 44, false) : prodNoImg(24);
   };
   $('#view').innerHTML = `<div class="zhj-page zhj-ss">
-    ${ssNav({ title: '销售统计详细', back: 'main', searchBtn: true, search: s.search, q: s.q })}
+    ${ssNav({ title: ssWord().detail, back: 'main', searchBtn: true, search: s.search, q: s.q })}
     
     ${ssBarHtml()}
     <div class="zhj-ss-filters">
@@ -12679,18 +12731,18 @@ function ssDetailPage() {
     <div class="zhj-ss-kpi4">
       <div><label>货品金额</label><b>${ymoney(amt)}</b></div>
       <div><label>运费</label><b>${ymoney(T.freight)}</b></div>
-      <div><label>销售数量</label><b>${ssQty(qty)}</b></div>
-      <div data-act="zhjSsAllOrders" style="cursor:pointer"><label>销售笔数 <em style="font-style:normal;color:var(--zhj);font-size:11px">看单›</em></label><b>${(+T.cnt).toFixed(2)}</b></div>
+      <div><label>${ssWord().qty}</label><b>${ssQty(qty)}</b></div>
+      <div data-act="zhjSsAllOrders" style="cursor:pointer"><label>${ssWord().cnt} <em style="font-style:normal;color:var(--zhj);font-size:11px">看单›</em></label><b>${(+T.cnt).toFixed(2)}</b></div>
     </div>
     <div class="zhj-ss-plist">
       ${rows.length ? rows.map(r => `<div class="zhj-ss-prow" data-act="zhjSsFlow" data-id="${esc(r.pid)}">
         <div class="th">${thumb(r)}</div>
         <div class="bd">
           <div class="ttl">${esc(r.name)}</div>
-          <div class="sub">出: ${ssQty(r.qty)}${esc(r.unit || '')}</div>
+          <div class="sub">${ssWord().pur ? '进' : '出'}: ${ssQty(r.qty)}${esc(r.unit || '')}</div>
           <div class="sub">金额: ${ymoney(r.amt)}</div>
         </div>
-      </div>`).join('') : '<div class="empty" style="padding:60px 0;text-align:center;color:#98a0aa">这段时间没有销售</div>'}
+      </div>`).join('') : '<div class="empty" style="padding:60px 0;text-align:center;color:#98a0aa">${ssWord().empty}</div>'}
     </div>
   </div>`;
   const si = document.querySelector('[data-search="ssq"]');
@@ -12731,22 +12783,22 @@ function ssFlowPage() {
     </div>`;
   }).join('');
   $('#view').innerHTML = `<div class="zhj-page zhj-ss-flow">
-    ${ssNav({ title: '货品销售流水', back: 'detail', noRange: true })}
+    ${ssNav({ title: ssWord().flow, back: 'detail', noRange: true })}
     <div class="fhd">
       <div class="top">
-        <div class="th">${p && p.img ? pimg(p, 52, false) : '<svg viewBox="0 0 24 24"><path d="M3 17l5-6 4 5 3-3 6 8H3z"/><circle cx="8" cy="7" r="2"/></svg>'}</div>
+        <div class="th">${p && p.img ? pimg(p, 52, false) : prodNoImg(28)}</div>
         <div class="bd">
           <div class="t1">${esc(name)}</div>
           <div class="t2">${esc(TLt || '')}</div>
         </div>
       </div>
       <div class="stats">
-        <div><b>${ssQty(sum(rows, r => r.qty))}<em>${esc(p && p.unit || '')}</em></b><label>销售数量</label></div>
-        <div><b>${ymoney(sum(rows, r => r.amt))}</b><label>销售金额</label></div>
+        <div><b>${ssQty(sum(rows, r => r.qty))}<em>${esc(p && p.unit || '')}</em></b><label>${ssWord().qty}</label></div>
+        <div><b>${ymoney(sum(rows, r => r.amt))}</b><label>${ssWord().amt}</label></div>
         <div><b>${rows.length}<em>单</em></b><label>单据数</label></div>
       </div>
     </div>
-    <div class="zhj-ss-tl">${body || '<div style="padding:60px 0;text-align:center;color:#98a0aa">这段时间没有销售</div>'}</div>
+    <div class="zhj-ss-tl">${body || '<div style="padding:60px 0;text-align:center;color:#98a0aa">${ssWord().empty}</div>'}</div>
   </div>`;
 }
 // 货品销售流水（全部商品）：按当前时间 + 类别 + 客户 过滤后，把所有商品的单据合并成一条时间线
@@ -12758,7 +12810,7 @@ function ssFlowAllPage() {
   const rows = [];
   const cat = s.cat || '';
   ssSales(s.range, s.mk).forEach(o => {
-    if (s.cust && o.customerId !== s.cust) return;
+    if (s.cust && (o[ssKind() === 'pur' ? 'supplierId' : 'customerId']) !== s.cust) return;
     const hits = o.items.filter(it => {
       const p = byId(db.products, it.productId);
       return !cat || ((p && p.category) || '未分类') === cat;
@@ -12772,7 +12824,7 @@ function ssFlowAllPage() {
       prodSet[pid].qty += +it.qty || 0;
       prodSet[pid].amt += lineAmt;
       rows.push({
-        orderId: o.id, date: o.date, no: o.no, party: partyName('sales', o) || '散客',
+        orderId: o.id, date: o.date, no: o.no, party: partyName(ssWord().partyOf, o) || ssWord().none,
         productName: p ? p.name : '已删除商品',
         price: +it.price || 0, qty: +it.qty || 0, unit: it.unit || (p && p.unit) || '',
         disc: +(+it.lineDiscount || 0).toFixed(2), amt: +lineAmt.toFixed(2),
@@ -12803,23 +12855,23 @@ function ssFlowAllPage() {
     ? `<div class="zhj-ss-more" data-act="zhjSsFlowMore" style="margin:12px 0 20px"><b>显示更多（还有 ${rows.length - shown.length} 条）</b></div>` : '';
 
   $('#view').innerHTML = `<div class="zhj-page zhj-ss-flow">
-    ${ssNav({ title: '货品销售流水', back: 'detail', noRange: true })}
+    ${ssNav({ title: ssWord().flow, back: 'detail', noRange: true })}
     <div class="fhd">
       <div class="top">
-        <div class="th"><svg viewBox="0 0 24 24"><path d="M3 17l5-6 4 5 3-3 6 8H3z"/><circle cx="8" cy="7" r="2"/></svg></div>
+        <div class="th">${prodNoImg(28)}</div>
         <div class="bd">
           <div class="t1">${esc(catTxt)}${custName ? ' · ' + esc(custName) : ''}</div>
           <div class="t2">${esc(TLt || '')}</div>
         </div>
       </div>
       <div class="stats">
-        <div><b>${ssQty(totQty)}</b><label>销售数量</label></div>
-        <div><b>${ymoney(totAmt)}</b><label>销售金额</label></div>
+        <div><b>${ssQty(totQty)}</b><label>${ssWord().qty}</label></div>
+        <div><b>${ymoney(totAmt)}</b><label>${ssWord().amt}</label></div>
         <div><b>${prods.length}<em>种</em></b><label>商品数</label></div>
         <div><b>${orderN}<em>单</em></b><label>单据数</label></div>
       </div>
     </div>
-    <div class="zhj-ss-tl">${body || '<div style="padding:60px 0;text-align:center;color:#98a0aa">这段时间没有销售</div>'}${more}</div>
+    <div class="zhj-ss-tl">${body || '<div style="padding:60px 0;text-align:center;color:#98a0aa">${ssWord().empty}</div>'}${more}</div>
   </div>`;
 }
 function pageSalesStat() {
@@ -14715,10 +14767,10 @@ const A = {
     if (ui.rptM.pick) { try { window.scrollTo(0, 0); } catch (_) { } }
   },
   zhjRptType: id => {
-    // 报表页里选「销售统计」→ 跳到独立的销售统计页（图2），不要留在报表页显示旧内容
-    if (id === 'saleStat') {
+    // 报表页里选「销售统计 / 进货统计」→ 跳到统一的那套统计页（同一套界面，只换数据源）
+    if (id === 'saleStat' || id === 'purStat') {
       ui.rptM.pick = false;
-      ssReset();
+      ssReset(id === 'purStat' ? 'pur' : 'sales');
       ssApplyDate('month');
       if (location.hash !== '#/salesstat') {
         if (location.replace) location.replace('#/salesstat'); else location.hash = '#/salesstat';
@@ -14841,7 +14893,13 @@ const A = {
   zhjSsTypeGo: id => {
     const s = ssState();
     s.pick = false;
-    if (id === 'saleStat') { render(); return; }   // 已经在销售统计页，直接重绘
+    // 销售统计 / 进货统计：同一套页面，只切数据源
+    if (id === 'saleStat' || id === 'purStat') {
+      const k = id === 'purStat' ? 'pur' : 'sales';
+      if (s.kind !== k) { s.kind = k; s.view = 'main'; s.cust = ''; s.pid = ''; s.q = ''; }
+      render();
+      return;
+    }
     // 其它报表类型交回统计报表页（那边已经有完整实现），时间范围带过去
     if (!ui.rptM) ui.rptM = { type: id, range: 'month', mk: ssTodayMk(), by: 'cust' };
     ui.rptM.type = id;
@@ -14893,8 +14951,11 @@ const A = {
   },
   // 客户筛选：直接复用「选择客户」那一页
   zhjSsCust: () => {
-    // 销售统计专用：顶部多一个「全部客户」，选过客户后还能切回全部
-    const page = zhjPickParty('customers', id => { ssState().cust = id || ''; render(); });
+    // 往来单位筛选：销售统计选客户，进货统计选供应商；都带一个「全部」可切回
+    const pur = ssKind() === 'pur';
+    const col = pur ? 'suppliers' : 'customers';
+    const allLabel = pur ? '全部供应商' : '全部客户';
+    const page = zhjPickParty(col, id => { ssState().cust = id || ''; render(); });
     if (!page) return;
     setTimeout(() => {
       const body = page.querySelector('.zhj-pick-body');
@@ -14902,7 +14963,7 @@ const A = {
       const bar = document.createElement('div');
       bar.className = 'zhj-allcust';
       bar.setAttribute('data-allcust', '1');
-      bar.innerHTML = `<span>全部客户</span><i></i>`;
+      bar.innerHTML = `<span>${allLabel}</span><i></i>`;
       bar.onclick = () => { ssState().cust = ''; page.remove(); render(); };
       body.insertBefore(bar, body.firstChild);
     }, 60);
@@ -14929,7 +14990,12 @@ const A = {
     render();
   },
   // 货品销售流水里点某一单 → 打开销售单详情
-  zhjSsOrder: id => { if (!id) return; closeModal(); orderView('sales', id); },
+  zhjSsOrder: id => {
+    if (!id) return;
+    closeModal();
+    // 进货统计的流水要打开进货单，不能一律按销售单查（否则查不到就静默无响应）
+    orderView(ssKind() === 'pur' ? 'purchase' : 'sales', id);
+  },
   // 首页：隐藏/显示金额
   zhjEye: () => { ui.hideMoney = !ui.hideMoney; render(); },
   // 结清状态筛选

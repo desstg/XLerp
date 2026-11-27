@@ -1,8 +1,8 @@
 <?xml version="1.0"?>
 <Container version="2">
   <Name>XLerp</Name>
-  <Repository>ghcr.io/desstg/xlerp:latest</Repository>
-  <Registry>https://github.com/desstg/XLerp/pkgs/container/xerp</Registry>
+  <Repository>desstg/xlerp:latest</Repository>
+  <Registry>https://hub.docker.com/r/desstg/xlerp</Registry>
   <Network>bridge</Network>
   <Shell>sh</Shell>
   <Privileged>false</Privileged>

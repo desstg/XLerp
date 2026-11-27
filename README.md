@@ -2,7 +2,7 @@
 
 [![License: AGPL-3.0](https://img.shields.io/badge/license-AGPL--3.0-blue.svg)](LICENSE)
 [![Release](https://img.shields.io/github/v/release/desstg/XLerp)](https://github.com/desstg/XLerp/releases/latest)
-[![Docker](https://img.shields.io/badge/ghcr.io-desstg%2Fxlerp-blue)](https://github.com/desstg/XLerp/pkgs/container/xlerp)
+[![Docker](https://img.shields.io/badge/docker.io-desstg%2Fxlerp-blue)](https://hub.docker.com/r/desstg/xlerp)
 
 **XLerp** 是一套轻量级、可自托管的进销存 / ERP 系统，面向中小企业与门店。进销存、财务、人事、报表一站搞定，**数据全部留在自己的机器里**，完全离线可用。
 
@@ -45,7 +45,7 @@
 docker run -d --name xlerp --restart unless-stopped \
   -p 8686:8686 -v ./xlerp-data:/data \
   -e XERP_ADMIN_PASSWORD=你的初始密码 \
-  ghcr.io/desstg/xlerp:latest
+  desstg/xlerp:latest
 ```
 
 浏览器打开 `http://NAS地址:8686`，账号 `admin`，密码是上面设的（不设则 `admin123`，登录后请立刻修改）。
@@ -128,19 +128,43 @@ node src/portal.js --data ./data --port 8686
 
 ## Docker 部署（群晖 / 威联通 / Unraid / 绿联 / 极空间等）
 
-镜像 `ghcr.io/desstg/xlerp`，Docker Hub 上同步一份 `desstg/xlerp`（群晖 Container Manager、威联通 Container Station、绿联、极空间的镜像仓库里搜 `xlerp` 就能找到），支持 amd64 和 arm64。数据全部在容器的 `/data` 目录（数据库、每日自动备份、日志），挂载出来后升级镜像不丢数据。
+镜像在 Docker Hub：[`desstg/xlerp`](https://hub.docker.com/r/desstg/xlerp)（群晖 Container Manager、威联通 Container Station、绿联、极空间的镜像仓库里搜 `xlerp` 就能找到），支持 amd64 和 arm64。数据全部在容器的 `/data` 目录（数据库、每日自动备份、日志），挂载出来后升级镜像不丢数据。
 
 ```bash
 docker run -d --name xlerp --restart unless-stopped \
   -p 8686:8686 -v ./xlerp-data:/data \
   -e XERP_ADMIN_PASSWORD=你的初始密码 \
-  ghcr.io/desstg/xlerp:latest
+  desstg/xlerp:latest
 ```
 
-或者用仓库里的 [`docker-compose.yml`](docker-compose.yml)：`docker compose up -d`。浏览器打开 `http://NAS地址:8686`，账号 `admin`，密码是 `XERP_ADMIN_PASSWORD`（不设置则为 `admin123`，登录后请及时修改；这个变量只在第一次启动时生效）。
+或者用 `docker-compose.yml`（新建一个文件，内容如下，然后 `docker compose up -d`）：
 
-- **升级**：`docker pull ghcr.io/desstg/xlerp:latest` 后重建容器（compose：`docker compose pull && docker compose up -d`）
-- **国内拉不动 ghcr.io**：到 [Releases](https://github.com/desstg/XLerp/releases/latest) 或官网下载离线镜像包 `xlerp-<版本>-docker-amd64.tar.gz`（ARM 设备用 `arm64`），执行 `docker load -i xlerp-<版本>-docker-amd64.tar.gz` 导入，之后同上
+```yaml
+services:
+  xlerp:
+    image: desstg/xlerp:latest
+    container_name: xlerp
+    restart: unless-stopped
+    ports:
+      - "8686:8686"
+    volumes:
+      - ./xlerp-data:/data
+    environment:
+      - XERP_ADMIN_PASSWORD=你的初始密码   # 首次启动的管理员密码，不设则 admin123
+      - XERP_STATS_URL=                    # 留空关闭匿名使用统计
+      - TZ=Asia/Shanghai
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:8686/api/ping').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      start_period: 20s
+      retries: 3
+```
+
+浏览器打开 `http://NAS地址:8686`，账号 `admin`，密码是 `XERP_ADMIN_PASSWORD`（不设置则为 `admin123`，登录后请及时修改；这个变量只在第一次启动时生效）。
+
+- **升级**：`docker pull desstg/xlerp:latest` 后重建容器（compose：`docker compose pull && docker compose up -d`）
+- **国内拉不动 Docker Hub**：到 [Releases](https://github.com/desstg/XLerp/releases/latest) 或官网下载离线镜像包 `xlerp-<版本>-docker-amd64.tar.gz`（ARM 设备用 `arm64`），执行 `docker load -i xlerp-<版本>-docker-amd64.tar.gz` 导入，之后同上
 - **环境变量**：`XERP_ADMIN_PASSWORD` 首次启动的管理员密码；`XERP_STATS_URL=`（留空）关闭匿名使用统计，也可以在 系统设置 里关；`TZ` 默认 `Asia/Shanghai`
 - **Unraid**：Docker 页面底部的 Template Repositories 里加上 `https://github.com/desstg/XLerp` 并保存，然后 Add Container → Template 选 XLerp；模板见 [`unraid/xerp.xml`](unraid/xerp.xml)
 - **CasaOS / ZimaOS**：已提交到官方应用商店，上架后在应用商店搜索 XLerp 即可安装
