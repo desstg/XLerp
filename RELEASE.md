@@ -1,4 +1,4 @@
-# XLerp 2.21.0
+# XLerp 2.21.1
 
 轻量级自托管进销存 / ERP，数据留在自己机器里，完全离线可用。
 
@@ -25,8 +25,8 @@
 |---|---|---|
 | Docker（AMD64） | `xlerp-2.20.4-docker-amd64.tar.gz` | 群晖、威联通、Unraid、绿联、极空间、飞牛等 x86 NAS |
 | Docker（ARM64） | `xlerp-2.20.4-docker-arm64.tar.gz` | 树莓派、ARM 架构 NAS |
-| Windows | `xlerp-2.21.0-windows-x64-setup.exe` | Windows 10 / 11 64 位，双击安装，自带 Node.js |
-| Android | `xlerp-2.21.0-android.apk` | Android 7.0 及以上 |
+| Windows | `xlerp-2.21.1-windows-x64-setup.exe` | Windows 10 / 11 64 位，双击安装，自带 Node.js |
+| Android | `xlerp-2.21.1-android.apk` | Android 7.0 及以上 |
 
 在线拉取镜像：`desstg/xlerp:latest`（amd64 + arm64 多架构）
 
@@ -77,7 +77,7 @@ docker run -d --name xlerp --restart unless-stopped \
 
 ## Windows 安装
 
-双击 `xlerp-2.21.0-windows-x64-setup.exe`，向导第一步选运行模式（服务器 / 客户端），再设端口（默认 8686）、管理员密码、数据目录。
+双击 `xlerp-2.21.1-windows-x64-setup.exe`，向导第一步选运行模式（服务器 / 客户端），再设端口（默认 8686）、管理员密码、数据目录。
 
 装完桌面和开始菜单都有 **小林进销存**，点开就是程序自己的窗口（不是浏览器标签页）。
 
@@ -90,7 +90,7 @@ docker run -d --name xlerp --restart unless-stopped \
 
 ## Android 安装
 
-安装 `xlerp-2.21.0-android.apk`，手机连上和服务端同一个 Wi-Fi，首次打开填服务端地址，或点「自动查找」扫描局域网。
+安装 `xlerp-2.21.1-android.apk`，手机连上和服务端同一个 Wi-Fi，首次打开填服务端地址，或点「自动查找」扫描局域网。
 
 - 右下角扫码按钮支持 EAN-13/8、UPC、Code 128/39/93、ITF、Codabar、QR、Data Matrix
 - 扫到的码会填进当前输入框并自动回车，开出入库单、盘点、搜索都能用
@@ -98,7 +98,15 @@ docker run -d --name xlerp --restart unless-stopped \
 
 > **签名说明**：本版起使用正式密钥签名，可正常覆盖升级。如果你装过 2.20.4 的早期测试包（临时证书签的），需要先卸载再装。
 
-## 本版更新（2.21.0）
+## 本版更新（2.21.1）
+
+**修客户端模式看不到数据、安装包自动留副本**
+
+- **客户端模式窗口连错端口**：安装器传的 `--port=8686` 是服务器模式的服务端口，桌面程序却把它当成客户端代理端口，去 ping `8686/local/ping` 失败后，就起了一个本机临时实例，窗口连上空库——看起来像数据丢了。现在客户端模式固定用 18686。
+- **客户端模式不再用本机空库冒充服务器**：连不上远端时明确报错，提示检查服务器地址、端口、网络，而不是默默显示一个空库。
+- **安装包自动多留两份**：构建完复制到 `D:\` 和桌面，避开从仓库目录双击安装时报「错误 5 拒绝访问」（那个目录被加了受限 ACL）。
+
+## 上版更新（2.21.0）
 
 **电脑版改成真正的桌面程序：不再在浏览器里打开网页**
 
@@ -118,6 +126,7 @@ docker run -d --name xlerp --restart unless-stopped \
 - `resources\app.asar` 模式下 `APP_DIR` 用 `__dirname` 推算会多退一层，导致找不到 `portal.js` / `client.js`。改成取 `process.execPath` 所在目录。
 
 ## 上版更新（2.20.4）
+
 
 **修复 v2.20.3 的三个安装问题，两个模式现在都能正常装**
 
