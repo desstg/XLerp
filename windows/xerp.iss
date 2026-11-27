@@ -81,7 +81,8 @@ end;
 // server = 本机存数据（默认）；client = 连已有服务器
 function GetMode(Param: String): String;
 begin
-  if ModePage.Selected = 1 then
+  // TInputOptionWizardPage 里第 2 项被选中就是客户端模式
+  if ModePage.Values[1] then
     Result := 'client'
   else
     Result := 'server';
@@ -99,10 +100,11 @@ begin
     '这台电脑是怎么用 XLerp？',
     '服务器模式：数据存在这台电脑，手机、别的电脑都可以连它。' + #13#10 +
     '客户端模式：连一台已经装好的服务器（比如 NAS 上的），本机不存业务数据。' + #13#10 +
-    '安装完成后可以在「系统设置 → 运行模式」里改，改完需要重新运行安装程序才生效。',
+    '装好后工作台会显示当前模式。要改模式，重新运行这个安装程序即可，数据不会丢。',
     True, False);
   ModePage.Add('服务器模式（数据存本机，推荐单机使用）');
   ModePage.Add('客户端模式（连接已有服务器）');
+  ModePage.Values[0] := True;   // 默认选服务器模式
 
   CfgPage := CreateInputQueryPage(ModePage.ID, '服务设置',
     'XLerp 会作为后台服务运行，开机自动启动，不用登录 Windows 也能使用。',
