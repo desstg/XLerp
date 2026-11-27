@@ -43,6 +43,7 @@ if ($Action -eq 'uninstall') {
 
 # ---- install / upgrade / reconfig ----
 # reconfig: only rebuild the scheduled task from config.json (used after changing mode in the UI)
+# reconfig: only rebuild the scheduled task (mode comes from config.json when -Mode is empty)
 Stop-Xerp
 $node = Join-Path $AppDir 'node.exe'
 $pwdFile = Join-Path $DataDir 'admin-password.txt'
@@ -50,25 +51,30 @@ $pwdFile = Join-Path $DataDir 'admin-password.txt'
 # Run mode:
 #   server (default) -> portal.js, data lives in $DataDir, LAN clients can connect
 #   client           -> client.js, proxies everything to the remote server, no local data
-# Installer passes -Mode / -ClientServer explicitly; reconfig reads config.json.
-$mode = 'server'
-$remote = ''
-if ($Mode -eq 'client') {
-  $mode = 'client'; $remote = $ClientServer
+# Installer always passes -Mode explicitly ('server' or 'client'), which wins.
+# Only when -Mode is empty (plain -Action reconfig) do we fall back to config.json.
+$runMode = 'server'
+$runRemote = ''
+$ModeIn = ([string]$Mode).Trim().ToLowerInvariant()
+if ($ModeIn -like 'client*') {
+  $runMode = 'client'; $runRemote = ([string]$ClientServer).Trim()
+} elseif ($ModeIn -like 'server*') {
+  $runMode = 'server'; $runRemote = ''
 } else {
   $cfgPath = Join-Path $DataDir 'config.json'
   if (Test-Path $cfgPath) {
     try {
       $cfg = Get-Content $cfgPath -Raw | ConvertFrom-Json
-      if ($cfg.mode -eq 'client') { $mode = 'client'; $remote = [string]$cfg.clientServer }
+      if ([string]$cfg.mode -like 'client*') { $runMode = 'client'; $runRemote = [string]$cfg.clientServer }
     } catch { Log ('config.json parse failed: ' + $_.Exception.Message) }
   }
 }
+
 # Persist the choice so a later reconfig sees the same thing
 try {
   New-Item -ItemType Directory -Force -Path $DataDir | Out-Null
   $cfgPath = Join-Path $DataDir 'config.json'
-  $cfgObj = @{ mode = $mode; clientServer = $remote }
+  $cfgObj = @{ mode = $runMode; clientServer = $runRemote }
   if (Test-Path $cfgPath) {
     $old = Get-Content $cfgPath -Raw | ConvertFrom-Json
     foreach ($p in $old.PSObject.Properties) { if ($p.Name -ne 'mode' -and $p.Name -ne 'clientServer') { $cfgObj[$p.Name] = $p.Value } }
@@ -76,20 +82,20 @@ try {
   $cfgObj | ConvertTo-Json -Depth 8 | Set-Content -Path $cfgPath -Encoding UTF8
 } catch { Log ('config.json write failed: ' + $_.Exception.Message) }
 
-if ($mode -eq 'client') {
+if ($runMode -eq 'client') {
   # client.js listens on its own port and proxies /api to the remote server
   $clientPort = 18686
-  $argLine = '"' + (Join-Path $AppDir 'client.js') + '" --port ' + $clientPort + ' --server "' + $remote + '" --no-browser'
+  $argLine = '"' + (Join-Path $AppDir 'client.js') + '" --port ' + $clientPort + ' --server "' + $runRemote + '" --no-browser'
   $act = New-ScheduledTaskAction -Execute $node -Argument $argLine -WorkingDirectory $AppDir
   $trg = New-ScheduledTaskTrigger -AtStartup
   $pri = New-ScheduledTaskPrincipal -UserId 'SYSTEM' -LogonType ServiceAccount -RunLevel Highest
   $set = New-ScheduledTaskSettingsSet -ExecutionTimeLimit ([TimeSpan]::Zero) -RestartCount 999 -RestartInterval (New-TimeSpan -Minutes 1) `
     -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -StartWhenAvailable -MultipleInstances IgnoreNew
   Register-ScheduledTask -TaskName $TaskName -Action $act -Trigger $trg -Principal $pri -Settings $set `
-    -Description "XLerp client (http://127.0.0.1:$clientPort -> $remote)" -Force | Out-Null
+    -Description "XLerp client (http://127.0.0.1:$clientPort -> $runRemote)" -Force | Out-Null
   # No inbound firewall rule: client mode does not accept connections from other machines
   try { Remove-NetFirewallRule -Name $RuleName -ErrorAction Stop } catch {}
-  Log "task registered, CLIENT mode, port $clientPort, remote $remote"
+  Log "task registered, CLIENT mode, port $clientPort, remote $runRemote"
   Start-ScheduledTask -TaskName $TaskName
   for ($i = 0; $i -lt 40; $i++) {
     Start-Sleep -Milliseconds 500

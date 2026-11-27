@@ -64,7 +64,22 @@ const json = (res, status, obj) => {
   res.end(body);
 };
 function readBody(req) {
-  return new Promise(resolve => { const c = []; req.on('data', d => c.push(d)); req.on('end', () => { try { resolve(JSON.parse(Buffer.concat(c).toString('utf8') || '{}')); } catch (e) { resolve({}); } }); });
+  return new Promise(resolve => {
+    // 流可能已经结束（或本来就没有 body），先看 readableEnded，别死等 end
+    if (req.readableEnded) return resolve({});
+    const c = [];
+    let done = false;
+    const finish = () => {
+      if (done) return;
+      done = true;
+      try { resolve(JSON.parse(Buffer.concat(c).toString('utf8') || '{}')); } catch (e) { resolve({}); }
+    };
+    req.on('data', d => c.push(d));
+    req.on('end', finish);
+    req.on('error', finish);
+    // 兜底：5 秒还没结束就按已有内容解析，避免登录页永远卡在「登录中…」
+    setTimeout(finish, 5000);
+  });
 }
 
 // 把 /api/* 转发给服务端
@@ -105,11 +120,13 @@ const server = http.createServer(async (req, res) => {
     if (req.method === 'GET') return json(res, 200, { server: cfg.server, desktop: true, mode: 'client' });
     if (req.method === 'POST') {
       try {
-        cfg.server = normalize((await readBody(req)).server);
+        const body = await readBody(req);
+        const next = normalize(body.server);
+        cfg.server = next;
         fs.writeFileSync(CFG_FILE, JSON.stringify(cfg, null, 2));
         log('服务器地址已设置为', cfg.server);
         return json(res, 200, { server: cfg.server });
-      } catch (e) { return json(res, 400, { error: e.message }); }
+      } catch (e) { return json(res, 400, { error: e.message || '地址格式不正确' }); }
     }
   }
   if (req.method === 'GET' && (p === '/' || p === '/index.html')) {
