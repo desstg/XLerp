@@ -47,7 +47,11 @@ const has = n => argv.includes('--' + n);
 const APP_DIR = app.isPackaged ? path.dirname(process.execPath) : path.resolve(__dirname, '..');
 const DATA_DIR = path.resolve(arg('data', process.env.ERP_DATA || path.join(process.env.ProgramData || os.homedir(), 'XERP')));
 const MODE = String(arg('mode', 'server')).toLowerCase().startsWith('client') ? 'client' : 'server';
-const PORT = +arg('port', MODE === 'client' ? 18686 : 8686) || (MODE === 'client' ? 18686 : 8686);
+// 客户端模式的代理端口固定 18686（和 xerp-service.ps1 里的 $clientPort 一致）。
+// 安装器传的 --port 是「服务器模式的服务端口」，客户端模式下不能拿它用，
+// 否则窗口会去连 8686 那个本机服务（甚至是空的临时实例），而不是转发到远端。
+const CLIENT_PORT = +arg('client-port', 0) || 18686;
+const PORT = MODE === 'client' ? CLIENT_PORT : (+arg('port', 8686) || 8686);
 const REMOTE = String(arg('server', '')).trim();
 // 安装器 [Run] 里的那一行：装完直接弹窗。这时后台服务已经装好并在跑，
 // 只要开窗指过去就行，不能再起一个实例去抢端口。
@@ -163,8 +167,10 @@ async function ensureLocal(skipSpawn) {
   return (await waitPing(PORT, '/api/ping', 40000)).ok ? PORT : null;
 }
 
-// 临时实例：换端口，数据目录和正式服务共用
+// 临时实例：换端口，数据目录和正式服务共用。只在服务器模式下用得上——
+// 客户端模式的界面必须来自远端服务器，绝不能在本机起一个空库冒充。
 async function startTabInstance() {
+  if (MODE === 'client') throw new Error('客户端模式不允许启动本机实例');
   const tport = await pickTabPort();
   if (!tport) throw new Error('本机没有可用端口');
   usingPort = tport;
@@ -188,6 +194,17 @@ const baseUrl = port => `http://${HOST}:${port}/`;
 async function makeShell() {
   const target = await ensureLocal(FROM_INSTALLER);
   if (target) return baseUrl(target);
+  // 客户端模式绝不能退到「本机临时实例」——那会显示一个几乎空的本地库，
+  // 让人以为数据丢了。连不上就明确报错，让用户去查服务器地址/网络。
+  if (MODE === 'client') {
+    throw new Error(
+      '连不上服务器：' + (remoteUrl() || '(未配置服务器地址)') + '\n\n' +
+      '请检查：\n' +
+      '1) 服务器那台机器开着、XLerp 服务在跑；\n' +
+      '2) 地址和端口对不对（例如 http://192.168.31.4:8686）；\n' +
+      '3) 两台机器在同一个局域网。'
+    );
+  }
   return baseUrl(await startTabInstance());
 }
 

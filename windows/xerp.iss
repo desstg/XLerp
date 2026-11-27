@@ -96,11 +96,15 @@ end;
 
 // 桌面程序（XLerp.exe = Electron 窗口）的启动参数：模式、端口、服务器地址、数据目录
 // 一律用 --key=value 形式：Chromium 会把「--server http://x」这种独立参数当成非法开关，进程直接退出
+// 端口只在服务器模式有意义；客户端模式窗口连的是本机代理 18686（由后台服务 xerp-service.ps1 起），
+// 所以客户端模式下不传 --port，免得程序把它当成代理端口去连（那会连到本机空库，看起来像数据丢了）。
 function ExeArgs(Param: String): String;
 begin
-  Result := '--mode=' + GetMode('') + ' --port=' + GetPort('');
+  Result := '--mode=' + GetMode('');
   if GetMode('') = 'client' then
-    Result := Result + ' --server=' + GetClientServer('');
+    Result := Result + ' --client-port=18686 --server=' + GetClientServer('')
+  else
+    Result := Result + ' --port=' + GetPort('');
   Result := Result + ' --data="' + DataDir('') + '"';
 end;
 

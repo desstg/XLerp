@@ -268,3 +268,17 @@ $iss = Join-Path $Stage 'xerp.iss'
 if ($LASTEXITCODE -ne 0) { throw "ISCC 失败（$LASTEXITCODE）" }
 $exe = Join-Path $Dist "xlerp-$Version-windows-x64-setup.exe"
 Step ("Done: $exe ({0:N1} MB)" -f ((Get-Item $exe).Length / 1MB))
+
+# ---------- 4. 另存一份到能直接双击安装的位置 ----------
+# 仓库目录（构建所在盘）常被加上受限 ACL / 被同步盘占着，从那里双击安装包会出现
+# 「安装程序无法创建目录 ... 错误 5: 拒绝访问」。把一份放到桌面和 D 盘根目录，
+# 用户拿到手就是从普通目录双击，不会踩这个坑。都不存在就跳过，不报错。
+Step 'Copying installer for direct install'
+$name = "xlerp-$Version-setup.exe"
+$copies = @()
+if (Test-Path 'D:\') { $copies += (Join-Path 'D:\' $name) }
+$desktop = [Environment]::GetFolderPath('Desktop')
+if ($desktop -and (Test-Path $desktop)) { $copies += (Join-Path $desktop $name) }
+foreach ($c in ($copies | Where-Object { $_ } | Select-Object -Unique)) {
+  try { Copy-Item $exe $c -Force; Write-Host "  -> $c" } catch { Write-Host "  跳过 $c ：$($_.Exception.Message)" }
+}
