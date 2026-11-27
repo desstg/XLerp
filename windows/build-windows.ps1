@@ -1,5 +1,7 @@
-# 构建 Windows 安装包：dist\xerp-<版本>-windows-x64-setup.exe
+﻿# 构建 Windows 安装包：dist\xerp-<版本>-windows-x64-setup.exe
 # 需要：Windows、本机已安装 Node.js（x64，会把 node.exe 一起打进安装包）、Inno Setup 6（winget install JRSoftware.InnoSetup）
+# ⚠ 本文件必须存成「UTF-8 带 BOM」。没有 BOM 时 Windows PowerShell 5.1（CI 上用的就是它）
+#   会按 ANSI 读，中文注释全变乱码，直接 ParserError。改完文件务必确认前三字节是 EF BB BF。
 $ErrorActionPreference = 'Stop'
 $Root  = Split-Path $PSScriptRoot -Parent
 $Win   = $PSScriptRoot
