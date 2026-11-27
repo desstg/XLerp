@@ -25,6 +25,9 @@ function log(...m) {
 }
 let cfg = { server: '' };
 try { Object.assign(cfg, JSON.parse(fs.readFileSync(CFG_FILE, 'utf8').replace(/^﻿/, ''))); } catch (e) {}
+// 命令行优先：桌面版由计划任务按 config.json 里保存的模式启动，
+// 服务器地址以那边为准（系统设置 → 运行模式 里填的），不用再单独维护一份 client.json
+if (arg('server')) { try { cfg.server = String(arg('server')).trim(); } catch (e) {} }
 function normalize(s) {
   s = String(s || '').trim();
   if (!s) throw new Error('请填写服务器地址');

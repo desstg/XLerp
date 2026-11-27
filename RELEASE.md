@@ -1,4 +1,4 @@
-# XLerp 2.20.1
+# XLerp 2.20.2
 
 轻量级自托管进销存 / ERP，数据留在自己机器里，完全离线可用。
 
@@ -23,10 +23,10 @@
 
 | 平台 | 文件 | 说明 |
 |---|---|---|
-| Docker（AMD64） | `xlerp-2.20.1-docker-amd64.tar.gz` | 群晖、威联通、Unraid、绿联、极空间、飞牛等 x86 NAS |
-| Docker（ARM64） | `xlerp-2.20.1-docker-arm64.tar.gz` | 树莓派、ARM 架构 NAS |
-| Windows | `xlerp-2.20.1-windows-x64-setup.exe` | Windows 10 / 11 64 位，双击安装，自带 Node.js |
-| Android | `xlerp-2.20.1-android.apk` | Android 7.0 及以上 |
+| Docker（AMD64） | `xlerp-2.20.2-docker-amd64.tar.gz` | 群晖、威联通、Unraid、绿联、极空间、飞牛等 x86 NAS |
+| Docker（ARM64） | `xlerp-2.20.2-docker-arm64.tar.gz` | 树莓派、ARM 架构 NAS |
+| Windows | `xlerp-2.20.2-windows-x64-setup.exe` | Windows 10 / 11 64 位，双击安装，自带 Node.js |
+| Android | `xlerp-2.20.2-android.apk` | Android 7.0 及以上 |
 
 在线拉取镜像：`desstg/xlerp:latest`（amd64 + arm64 多架构）
 
@@ -68,7 +68,7 @@ services:
 **国内拉不动 Docker Hub** 时用离线镜像包：
 
 ```bash
-docker load -i xlerp-2.20.1-docker-amd64.tar.gz
+docker load -i xlerp-2.20.2-docker-amd64.tar.gz
 docker run -d --name xlerp --restart unless-stopped \
   -p 8686:8686 -v ./xlerp-data:/data \
   -e XERP_ADMIN_PASSWORD=你的初始密码 \
@@ -77,7 +77,7 @@ docker run -d --name xlerp --restart unless-stopped \
 
 ## Windows 安装
 
-双击 `xlerp-2.20.1-windows-x64-setup.exe`，向导里设端口（默认 8686）和管理员密码。
+双击 `xlerp-2.20.2-windows-x64-setup.exe`，向导里设端口（默认 8686）和管理员密码。
 
 - 以后台服务运行（任务计划程序「XLerp」，SYSTEM 身份开机自启，崩溃自动重启），不用登录 Windows
 - 自动在防火墙放行该端口，仅限同一局域网
@@ -85,13 +85,29 @@ docker run -d --name xlerp --restart unless-stopped \
 
 ## Android 安装
 
-安装 `xlerp-2.20.1-android.apk`，手机连上和服务端同一个 Wi-Fi，首次打开填服务端地址，或点「自动查找」扫描局域网。
+安装 `xlerp-2.20.2-android.apk`，手机连上和服务端同一个 Wi-Fi，首次打开填服务端地址，或点「自动查找」扫描局域网。
 
 - 右下角扫码按钮支持 EAN-13/8、UPC、Code 128/39/93、ITF、Codabar、QR、Data Matrix
 - 扫到的码会填进当前输入框并自动回车，开出入库单、盘点、搜索都能用
 - 服务端升级后手机端界面自动更新，一般不用重装
 
-> **签名说明**：本版起使用正式密钥签名，可正常覆盖升级。如果你装过 2.20.1 的早期测试包（临时证书签的），需要先卸载再装。
+> **签名说明**：本版起使用正式密钥签名，可正常覆盖升级。如果你装过 2.20.2 的早期测试包（临时证书签的），需要先卸载再装。
+
+## 本版更新（2.20.2）
+
+- **Windows 版支持两种运行模式**：系统设置 → 运行模式
+  - 服务器模式：数据存本机，手机和别的电脑可以连这台机（默认）
+  - 客户端模式：连一台已有服务器，本机不存业务数据，切换后重启生效
+  - 两种模式数据完全分开，切换不会删除本机已有数据
+- **进货统计改成与销售统计同款界面**：曲线 + 三格合计 + 两个排行 + 详细页
+- **手机端客户/供应商新增「专属价」入口**：搜索、改价、删除、导入，删完点保存才生效
+- 选货页只显示一个实际取价（专属价 > 上次价 > 等级价 > 零售价），修掉「显示一个价、下单另一个价」
+- 数量/单价弹窗点行整段覆盖输入，避开安卓系统剪切复制工具条
+- 货品详情页、开单页购物车、货品库存列表都能正确显示商品图；默认图换成灰蓝山形
+- 单据详情页上传票据影像不再闪屏
+- 销售单开单页加「快递单」入口（编辑已有单据时显示，需要时自己点进去）
+- 登录页不再显示底栏
+- **新装系统默认开启全部功能模块**（医疗器械 GSP 除外，需要时到功能模块里勾）
 
 ## 功能
 

@@ -20,7 +20,7 @@ const tls = require('tls');
 const zlib = require('zlib');
 const { DatabaseSync } = require('node:sqlite');
 
-const VERSION = '2.20.1';
+const VERSION = '2.20.2';
 const argv = process.argv.slice(2);
 const arg = (name, def) => { const i = argv.indexOf('--' + name); return i >= 0 && argv[i + 1] ? argv[i + 1] : def; };
 
@@ -152,8 +152,10 @@ const DEFAULT_WH = 'w1';
 /* ================= 模块 / 权限 ================= */
 const MODULES = { inventory: '库存管理', products: '商品管理', bom: '生产 / BOM', dashboard: '工作台', sales: '销售管理', purchase: '采购管理', parties: '客户 / 供应商', finance: '财务管理', hr: '人事管理', reports: '统计报表', medical: '医疗器械（GSP）', shipping: '物流运费' };
 const DEMO = process.env.XERP_DEMO === '1';  // 在线演示，见 HTTP 服务部分的 DEMO_BLOCK
-// 默认只开库存和商品；在线演示默认全开，方便别人看全部功能
-const DEFAULT_MODULES = DEMO ? Object.keys(MODULES) : ['inventory', 'products'];
+// 默认全开（新装用户一进来就看到完整菜单）。
+// 唯一的例外是 medical（医疗器械 GSP）——那是行业专用模块，会在商品表单里加注册证号等字段，
+// 默认关上，需要的到「系统设置 → 常规设置 → 功能模块」里自己勾。
+const DEFAULT_MODULES = Object.keys(MODULES).filter(k => k !== 'medical');
 // [权限键, 名称, 所属模块]
 const PERMS = [
   ['inv.view', '查看库存、出入库单与流水', 'inventory'], ['inv.in', '开入库单', 'inventory'], ['inv.out', '开出库单', 'inventory'],
@@ -3680,6 +3682,25 @@ const route = (method, pattern, handler, opts = {}) =>
   routes.push({ method, re: new RegExp('^' + pattern.replace(/:(\w+)/g, '(?<$1>[^/]+)') + '$'), handler, auth: opts.auth !== false, admin: !!opts.admin, perm: opts.perm });
 
 route('GET', '/api/ping', () => ({ ok: true, app: 'XERP', version: VERSION, company: getMeta('settings', {}).company || '' }), { auth: false });
+// ---- 运行模式：server = 本机存数据（手机可连这台机）；client = 连别人（数据在服务器）----
+// 只在 Windows 桌面版有意义。切换后需要重启程序才生效。
+route('GET', '/api/mode', ctx => ({
+  mode: config.mode === 'client' ? 'client' : 'server',
+  server: config.clientServer || '',
+  desktop: process.platform === 'win32' && !process.env.XERP_DOCKER,
+  // 改的是哪个文件、数据放哪，都告诉前端，方便用户判断
+  dataDir: DATA_DIR,
+}), { admin: true });
+route('PUT', '/api/mode', ctx => {
+  const mode = ctx.body.mode === 'client' ? 'client' : 'server';
+  const server = String(ctx.body.server || '').trim();
+  if (mode === 'client' && !/^https?:\/\//i.test(server)) fail('客户端模式要填写服务器地址，例如 http://192.168.1.10:8686');
+  config.mode = mode;
+  config.clientServer = mode === 'client' ? server.replace(/\/+$/, '') : (config.clientServer || '');
+  saveConfig();
+  audit(ctx, '切换运行模式', mode === 'client' ? '客户端 → ' + server : '服务器（本机）');
+  return { mode: config.mode, server: config.clientServer || '' };
+}, { admin: true });
 route('POST', '/api/login', ctx => login(ctx, ctx.body), { auth: false });
 route('POST', '/api/logout', ctx => { db.prepare('DELETE FROM sessions WHERE token = ?').run(ctx.user.token); });
 // 推送地址带密钥，只给管理员看；快递鸟 AppKey 谁都不下发，只告诉前端设没设、能不能下电子面单

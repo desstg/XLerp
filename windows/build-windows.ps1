@@ -1,4 +1,4 @@
-﻿# 构建 Windows 安装包：dist\xerp-<版本>-windows-x64-setup.exe
+# 构建 Windows 安装包：dist\xerp-<版本>-windows-x64-setup.exe
 # 需要：Windows、本机已安装 Node.js（x64，会把 node.exe 一起打进安装包）、Inno Setup 6（winget install JRSoftware.InnoSetup）
 $ErrorActionPreference = 'Stop'
 $Root  = Split-Path $PSScriptRoot -Parent
@@ -57,7 +57,7 @@ else {  # Node.js 安装目录里没有 LICENSE 时，从官方仓库取对应�
   $tag = & $Node -p process.version
   Invoke-WebRequest -UseBasicParsing -Uri "https://raw.githubusercontent.com/nodejs/node/$tag/LICENSE" -OutFile (Join-Path $App 'node-LICENSE.txt')
 }
-Copy-Item (Join-Path $Root 'src\server.js'), (Join-Path $Root 'src\portal.js'), (Join-Path $Root 'src\index.html') $App
+Copy-Item (Join-Path $Root 'src\server.js'), (Join-Path $Root 'src\portal.js'), (Join-Path $Root 'src\index.html'), (Join-Path $Root 'src\client.js') $App
 Copy-Item (Join-Path $Root 'src\vendor') $App -Recurse
 Copy-Item (Join-Path $Win 'xerp-service.ps1') $App
 Copy-Item (Join-Path $Win 'ChineseSimplified.isl') $Stage

@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "latest": "2.20.1",
+  "latest": "2.20.2",
   "publishedAt": "2026-11-21T12:51:00+08:00",
   "notes": [
     "「云服务」和「问题反馈」页面新增产品官网入口，方便查看教程与下载新版",
@@ -8,37 +8,37 @@
   ],
   "packages": {
     "fnos": {
-      "version": "2.20.1",
-      "url": "https://www.zhaoyoucai.xyz/downloads/xerp-2.20.1.fpk",
+      "version": "2.20.2",
+      "url": "https://www.zhaoyoucai.xyz/downloads/xerp-2.20.2.fpk",
       "sha256": "8df5923be1017b808509cc6e4486cfb92b0ce17e0c07c2a7d3bba3bde21326e7",
       "size": 739120,
-      "file": "xerp-2.20.1.fpk",
+      "file": "xerp-2.20.2.fpk",
       "kind": "fpk"
     },
     "windows": {
-      "version": "2.20.1",
-      "url": "https://www.zhaoyoucai.xyz/downloads/xerp-2.20.1-windows-x64-setup.exe",
+      "version": "2.20.2",
+      "url": "https://www.zhaoyoucai.xyz/downloads/xerp-2.20.2-windows-x64-setup.exe",
       "sha256": "434a0f40f98215a65c003f2e6f76a5afa85f4cbf9f4e87c64f6db74c1af3b764",
       "size": 23829828,
-      "file": "xerp-2.20.1-windows-x64-setup.exe",
+      "file": "xerp-2.20.2-windows-x64-setup.exe",
       "kind": "exe"
     },
     "android": {
-      "version": "2.20.1",
-      "url": "https://www.zhaoyoucai.xyz/downloads/xerp-2.20.1-android.apk",
+      "version": "2.20.2",
+      "url": "https://www.zhaoyoucai.xyz/downloads/xerp-2.20.2-android.apk",
       "sha256": "491f208ff47df5b5e3975e85c2695bcdafd30f292e72aca4aa469f4c597cb1d3",
       "size": 279329,
-      "file": "xerp-2.20.1-android.apk",
+      "file": "xerp-2.20.2-android.apk",
       "kind": "apk",
       "versionCode": 21405
     },
     "docker": {
-      "version": "2.20.1",
+      "version": "2.20.2",
       "kind": "docker",
-      "image": "desstg/xlerp:2.20.1",
+      "image": "desstg/xlerp:2.20.2",
       "offline": [
-        "https://www.zhaoyoucai.xyz/downloads/xerp-2.20.1-docker-amd64.tar.gz",
-        "https://www.zhaoyoucai.xyz/downloads/xerp-2.20.1-docker-arm64.tar.gz"
+        "https://www.zhaoyoucai.xyz/downloads/xerp-2.20.2-docker-amd64.tar.gz",
+        "https://www.zhaoyoucai.xyz/downloads/xerp-2.20.2-docker-arm64.tar.gz"
       ],
       "note": "也可以下载离线包 docker load"
     }

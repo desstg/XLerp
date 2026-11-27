@@ -2610,7 +2610,7 @@ html.mobile .zhj-rpt-cap{font-size:16px}
   <aside class="sidebar">
     <div class="brand"><div class="logo">XL</div><span class="brand-name">XLerp</span></div>
     <nav id="nav"></nav>
-<div class="side-foot"><span id="sideVer">v2.20.1</span> · 数据保存在服务器</div>
+<div class="side-foot"><span id="sideVer">v2.20.2</span> · 数据保存在服务器</div>
   </aside>
   <div class="backdrop" data-act="toggleSide"></div>
   <div class="main">
@@ -3063,6 +3063,8 @@ async function enterApp() {
   await reload();
   $('#login').classList.remove('show');
   document.documentElement.classList.remove('zhj-login-page');   // 登入成功，放开底栏
+  // 运行模式（Windows 桌面版才有意义）要在 render 之前拿到，否则设置首页那一行不显示
+  try { window.__runMode = await api('GET', '/api/mode'); } catch (e) { window.__runMode = { mode: 'server', desktop: false }; }
   applyTheme(); render();
   setupPortalUI();
 }
@@ -4745,14 +4747,35 @@ async function obAddImgDoc(ref) {
   inp.onchange = async e => {
     const files = [...(e.target.files || [])]; e.target.value = '';
     if (!files.length) return;
-    let bad = 0;
+    let bad = 0, last = null;
     for (const f of files) {
-      try { const d = await shrinkImage(f, 1200, 700000); await api('POST', '/api/orderimg/' + kind + '/' + oid, { data: d }); }
-      catch (err) { bad++; toast(err.message || '这张图片没能加上', 'error'); }
+      try {
+        const d = await shrinkImage(f, 1200, 700000);
+        last = await api('POST', '/api/orderimg/' + kind + '/' + oid, { data: d });
+      } catch (err) { bad++; toast(err.message || '这张图片没能加上', 'error'); }
     }
-    closeModal(); await reload();
-    if (ORD[kind] && byId(db[ORD[kind].db], oid)) orderView(kind, oid);
+    // 关键：不要等 reload() 再重绘。reload 要拉整个 /api/data（这库快 10MB），
+    // 期间页面空着/半渲染，看起来就是「闪一下」。先用 POST 返回的 imgs 立即把这一块画好。
+    const drawImgs = list => {
+      const box = document.getElementById('obDocImgs');
+      if (!box) return false;
+      const o0 = ORD[kind] ? byId(db[ORD[kind].db], oid) : null;
+      const canEdit = !o0 || o0.status !== '已作废';
+      box.innerHTML = list.map(k => `<img data-oimg="${esc(kind + '|' + oid + '|' + k)}" data-act="obViewImg" data-id="${esc(kind + '|' + oid + '|' + k)}" alt="">`).join('')
+        + (canEdit ? `<div class="oi-add" data-act="obAddImgDoc" data-id="${kind}|${oid}"><span>+</span><em>添加</em></div>` : '');
+      const cnt = box.parentElement && box.parentElement.querySelector('.zv');
+      if (cnt) cnt.textContent = list.length ? list.length + ' 张' : '';
+      return true;
+    };
+    if (last && Array.isArray(last.imgs)) {
+      // 内存里的单据对象也同步一下，后面任何重绘都看到最新
+      const o0 = ORD[kind] ? byId(db[ORD[kind].db], oid) : null;
+      if (o0) o0.imgs = last.imgs;
+      drawImgs(last.imgs);
+    }
     if (!bad) toast('票据影像已保存', 'success');
+    // 后台静默同步（不重绘，只更新 db，下次进页面就是全的）
+    try { await reload(); } catch (e2) { }
   };
   inp.click();
 }
@@ -7834,6 +7857,7 @@ function orderModal(kind, id, srcId0) {
       <input type="hidden" id="oParty" value="${esc(party0)}">
       <input type="date" id="oDate" value="${o ? o.date : today()}" style="display:none">
       <input id="oHandler" type="hidden" value="${esc(o ? o.handler || o.creator || '' : ME.name)}">
+      ${kind === 'sales' && o ? `<div class="zhj-row tap" id="mExpressRow"><span class="rico">${ic('truck')}</span><label>快递单</label><span class="v" id="oExpressText" style="color:${expressOf(kind, o.id) ? '#333' : '#9aa3ad'};text-align:right;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${expressOf(kind, o.id) ? esc(expressOf(kind, o.id)) : '未填写'}</span><span class="arrow"></span></div>` : ''}
     </div>
     <div class="zhj-ob-sum"><span class="l">选择货品 (<b id="oQtyL">0</b>)</span><span class="r">¥ <b id="oTotalL">0.00</b></span></div>
     <datalist id="oProdList">${db.products.map(p => `<option value="${esc(prodLabel(p))}">`).join('')}</datalist>
@@ -8303,6 +8327,18 @@ function orderModal(kind, id, srcId0) {
       if (!o) return toast('先保存单据再打印', 'info');
       zhjPrintView(kind, o.id);
     };
+    // 快递单行：只在编辑已存在的销售单时出现，点进去登记单号（不做任何自动弹出）
+    const exRow = $('#mExpressRow');
+    if (exRow) exRow.onclick = () => {
+      const curId = (o && o.id) || '';
+      if (!curId) return;
+      // 开单页是全屏页（html.zhj-ob-page），直接 closeModal 会残留页面样式，
+      // 必须先把这两个 class 去掉再关，跟 obClose 保持一致。
+      // 注意不要用 setTimeout 延迟调用：中间只要有一次 render() 就会把弹窗顶掉。
+      document.documentElement.classList.remove('zhj-ob-page', 'modal-fullscreen');
+      closeModal();
+      zhjExpressPage(kind, curId);
+    };
     renderItems2();
     syncTabbar();
     // App 内 WebView 有时不重绘：切换页面后强制触发一次回流，让内容立即上屏
@@ -8324,6 +8360,7 @@ function orderModal(kind, id, srcId0) {
   ${IS_MOBILE ? `<div class="zhj-ob-form">
     <div class="zhj-row tap" id="mPartyRow"><label>日期</label><span class="v strong">${o ? o.date : today()}</span><span class="arrow"></span></div>
     <div class="zhj-row tap" id="mPartyPick"><label>${C.partyLabel}</label><span class="v strong" id="oPartyText">${esc((byId(db[C.party], party0) || {}).name || '零售客户')}</span><span class="arrow"></span></div>
+    ${kind === 'sales' && o ? `<div class="zhj-row tap" id="mExpressRow"><label>快递单</label><span class="v" id="oExpressText" style="color:${expressOf(kind, o.id) ? '#333' : '#9aa3ad'}">${expressOf(kind, o.id) ? esc(expressOf(kind, o.id)) : '选填，点这里填写单号'}</span><span class="arrow"></span></div>` : ''}
     <input type="hidden" id="oParty" value="${esc(party0)}">
     <input type="date" id="oDate" value="${o ? o.date : today()}" style="display:none">
     <input id="oHandler" type="hidden" value="${esc(o ? o.handler || o.creator || '' : ME.name)}">
@@ -8347,6 +8384,10 @@ function orderModal(kind, id, srcId0) {
     <label class="field"><span>${kind === 'sales' ? '业务员' : kind === 'purchase' ? '采购员' : '经手人'}</span><input id="oHandler" list="oHList" maxlength="32" value="${esc(o ? o.handler || o.creator || '' : ME.name)}" placeholder="默认开单人"><datalist id="oHList">${handlerNames().map(n => `<option value="${esc(n)}">`).join('')}</datalist></label>
     ${kind === 'sales' ? `<label class="field span2"><span>收货地址（选填）</span><input id="oAddress" maxlength="200" value="${esc(o ? o.address || '' : '')}" placeholder="默认带出客户档案地址，可改成这次订单的收货地址"></label>` : ''}
     ${C.src ? `<label class="field span2"><span>关联原${S0.doc}（只列出${C.srcOk.join(' / ')}的单子；选了按原单带出商品，限退未退的数量）</span><select id="oSrc">${srcOpts(party0)}</select></label>` : ''}
+    ${kind === 'sales' && o ? `<label class="field span2"><span>快递单（选填）</span><div style="display:flex;gap:8px;align-items:center">
+      <input value="${esc(expressOf(kind, o.id))}" readonly placeholder="还没填快递单号" style="flex:1;background:#f7f9fb;cursor:default">
+      <button class="btn sm" type="button" id="oExpressBtn">${ic('truck')}${expressOf(kind, o.id) ? '修改' : '填写'}</button>
+    </div></label>` : ''}
   </div>
   <div class="line-head"><b>${C.src ? '退货明细' : '商品明细'}</b><span class="sub-t" style="margin-left:10px;margin-right:auto">可输入编码 / 条码 / 名称搜索，支持扫码枪录入后回车</span><button class="btn sm" id="oPick">${ic('search')}选择商品</button><button class="btn sm" id="oAdd">${ic('plus')}添加一行</button></div>
   <datalist id="oProdList">${db.products.map(p => `<option value="${esc(prodLabel(p))}">`).join('')}</datalist>
@@ -8536,6 +8577,12 @@ function orderModal(kind, id, srcId0) {
     $('#oParty').onchange = e => { const s = srcOf(); if (s && s[S0.partyKey] !== e.target.value) draft.srcId = ''; $('#oSrc').innerHTML = srcOpts(e.target.value); reprice(e.target.value); renderItems(); };
     $('#oSrc').onchange = e => { draft.srcId = e.target.value; const s = srcOf(); if (s) { fillFromSrc(s); draft.items.push(blank()); } renderItems(); };
   }
+  if ($('#oExpressBtn')) $('#oExpressBtn').onclick = () => {
+    const curId = (o && o.id) || '';
+    if (!curId) return;
+    closeModal();
+    zhjExpressPage(kind, curId);
+  };
   $('#oSave').onclick = () => {
     const party = $('#oParty').value, date = $('#oDate').value, remark = $('#oRemark').value.trim();
     const items = draft.items.filter(i => i.productId);
@@ -8611,7 +8658,7 @@ function orderView(kind, id) {
         const canEdit = o.status !== '已作废';
         if (!imgs.length && !canEdit) return '';
         return `<div class="zgroup"><div class="zrow" style="border-bottom:1px solid #f0f2f5"><label>票据影像</label><div class="zc"><span class="zv" style="color:#9aa3ad">${imgs.length ? imgs.length + ' 张' : ''}</span></div></div>
-        <div class="zhj-docimgs">${imgs.map(k => `<img data-oimg="${esc(kind + '|' + o.id + '|' + k)}" data-act="obViewImg" data-id="${esc(kind + '|' + o.id + '|' + k)}" alt="">`).join('')}${canEdit ? `<div class="oi-add" data-act="obAddImgDoc" data-id="${kind}|${o.id}"><span>+</span><em>添加</em></div>` : ''}</div></div>`;
+        <div class="zhj-docimgs" id="obDocImgs" data-ref="${esc(kind + '|' + o.id)}">${imgs.map(k => `<img data-oimg="${esc(kind + '|' + o.id + '|' + k)}" data-act="obViewImg" data-id="${esc(kind + '|' + o.id + '|' + k)}" alt="">`).join('')}${canEdit ? `<div class="oi-add" data-act="obAddImgDoc" data-id="${kind}|${o.id}"><span>+</span><em>添加</em></div>` : ''}</div></div>`;
       })()}
       <div class="zgroup"><div class="zrow ta"><label>备注(最多200字)</label><div class="zc"><span class="zv" style="text-align:left;white-space:pre-wrap;color:#9aa3ad">${esc(o.remark || '')}</span></div></div></div>      <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 16px 6px;font-size:13px;color:#b0b7bf">
         <span>${esc(o.no)}</span><span>${esc(o.creator || o.handler || '')}</span>
@@ -13459,6 +13506,7 @@ function setMobileHome(keepScroll) {
     adminRows.push(row('users', '用户管理', '', '账号与角色分配', 'setPage', 'users'));
     adminRows.push(row('id', '角色管理', '', '预置角色与自定义权限', 'setPage', 'roles'));
     adminRows.push(row('grid', '功能模块', (st.modules || []).length + ' 个已启用', '', 'setPage', 'modules'));
+if (isAdmin() && (window.__runMode ? window.__runMode.desktop : false)) adminRows.push(row('cloud', '运行模式', (window.__runMode.mode === 'client' ? '客户端 · 连服务器' : '服务器 · 本机存数据'), '', 'setPage', 'mode'));
     adminRows.push(row('download', '数据管理', '', '备份导出 / 导入 / 清理', 'setPage', 'data'));
     adminRows.push(row('clock', '操作日志', '', '谁在什么时候做了什么', 'setPage', 'audit'));
   }
@@ -13506,7 +13554,7 @@ function setSubPage(key) {
     orderRule: '开单规则', cost: '成本核算', expFlow: '报销审批流程', basic: '基础资料', notice: '首页公告',
     users: '用户管理', roles: '角色管理', modules: '功能模块', data: '数据管理', audit: '操作日志',
     print: '打印模板', notify: '通知推送', kdn: '快递鸟', gsp: '医疗器械', companies: '公司管理',
-    update: '版本更新', stats: '匿名使用统计',
+    update: '版本更新', stats: '匿名使用统计', mode: '运行模式',
   }[key] || '系统设置';
   // 后端会把内容写进 #setBody，这里先建外壳
   $('#view').innerHTML = `<div class="zhj-page zhj-set2">
@@ -13524,6 +13572,7 @@ function setSubPage(key) {
   else if (key === 'basic') setBasic(body);
   else if (key === 'notice') setNotice(body);
   else if (key === 'modules') setModules(body);
+  else if (key === 'mode') setMode(body);
   else if (key === 'update') setUpdate(body);
   else if (key === 'stats') setStats(body);
   else if (key === 'notify') body.innerHTML = `<div class="set-sec">${notifyCard(st)}</div>`;
@@ -13684,6 +13733,115 @@ function setUpdate(body) {
     ${NATIVE ? `<div class="set-row" data-act="apkUpdate"><span class="ri">${ic('download')}</span><div class="tx"><b>安卓客户端</b><small>当前 v${esc(NATIVE.version ? NATIVE.version() : '')}</small></div><span class="ar"></span></div>` : ''}
   </div>
   <div id="updBox" class="set-sec" style="padding:14px 16px"><div class="sub-t" style="font-size:13px;line-height:1.6">下载前会再次向你确认，安装仍由你在应用中心或安装程序里完成。</div></div>`;
+}
+/* ---------- 运行模式：服务器（本机存数据）/ 客户端（连别的服务器） ---------- */
+// 只对 Windows 桌面版开放。两种模式数据天然隔离：
+//   服务器模式 → 数据在本机，和现在完全一样
+//   客户端模式 → 本机不存业务数据，所有 /api 转发到远程服务器
+function setMode(body) {
+  const M = window.__runMode || { mode: 'server', server: '', desktop: false, dataDir: '' };
+  const isClient = M.mode === 'client';
+  if (!M.desktop) {
+    body.innerHTML = `<div class="set-sec" style="padding:18px 16px">
+      <div style="font-size:15px;color:#333;margin-bottom:6px">当前模式：服务器</div>
+      <div style="font-size:13px;color:#9aa3ad;line-height:1.7">这个部署（Docker / NAS / 飞牛）本身就是服务器，手机和电脑都连它，不存在「客户端模式」。</div>
+    </div>
+    <div class="set-note">运行模式只在 Windows 桌面版里可切换。</div>`;
+    return;
+  }
+  body.innerHTML = `
+  <div class="set-sec" style="padding:16px">
+    <div style="font-size:13px;color:#9aa3ad;margin-bottom:10px">当前模式</div>
+    <div class="set-mode-cur" style="display:flex;align-items:center;gap:10px;padding:14px;border-radius:10px;background:${isClient ? '#eef7ff' : '#eefaf3'};border:1px solid ${isClient ? '#c8e3fb' : '#cdeeda'}">
+      <span class="ri" style="width:34px;height:34px;display:flex;align-items:center;justify-content:center;border-radius:50%;background:${isClient ? '#2f88d6' : '#25a26b'};color:#fff;flex:none">${ic(isClient ? 'cloud' : 'warehouse')}</span>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:16px;color:#222;font-weight:500">${isClient ? '客户端模式' : '服务器模式'}</div>
+        <div style="font-size:12px;color:#7d8894;margin-top:3px;word-break:break-all">${isClient ? '数据在服务器：' + esc(M.server || '未填写地址') : '数据保存在本机'}</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="set-sec">
+    <div class="set-row" data-mode-pick="server" style="cursor:pointer">
+      <span class="ri">${ic('warehouse')}</span>
+      <div class="tx"><b>服务器模式</b><small>数据存在这台电脑，手机、别的电脑都可以连它</small></div>
+      <span class="rv" style="color:${!isClient ? '#25a26b' : '#b6bcc4'}">${!isClient ? '使用中' : '切换'}</span>
+      <span class="ar"></span>
+    </div>
+    <div class="set-row" data-mode-pick="client" style="cursor:pointer">
+      <span class="ri">${ic('cloud')}</span>
+      <div class="tx"><b>客户端模式</b><small>连一台已有的服务器，本机不存业务数据</small></div>
+      <span class="rv" style="color:${isClient ? '#2f88d6' : '#b6bcc4'}">${isClient ? '使用中' : '切换'}</span>
+      <span class="ar"></span>
+    </div>
+  </div>
+
+  <div class="set-sec" id="modeSrvBox" style="display:${isClient ? '' : 'none'};padding:14px 16px">
+    <label style="display:block;font-size:13px;color:#9aa3ad;margin-bottom:8px">服务器地址</label>
+    <input id="modeSrv" value="${esc(M.server || '')}" placeholder="例如 http://192.168.31.4:8686"
+      style="width:100%;border:1px solid #dfe4ea;border-radius:8px;padding:12px;font-size:15px;box-sizing:border-box">
+    <div style="display:flex;gap:10px;margin-top:10px;align-items:center">
+      <button class="btn" id="modeSrvTest" type="button" style="flex:0 0 auto">测试连接</button>
+      <span id="modeSrvState" style="font-size:13px;color:#9aa3ad">还没测试</span>
+    </div>
+  </div>
+
+  <div class="set-note" style="line-height:1.9">
+    <b>两种模式的数据是分开的：</b><br>
+    · 服务器模式：数据在 <code>${esc(M.dataDir || '本机')}</code>，本机自己一套账<br>
+    · 客户端模式：本机只做界面转发，单据、库存、往来全部读写服务器<br>
+    切换后需要<b>退出程序再重新打开</b>才生效。本机已有的数据不会丢，切回服务器模式就能看到。
+  </div>
+  <div style="padding:0 16px 20px"><button class="btn primary" id="modeSave" type="button" style="width:100%;height:46px;font-size:16px">保存并重启提示</button></div>`;
+
+  let pick = M.mode;
+  const srvBox = body.querySelector('#modeSrvBox');
+  body.querySelectorAll('[data-mode-pick]').forEach(el => el.onclick = () => {
+    pick = el.dataset.modePick;
+    srvBox.style.display = pick === 'client' ? '' : 'none';
+    body.querySelectorAll('[data-mode-pick]').forEach(r => {
+      const on = r.dataset.modePick === pick;
+      const rv = r.querySelector('.rv');
+      const isS = r.dataset.modePick === 'server';
+      rv.textContent = on ? '使用中' : '切换';
+      rv.style.color = on ? (isS ? '#25a26b' : '#2f88d6') : '#b6bcc4';
+    });
+  });
+  const srvIn = body.querySelector('#modeSrv');
+  body.querySelector('#modeSrvTest').onclick = async () => {
+    const st = body.querySelector('#modeSrvState');
+    const url = String(srvIn.value || '').trim();
+    if (!/^https?:\/\//i.test(url)) { st.textContent = '地址要以 http:// 开头'; st.style.color = '#fa3757'; return; }
+    st.textContent = '正在连接…'; st.style.color = '#9aa3ad';
+    try {
+      const r = await fetch(url.replace(/\/+$/, '') + '/api/ping', { cache: 'no-store' });
+      const d = await r.json().catch(() => ({}));
+      if (!r.ok || d.app !== 'XERP') throw new Error('该地址不是 XLerp 服务端');
+      st.textContent = `连接成功 · ${d.company || ''} · v${d.version}`; st.style.color = '#25a26b';
+    } catch (e) {
+      st.textContent = '连不上：' + (e.message || '网络错误'); st.style.color = '#fa3757';
+    }
+  };
+  body.querySelector('#modeSave').onclick = () => {
+    const server = String(srvIn.value || '').trim();
+    if (pick === 'client' && !/^https?:\/\//i.test(server)) return toast('客户端模式要填服务器地址，例如 http://192.168.31.4:8686', 'error');
+    const cur = window.__runMode || {};
+    if (pick === cur.mode && (pick === 'server' || server.replace(/\/+$/, '') === (cur.server || '').replace(/\/+$/, ''))) {
+      return toast('模式没有变化', 'info');
+    }
+    const ask = pick === 'client'
+      ? `切换到「客户端模式」？\n\n以后所有数据都读写 ${server}，本机不再存业务数据。\n本机现有数据不会被删除，切回服务器模式就能看到。\n\n需要退出程序重新打开才生效。`
+      : `切换到「服务器模式」？\n\n改用本机数据，手机和别的电脑可以连这台机。\n\n需要退出程序重新打开才生效。`;
+    if (!confirm(ask)) return;
+    api('PUT', '/api/mode', { mode: pick, server: pick === 'client' ? server : (cur.server || '') })
+      .then(async r => {
+        window.__runMode = { ...(window.__runMode || {}), mode: r.mode, server: r.server };
+        toast('已切换到' + (r.mode === 'client' ? '客户端模式' : '服务器模式') + '，请退出程序后重新打开');
+        await reload();
+        try { render(); } catch (e) { }
+      })
+      .catch(e => toast(e.message, 'error'));
+  };
 }
 function setStats(body) {
   const st = db.settings;

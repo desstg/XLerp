@@ -42,6 +42,46 @@ if ($Action -eq 'uninstall') {
 Stop-Xerp
 $node = Join-Path $AppDir 'node.exe'
 $pwdFile = Join-Path $DataDir 'admin-password.txt'
+
+# Run mode comes from config.json (written by 系统设置 -> 运行模式):
+#   server (default) -> portal.js, data lives in $DataDir, LAN clients can connect
+#   client           -> client.js, proxies everything to the remote server, no local data
+$mode = 'server'
+$remote = ''
+$cfgPath = Join-Path $DataDir 'config.json'
+if (Test-Path $cfgPath) {
+  try {
+    $cfg = Get-Content $cfgPath -Raw | ConvertFrom-Json
+    if ($cfg.mode -eq 'client') { $mode = 'client'; $remote = [string]$cfg.clientServer }
+  } catch { Log ('config.json parse failed: ' + $_.Exception.Message) }
+}
+
+if ($mode -eq 'client') {
+  # client.js listens on its own port and proxies /api to the remote server
+  $clientPort = 18686
+  $argLine = '"' + (Join-Path $AppDir 'client.js') + '" --port ' + $clientPort + ' --server "' + $remote + '" --no-browser'
+  $act = New-ScheduledTaskAction -Execute $node -Argument $argLine -WorkingDirectory $AppDir
+  $trg = New-ScheduledTaskTrigger -AtStartup
+  $pri = New-ScheduledTaskPrincipal -UserId 'SYSTEM' -LogonType ServiceAccount -RunLevel Highest
+  $set = New-ScheduledTaskSettingsSet -ExecutionTimeLimit ([TimeSpan]::Zero) -RestartCount 999 -RestartInterval (New-TimeSpan -Minutes 1) `
+    -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -StartWhenAvailable -MultipleInstances IgnoreNew
+  Register-ScheduledTask -TaskName $TaskName -Action $act -Trigger $trg -Principal $pri -Settings $set `
+    -Description "XLerp client (http://127.0.0.1:$clientPort -> $remote)" -Force | Out-Null
+  # No inbound firewall rule: client mode does not accept connections from other machines
+  try { Remove-NetFirewallRule -Name $RuleName -ErrorAction Stop } catch {}
+  Log "task registered, CLIENT mode, port $clientPort, remote $remote"
+  Start-ScheduledTask -TaskName $TaskName
+  for ($i = 0; $i -lt 40; $i++) {
+    Start-Sleep -Milliseconds 500
+    try {
+      $r = Invoke-WebRequest -UseBasicParsing -TimeoutSec 2 -Uri "http://127.0.0.1:$clientPort/local/ping"
+      if ($r.Content -match 'XERP-Client') { Log 'client is up'; exit 0 }
+    } catch {}
+  }
+  Log "client did not answer on port $clientPort within 20s"
+  exit 0
+}
+
 $argLine = '"' + (Join-Path $AppDir 'portal.js') + '" --data "' + $DataDir + '" --port ' + $Port + ' --admin-password-file "' + $pwdFile + '"'
 
 $act = New-ScheduledTaskAction -Execute $node -Argument $argLine -WorkingDirectory $AppDir
