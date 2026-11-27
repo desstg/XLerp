@@ -1,4 +1,4 @@
-﻿# 构建 Windows 安装包：dist\xerp-<版本>-windows-x64-setup.exe
+# 构建 Windows 安装包：dist\xerp-<版本>-windows-x64-setup.exe
 # 需要：Windows、本机已安装 Node.js（x64，会把 node.exe 一起打进安装包）、Inno Setup 6（winget install JRSoftware.InnoSetup）
 $ErrorActionPreference = 'Stop'
 $Root  = Split-Path $PSScriptRoot -Parent
@@ -63,31 +63,33 @@ Copy-Item (Join-Path $Root 'src\vendor') $App -Recurse
 Copy-Item (Join-Path $Win 'xerp-service.ps1') $App
 Copy-Item (Join-Path $Win 'ChineseSimplified.isl') $Stage
 
-# ---------- 1b. 图标（与飞牛版相同的图案，打成多尺寸 .ico） ----------
+# ---------- 1b. 图标：用我们自己的图标（dist\xerp-icon.png），打成多尺寸 .ico ----------
 Step 'Generating icon'
 Add-Type -AssemblyName System.Drawing
-function New-IconPng($size) {
-  $bmp = New-Object Drawing.Bitmap $size, $size
+# 源图：dist\xerp-icon.png（192×192，XL 圆角蓝绿）。有更高分辨率的就优先用大的。
+$iconSrc = @(
+  (Join-Path $Root 'dist\xerp-icon.png'),
+  (Join-Path $Root 'src\desktop\icon.png')
+) | Where-Object { Test-Path $_ } | Select-Object -First 1
+if (-not $iconSrc) { throw '找不到图标源文件 dist\xerp-icon.png' }
+Write-Host "  icon source: $iconSrc"
+$srcImg = [Drawing.Image]::FromFile((Resolve-Path $iconSrc))
+# ICO 标准尺寸，256 也放（Explorer 大图标视图要用）；高位图更清晰
+$sizes = 16, 24, 32, 48, 64, 128, 256
+$pngs = foreach ($s in $sizes) {
+  $bmp = New-Object Drawing.Bitmap $s, $s
   $g = [Drawing.Graphics]::FromImage($bmp)
-  $g.SmoothingMode = 'AntiAlias'; $g.TextRenderingHint = 'AntiAliasGridFit'; $g.Clear([Drawing.Color]::Transparent)
-  $m = [math]::Round($size * 0.06); $w = $size - 2 * $m; $r = [math]::Max(2, [math]::Round($w * 0.24))
-  $path = New-Object Drawing.Drawing2D.GraphicsPath
-  $path.AddArc($m, $m, $r, $r, 180, 90); $path.AddArc($m + $w - $r, $m, $r, $r, 270, 90)
-  $path.AddArc($m + $w - $r, $m + $w - $r, $r, $r, 0, 90); $path.AddArc($m, $m + $w - $r, $r, $r, 90, 90); $path.CloseFigure()
-  $rect = New-Object Drawing.Rectangle $m, $m, $w, $w
-  $brush = New-Object Drawing.Drawing2D.LinearGradientBrush $rect, ([Drawing.Color]::FromArgb(99, 102, 241)), ([Drawing.Color]::FromArgb(6, 182, 212)), 45
-  $g.FillPath($brush, $path)
-  $font = New-Object Drawing.Font 'Arial', ([float]($size * 0.55)), ([Drawing.FontStyle]::Bold), ([Drawing.GraphicsUnit]::Pixel)
-  $fmt = New-Object Drawing.StringFormat; $fmt.Alignment = 'Center'; $fmt.LineAlignment = 'Center'
-  $g.DrawString('X', $font, [Drawing.Brushes]::White, (New-Object Drawing.RectangleF 0, ([float]($size * 0.03)), $size, $size), $fmt)
+  $g.InterpolationMode = 'HighQualityBicubic'; $g.PixelOffsetMode = 'HighQuality'
+  $g.SmoothingMode = 'AntiAlias'; $g.CompositingQuality = 'HighQuality'
+  $g.Clear([Drawing.Color]::Transparent)
+  $g.DrawImage($srcImg, 0, 0, $s, $s)
   $ms = New-Object IO.MemoryStream
   $bmp.Save($ms, [Drawing.Imaging.ImageFormat]::Png)
   $g.Dispose(); $bmp.Dispose()
-  return ,$ms.ToArray()
+  ,$ms.ToArray()
 }
-# ICO 文件：头 + 目录 + 每个尺寸一张 PNG
-$sizes = 16, 24, 32, 48, 64, 128, 256
-$pngs = $sizes | ForEach-Object { ,(New-IconPng $_) }
+$srcImg.Dispose()
+# ICO 文件：6 字节头 + 16 字节/项的目录 + 各尺寸 PNG 数据
 $out = New-Object IO.MemoryStream; $bw = New-Object IO.BinaryWriter $out
 $bw.Write([uint16]0); $bw.Write([uint16]1); $bw.Write([uint16]$sizes.Count)
 $offset = 6 + 16 * $sizes.Count
@@ -99,6 +101,8 @@ for ($i = 0; $i -lt $sizes.Count; $i++) {
 }
 foreach ($d in $pngs) { $bw.Write($d) }
 $bw.Flush(); [IO.File]::WriteAllBytes((Join-Path $Stage 'xerp.ico'), $out.ToArray())
+$bw.Dispose(); $out.Dispose()
+Write-Host ("  已生成 xerp.ico（" + $sizes.Count + " 个尺寸，来自我们自己的图标）")
 
 # ---------- 1c. 桌面窗口：Electron 运行时 ----------
 # 装出来的是「小林进销存.exe」自己的窗口，不是浏览器标签页。
