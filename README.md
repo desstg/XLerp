@@ -111,7 +111,9 @@ XLerp 基于开源项目 **[x.erp](https://github.com/Zyc009234/x.erp)** 二次�
 | `src/server.js` | 服务端：只依赖 Node.js 内置模块，数据库使用内置 `node:sqlite` |
 | `src/portal.js` | 多账套网关：全局账号、公司管理、登录后切换，每家公司启动独立服务实例 |
 | `src/index.html` | 前端单页应用（由服务端提供） |
-| `src/client.js` | Windows 桌面客户端外壳（基于系统 Edge 内核的独立窗口） |
+| `src/client.js` | Windows 客户端模式的本地代理：把 `/api` 转发到远程服务器（不开窗口，窗口由 `src/desktop` 负责） |
+| `src/desktop/` | Windows 桌面外壳（Electron）：原生窗口、托盘、启动闪屏、拉起本机服务 |
+| `windows/` | Windows 安装包（Inno Setup）：源码 + 脚本 + 中文语言文件 |
 | `tests/` | 后端接口与多账套测试（`node --test "tests/*.test.mjs"`） |
 | `fnos/` | 飞牛 fnOS 应用打包（manifest、生命周期脚本、安装向导） |
 | `Dockerfile`、`docker-compose.yml` | Docker 镜像（见下方「Docker 部署」） |
@@ -188,12 +190,16 @@ node --test tests/api.test.mjs
 
 从 [Releases](https://github.com/desstg/XLerp/releases) 下载 `xlerp-<版本>-windows-x64-setup.exe`（Windows 10 / 11 64 位），双击安装：
 
-- 安装向导里设置端口（默认 8686）和管理员密码；自带 Node.js，不用另装任何东西
-- 以后台服务运行（任务计划程序「XLerp」，SYSTEM 身份开机自启，崩溃自动重启），不用登录 Windows
+- 装完桌面和开始菜单都有 **小林进销存**，点开是**程序自己的窗口**（Electron 原生窗口，不是浏览器标签页），有独立图标、任务栏按钮和托盘
+- 安装向导里先选运行模式：**服务器模式**（数据存本机）或**客户端模式**（连已有服务器，本机不存业务数据）；再设端口（默认 8686）、管理员密码、数据目录
+- 后台服务照旧运行（任务计划程序「XLerp」，SYSTEM 身份开机自启，崩溃自动重启），手机和局域网其他电脑连的就是它，不用登录 Windows；桌面窗口关了服务还在跑
 - 自动在防火墙放行该端口，仅限同一局域网；局域网其他电脑访问 `http://本机IP:8686`
-- 数据在 `C:\ProgramData\XERP`；覆盖安装新版即可升级，升级和卸载都不删数据
+- 数据默认在 `C:\ProgramData\XERP`（可改到别的盘）；覆盖安装新版即可升级，升级和卸载都不删数据
+- 静默安装：`setup.exe /SILENT /SUPPRESSMSGBOXES /NORESTART`，用默认值（服务器模式、8686），管理员密码可用环境变量 `XERP_ADMIN_PASSWORD` 指定
 
-构建：`powershell -ExecutionPolicy Bypass -File windows\build-windows.ps1`（需要 x64 Node.js 22.13+ 和 Inno Setup 6：`winget install JRSoftware.InnoSetup`），产物为 `dist\xlerp-<版本>-windows-x64-setup.exe`。
+安装包约 109 MB，包含 Electron 运行时和 Node.js，不依赖系统里的浏览器。
+
+构建：`powershell -ExecutionPolicy Bypass -File windows\build-windows.ps1`（需要 x64 Node.js 22.13+ 和 Inno Setup 6：`winget install JRSoftware.InnoSetup`），产物为 `dist\xlerp-<版本>-windows-x64-setup.exe`。构建时会自动下载 Electron 运行时（npmmirror 优先，失败退回 GitHub）。
 
 ## 安卓客户端
 

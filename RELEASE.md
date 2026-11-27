@@ -1,4 +1,4 @@
-# XLerp 2.20.4
+# XLerp 2.21.0
 
 轻量级自托管进销存 / ERP，数据留在自己机器里，完全离线可用。
 
@@ -25,8 +25,8 @@
 |---|---|---|
 | Docker（AMD64） | `xlerp-2.20.4-docker-amd64.tar.gz` | 群晖、威联通、Unraid、绿联、极空间、飞牛等 x86 NAS |
 | Docker（ARM64） | `xlerp-2.20.4-docker-arm64.tar.gz` | 树莓派、ARM 架构 NAS |
-| Windows | `xlerp-2.20.4-windows-x64-setup.exe` | Windows 10 / 11 64 位，双击安装，自带 Node.js |
-| Android | `xlerp-2.20.4-android.apk` | Android 7.0 及以上 |
+| Windows | `xlerp-2.21.0-windows-x64-setup.exe` | Windows 10 / 11 64 位，双击安装，自带 Node.js |
+| Android | `xlerp-2.21.0-android.apk` | Android 7.0 及以上 |
 
 在线拉取镜像：`desstg/xlerp:latest`（amd64 + arm64 多架构）
 
@@ -77,15 +77,20 @@ docker run -d --name xlerp --restart unless-stopped \
 
 ## Windows 安装
 
-双击 `xlerp-2.20.4-windows-x64-setup.exe`，向导里设端口（默认 8686）和管理员密码。
+双击 `xlerp-2.21.0-windows-x64-setup.exe`，向导第一步选运行模式（服务器 / 客户端），再设端口（默认 8686）、管理员密码、数据目录。
 
-- 以后台服务运行（任务计划程序「XLerp」，SYSTEM 身份开机自启，崩溃自动重启），不用登录 Windows
+装完桌面和开始菜单都有 **小林进销存**，点开就是程序自己的窗口（不是浏览器标签页）。
+
+- **桌面窗口** `XLerp.exe`：原生窗口，有自己的图标、任务栏、标题栏和托盘；可最小化到托盘，关掉再点图标就重开
+- **后台服务**：任务计划程序「XLerp」，SYSTEM 身份开机自启、崩溃自动重启，手机和局域网电脑连的就是它，不用登录 Windows
+- 服务器模式数据在本机；客户端模式数据在对方服务器上，本机只做显示
 - 自动在防火墙放行该端口，仅限同一局域网
-- 数据在 `C:\ProgramData\XERP`，升级和卸载都不删数据
+- 数据默认在 `C:\ProgramData\XERP`（安装时可改到别的盘），升级和卸载都不删数据
+- 静默安装：`setup.exe /SILENT /SUPPRESSMSGBOXES /NORESTART`，用默认值（服务器模式、8686）；管理员密码可用环境变量 `XERP_ADMIN_PASSWORD` 指定
 
 ## Android 安装
 
-安装 `xlerp-2.20.4-android.apk`，手机连上和服务端同一个 Wi-Fi，首次打开填服务端地址，或点「自动查找」扫描局域网。
+安装 `xlerp-2.21.0-android.apk`，手机连上和服务端同一个 Wi-Fi，首次打开填服务端地址，或点「自动查找」扫描局域网。
 
 - 右下角扫码按钮支持 EAN-13/8、UPC、Code 128/39/93、ITF、Codabar、QR、Data Matrix
 - 扫到的码会填进当前输入框并自动回车，开出入库单、盘点、搜索都能用
@@ -93,7 +98,26 @@ docker run -d --name xlerp --restart unless-stopped \
 
 > **签名说明**：本版起使用正式密钥签名，可正常覆盖升级。如果你装过 2.20.4 的早期测试包（临时证书签的），需要先卸载再装。
 
-## 本版更新（2.20.4）
+## 本版更新（2.21.0）
+
+**电脑版改成真正的桌面程序：不再在浏览器里打开网页**
+
+- **程序自己的窗口**：新增 Electron 外壳（`src/desktop`）。窗口是原生窗口，有自己的图标、标题栏、任务栏按钮和系统托盘，不再是 Edge/Chrome 的 `--app=` 应用模式窗口。任务栏和 Alt+Tab 里显示的都是「小林进销存」。
+- **两种模式都用原生窗口**：服务器模式窗口连 `127.0.0.1:端口`；客户端模式窗口连 `127.0.0.1:18686` 的本地代理（代理再转发到你填的服务器）。
+- **后台服务不变**：计划任务 `XLerp` 照旧负责开机自启和给手机、别的电脑供货；桌面程序只负责开窗，两者共用同一个数据目录和端口，同时运行不冲突。
+- **快捷方式改名**：桌面和开始菜单都叫「小林进销存」，指向 `XLerp.exe`。
+- **图标**：把我们的 XL 图标写进了 exe 的 Win32 资源（7 个尺寸），任务栏、Alt+Tab、资源管理器里都是我们自己的图标，不是 Electron 默认蓝球。
+- **启动闪屏**：双击后先显示带图标的启动画面，服务就绪再切到主窗口，不会有白屏。
+- **关窗不退出**：关掉窗口后台服务还在跑，手机照样能用；要完全退出从托盘菜单「退出」。
+- **安装包变大**：24 MB → 109 MB，多出来的是 Electron 运行时（保证窗口属于本程序，不依赖系统里的浏览器）。
+- **静默安装**：`/SILENT` 时自动跳过模式页和设置页，用默认值；CI 和批量部署不再卡住。
+
+**修掉的两个启动问题**
+
+- `--server http://ip:port` 这种空格分隔的写法会被 Chromium 当成非法开关，进程直接退出（exit -1）。启动参数统一改成 `--key=value`。
+- `resources\app.asar` 模式下 `APP_DIR` 用 `__dirname` 推算会多退一层，导致找不到 `portal.js` / `client.js`。改成取 `process.execPath` 所在目录。
+
+## 上版更新（2.20.4）
 
 **修复 v2.20.3 的三个安装问题，两个模式现在都能正常装**
 
