@@ -1,4 +1,6 @@
 # XLerp Windows background service (scheduled task running as SYSTEM at boot).
+# The desktop window is XLerp.exe (Electron); this script only manages the background
+# server / proxy task that phones and other LAN computers connect to. It never opens a window.
 # Called by the installer / uninstaller:
 #   xerp-service.ps1 -Action install   -AppDir <dir> -DataDir <dir> -Port 8686 -Mode server|client -ClientServer <url>
 #   xerp-service.ps1 -Action uninstall -AppDir <dir>

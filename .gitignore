@@ -9,6 +9,11 @@ node_modules/
 windows/build/
 android/build/
 payrelay/build/
+# 桌面外壳（Electron）：只提交源码和图标，运行时由构建脚本自己下载
+src/desktop/node_modules/
+src/desktop/runtime/
+src/desktop/*.zip
+src/desktop/package-lock.json
 tools/stats-server/ip2region_v4.xdb
 __pycache__/
 # 私有运维记录（含内网地址与密码，勿上传）

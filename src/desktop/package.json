@@ -1,0 +1,9 @@
+{
+  "name": "xlerp-desktop",
+  "productName": "小林进销存",
+  "version": "1.0.0",
+  "private": true,
+  "description": "小林进销存 桌面窗口（Electron 外壳，界面由同目录的 index.html / portal.js 提供）",
+  "main": "main.js",
+  "electronVersion": "38.8.6"
+}

@@ -1,20 +1,19 @@
 'use strict';
 /**
- * XLerp 客户端
+ * XLerp 客户端（仅供后台代理使用）
  * - 在本机 127.0.0.1 启动界面服务，并把 /api 请求转发到配置的服务端
- * - 以独立应用窗口（Edge/Chrome 应用模式）打开界面
- * - 用法：erp-client.exe [--no-browser] [--port <端口>] [--config <配置文件>]
+ * - 窗口由 XLerp.exe（Electron 桌面壳）负责打开，本进程永远不开浏览器
+ * - 用法：node client.js [--port <端口>] [--server <服务端地址>] [--config <配置文件>]
+ *   （--no-browser 仍然接受，只是不再有作用，老快捷方式不会因此报错）
  */
 const http = require('http');
 const https = require('https');
 const fs = require('fs');
 const path = require('path');
 const os = require('os');
-const { spawn } = require('child_process');
 
 const argv = process.argv.slice(2);
 const arg = (name, def) => { const i = argv.indexOf('--' + name); return i >= 0 && argv[i + 1] ? argv[i + 1] : def; };
-const NO_BROWSER = argv.includes('--no-browser');
 const APP_DIR = path.join(process.env.APPDATA || os.homedir(), 'XERP');
 const CFG_FILE = path.resolve(arg('config', path.join(APP_DIR, 'client.json')));
 const BASE_PORT = +arg('port', 18686);
@@ -109,7 +108,7 @@ function proxy(req, res) {
   req.pipe(preq);
 }
 
-let lastBeat = Date.now() + 60e3, browserProc = null;
+let lastBeat = Date.now() + 60e3;
 const server = http.createServer(async (req, res) => {
   const p = req.url.split('?')[0];
   if (p.startsWith('/api/')) return proxy(req, res);
@@ -139,24 +138,11 @@ const server = http.createServer(async (req, res) => {
 });
 
 function findBrowser() {
-  const pf = [process.env['ProgramFiles(x86)'], process.env.ProgramFiles, process.env.LOCALAPPDATA].filter(Boolean);
-  const rel = ['Microsoft\\Edge\\Application\\msedge.exe', 'Google\\Chrome\\Application\\chrome.exe'];
-  for (const r of rel) for (const base of pf) { const f = path.join(base, r); if (fs.existsSync(f)) return f; }
+  // 桌面窗口由 XLerp.exe 自己开（Electron 原生窗口），这里不再找浏览器。
   return null;
 }
-function openWindow(port) {
-  const url = `http://127.0.0.1:${port}/`;
-  if (NO_BROWSER) return;
-  const exe = findBrowser();
-  if (exe) {
-    const profile = path.join(process.env.LOCALAPPDATA || APP_DIR, 'XERP', 'Browser');
-    browserProc = spawn(exe, ['--app=' + url, '--user-data-dir=' + profile, '--no-first-run', '--no-default-browser-check', '--window-size=1440,900', '--disable-features=Translate'], { detached: true, stdio: 'ignore' });
-    browserProc.on('exit', () => { browserProc = null; });
-    browserProc.unref();
-  } else {
-    spawn('rundll32', ['url.dll,FileProtocolHandler', url], { detached: true, stdio: 'ignore' }).unref();
-  }
-}
+// 保留函数名，避免老的计划任务 / 快捷方式调不到；现在只是个空操作
+function openWindow() {}
 // 若已有本程序实例在运行，直接打开新窗口并退出
 function probe(port) {
   return new Promise(resolve => {
@@ -177,13 +163,11 @@ function listen(port) {
     try {
       await listen(port);
       log('客户端已启动，端口', port, '服务器', cfg.server || '(未配置)');
-      openWindow(port);
-      // 窗口关闭且 3 分钟无心跳后自动退出
-      if (!NO_BROWSER) setInterval(() => { if (!browserProc && Date.now() - lastBeat > 180e3) { log('窗口已关闭，客户端退出'); process.exit(0); } }, 15e3);
       return;
     } catch (e) {
       if (e.code !== 'EADDRINUSE') { log('启动失败', e.message); process.exit(1); }
-      if (await probe(port)) { openWindow(port); setTimeout(() => process.exit(0), 1500); return; }
+      // 端口已被同一个代理占着 = 已经在跑了，不重复启动，也不退出（计划任务重启时靠这个不打架）
+      if (await probe(port)) { log('端口', port, '已有客户端在运行'); return; }
     }
   }
   log('启动失败：没有可用端口'); process.exit(1);

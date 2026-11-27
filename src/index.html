@@ -3078,8 +3078,10 @@ async function enterApp() {
       if (r.ok) { const c = await r.json(); m = { mode: c.mode || 'client', server: c.server || '', desktop: true, dataDir: '' }; }
     } catch (e) { }
     if (!m) m = await api('GET', '/api/mode');
+    // 在 XLerp.exe 原生窗口里跑，就是桌面版；Docker/NAS 上是浏览器，没有 preload
+    if (!m.desktop && window.XerpDesktop) m.desktop = true;
     window.__runMode = m;
-  } catch (e) { window.__runMode = { mode: 'server', desktop: false }; }
+  } catch (e) { window.__runMode = { mode: 'server', desktop: !!window.XerpDesktop }; }
   applyTheme(); render();
   setupPortalUI();
 }
@@ -3669,9 +3671,10 @@ function goMore(id) {
 }
 // 工作台显示当前运行模式（只在 Windows 桌面版有意义；Docker/NAS 上不显示）
 // 服务器模式：数据在本机；客户端模式：数据在远程服务器
+// XLerp.exe（Electron 原生窗口）里 preload 会注入 window.XerpDesktop，据此也能判断是桌面版
 function runModeTag(inHero) {
   const M = window.__runMode;
-  if (!M || !M.desktop) return '';
+  if (!M || !(M.desktop || window.XerpDesktop)) return '';
   const isClient = M.mode === 'client';
   const txt = isClient ? '客户端模式' : '服务器模式';
   const sub = isClient ? ('数据在 ' + String(M.server || '').replace(/^https?:\/\//, '')) : '数据在本机';
