@@ -52,7 +52,17 @@ function vendorFile(p) {
   try { const sea = require('node:sea'); if (sea.isSea()) return (vendorCache[name] = Buffer.from(sea.getAsset('vendor/' + name))); } catch (e) {}
   try { return (vendorCache[name] = fs.readFileSync(path.join(__dirname, 'vendor', name))); } catch (e) { return null; }
 }
-const json = (res, status, obj) => { res.writeHead(status, { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store' }); res.end(JSON.stringify(obj)); };
+// 显式给 Content-Length：fetch 读到 EOF 才认为响应结束，
+// 没有长度又不 close 的话浏览器会一直挂着（登录卡在「登录中…」就是这个原因）
+const json = (res, status, obj) => {
+  const body = Buffer.from(JSON.stringify(obj), 'utf8');
+  res.writeHead(status, {
+    'Content-Type': 'application/json; charset=utf-8',
+    'Content-Length': body.length,
+    'Cache-Control': 'no-store',
+  });
+  res.end(body);
+};
 function readBody(req) {
   return new Promise(resolve => { const c = []; req.on('data', d => c.push(d)); req.on('end', () => { try { resolve(JSON.parse(Buffer.concat(c).toString('utf8') || '{}')); } catch (e) { resolve({}); } }); });
 }
@@ -67,7 +77,12 @@ function proxy(req, res) {
   if (req.headers.authorization) headers.authorization = req.headers.authorization;
   if (req.headers['content-length']) headers['content-length'] = req.headers['content-length'];
   const preq = lib.request(target, { method: req.method, headers, timeout: 20000 }, pres => {
-    res.writeHead(pres.statusCode, { 'Content-Type': pres.headers['content-type'] || 'application/json', 'Cache-Control': 'no-store' });
+    // 服务端给了 content-length 就透传，浏览器才知道响应到哪结束；
+    // 没给（chunked）时显式关连接，别让 fetch 一直等 EOF
+    const h = { 'Content-Type': pres.headers['content-type'] || 'application/json', 'Cache-Control': 'no-store' };
+    if (pres.headers['content-length']) h['Content-Length'] = pres.headers['content-length'];
+    else h['Connection'] = 'close';
+    res.writeHead(pres.statusCode, h);
     pres.pipe(res);
   });
   preq.on('timeout', () => preq.destroy(new Error('连接超时')));
@@ -86,7 +101,8 @@ const server = http.createServer(async (req, res) => {
   if (p === '/local/ping') return json(res, 200, { app: 'XERP-Client' });
   if (p === '/local/heartbeat') { lastBeat = Date.now(); return json(res, 200, { ok: true }); }
   if (p === '/local/config') {
-    if (req.method === 'GET') return json(res, 200, { server: cfg.server });
+    // desktop 让前端知道「这是 Windows 桌面版」，mode 告诉它现在是哪种用法
+    if (req.method === 'GET') return json(res, 200, { server: cfg.server, desktop: true, mode: 'client' });
     if (req.method === 'POST') {
       try {
         cfg.server = normalize((await readBody(req)).server);

@@ -2610,7 +2610,7 @@ html.mobile .zhj-rpt-cap{font-size:16px}
   <aside class="sidebar">
     <div class="brand"><div class="logo">XL</div><span class="brand-name">XLerp</span></div>
     <nav id="nav"></nav>
-<div class="side-foot"><span id="sideVer">v2.20.2</span> · 数据保存在服务器</div>
+<div class="side-foot"><span id="sideVer">v2.20.3</span> · 数据保存在服务器</div>
   </aside>
   <div class="backdrop" data-act="toggleSide"></div>
   <div class="main">
@@ -3024,10 +3024,16 @@ async function testServer() {
     if (CLIENT_MODE) {
       const s = $('#lServer').value.trim();
       if (!s) throw new Error('请填写服务器地址');
-      const r = await fetch('/local/config', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({server:s})});
-      const c = await r.json();
-      if (!r.ok) throw new Error(c.error || '地址格式不正确');
-      $('#lServer').value = SERVER_ADDR = c.server;
+      // 地址没变就别再 POST 一次：桌面版的地址由 plan task 的 --server 参数给定了，
+      // 反复写 client.json 没必要，而且个别环境里这个往返会让登录一直停在「登录中…」
+      const norm = s.replace(/\/+$/, '');
+      if (norm !== String(SERVER_ADDR || '').replace(/\/+$/, '')) {
+        const r = await fetch('/local/config', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ server: s }) });
+        const c = await r.json();
+        if (!r.ok) throw new Error(c.error || '地址格式不正确');
+        SERVER_ADDR = c.server;
+      }
+      $('#lServer').value = SERVER_ADDR;
     }
     const r = await fetch('/api/ping'), d = await r.json().catch(() => ({}));
     if (!r.ok || d.app !== 'XERP') throw new Error(d.error || '该地址不是 XLerp 服务端');
@@ -3063,8 +3069,17 @@ async function enterApp() {
   await reload();
   $('#login').classList.remove('show');
   document.documentElement.classList.remove('zhj-login-page');   // 登入成功，放开底栏
-  // 运行模式（Windows 桌面版才有意义）要在 render 之前拿到，否则设置首页那一行不显示
-  try { window.__runMode = await api('GET', '/api/mode'); } catch (e) { window.__runMode = { mode: 'server', desktop: false }; }
+  // 运行模式：客户端模式由 client.js 的 /local/config 告诉前端（它是本机的壳，知道自己连谁）；
+  // 服务器模式则由 server.js 的 /api/mode 回答。要在 render 之前拿到。
+  try {
+    let m = null;
+    try {
+      const r = await fetch('/local/config', { cache: 'no-store' });
+      if (r.ok) { const c = await r.json(); m = { mode: c.mode || 'client', server: c.server || '', desktop: true, dataDir: '' }; }
+    } catch (e) { }
+    if (!m) m = await api('GET', '/api/mode');
+    window.__runMode = m;
+  } catch (e) { window.__runMode = { mode: 'server', desktop: false }; }
   applyTheme(); render();
   setupPortalUI();
 }
@@ -3652,6 +3667,22 @@ function goMore(id) {
   if (map[id]) return map[id]();
   go(id);
 }
+// 工作台显示当前运行模式（只在 Windows 桌面版有意义；Docker/NAS 上不显示）
+// 服务器模式：数据在本机；客户端模式：数据在远程服务器
+function runModeTag(inHero) {
+  const M = window.__runMode;
+  if (!M || !M.desktop) return '';
+  const isClient = M.mode === 'client';
+  const txt = isClient ? '客户端模式' : '服务器模式';
+  const sub = isClient ? ('数据在 ' + String(M.server || '').replace(/^https?:\/\//, '')) : '数据在本机';
+  const bg = isClient ? 'rgba(47,136,214,.14)' : 'rgba(37,162,107,.14)';
+  const fg = isClient ? '#2f88d6' : '#1f8f5f';
+  const dot = isClient ? '#2f88d6' : '#25a26b';
+  const style = inHero
+    ? `display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:11px;background:rgba(255,255,255,.9);color:#333;font-size:12px;font-weight:600;margin-right:2px;vertical-align:middle`
+    : `display:inline-flex;align-items:center;gap:6px;margin-top:12px;padding:5px 12px;border-radius:13px;background:#fff;color:${fg};font-size:12.5px;font-weight:600;box-shadow:0 2px 8px rgba(79,70,229,.18)`;
+  return `<span style="${style}" title="${esc(sub)}"><i style="width:7px;height:7px;border-radius:50%;background:${dot};display:inline-block"></i>${txt}</span>`;
+}
 function pageDashboard() {
   const [prev, cur] = lastMonths(2), S = validSales();
   const sm = mk => S.filter(o => monthKey(o.date) === mk);
@@ -3689,7 +3720,7 @@ function pageDashboard() {
           <div class="zhj-search">${ic('search')}<input id="zhjSearch" placeholder="输入货品名称或关键字搜索"></div>
           <button class="icon-btn" data-act="zhjScanNewOrder" title="扫码" style="color:#fff"><svg class="i" viewBox="0 0 24 24">${ICONS.scan}</svg></button>
         </div>
-        <div class="zhj-hero-label" data-act="zhjEye" style="display:flex;align-items:center;gap:8px">今日销售额
+        <div class="zhj-hero-label" data-act="zhjEye" style="display:flex;align-items:center;gap:8px">${runModeTag(true)}今日销售额
           <svg viewBox="0 0 24 24" style="width:19px;height:19px;stroke:currentColor;fill:none;stroke-width:1.7;opacity:.9">
             ${ui.hideMoney ? '<path d="M2 2l20 20"/><path d="M6.7 6.7A10.6 10.6 0 001.5 12S5 18.5 12 18.5c1.7 0 3.2-.4 4.5-1"/><path d="M10.6 5.2A10.4 10.4 0 0112 5.5c7 0 10.5 6.5 10.5 6.5a15 15 0 01-3.2 4"/>'
       : '<path d="M1.5 12S5 5.5 12 5.5 22.5 12 22.5 12 19 18.5 12 18.5 1.5 12 1.5 12z"/><circle cx="12" cy="12" r="3.2"/>'}
@@ -3753,7 +3784,7 @@ function pageDashboard() {
   const top = Object.entries(pAmt).sort((a, b) => b[1] - a[1]).slice(0, 6), topMax = top[0] ? top[0][1] : 1;
 
   $('#view').innerHTML = `
-  <div class="card welcome mb"><div><h2>${greet}，${esc(db.settings.user)} 👋</h2><p>今天是 ${new Date().toLocaleDateString('zh-CN', {year:'numeric', month:'long', day:'numeric', weekday:'long'})}，您有 ${toShip + toApprove + toIn} 项待处理事务。</p></div>
+  <div class="card welcome mb"><div><h2>${greet}，${esc(db.settings.user)} 👋</h2><p>今天是 ${new Date().toLocaleDateString('zh-CN', {year:'numeric', month:'long', day:'numeric', weekday:'long'})}，您有 ${toShip + toApprove + toIn} 项待处理事务。</p>${runModeTag()}</div>
     <div class="tb-right"><button class="btn" data-act="orderNew" data-id="sales">${ic('plus')}新建销售单</button><button class="btn" data-act="orderNew" data-id="purchase">${ic('plus')}新建采购单</button></div></div>
   <div class="grid g4 mb">
     ${kpi('本月销售额', moneyK(curS), 'sales', 'primary', trendHtml(curS, prevS))}
@@ -13506,7 +13537,7 @@ function setMobileHome(keepScroll) {
     adminRows.push(row('users', '用户管理', '', '账号与角色分配', 'setPage', 'users'));
     adminRows.push(row('id', '角色管理', '', '预置角色与自定义权限', 'setPage', 'roles'));
     adminRows.push(row('grid', '功能模块', (st.modules || []).length + ' 个已启用', '', 'setPage', 'modules'));
-if (isAdmin() && (window.__runMode ? window.__runMode.desktop : false)) adminRows.push(row('cloud', '运行模式', (window.__runMode.mode === 'client' ? '客户端 · 连服务器' : '服务器 · 本机存数据'), '', 'setPage', 'mode'));
+
     adminRows.push(row('download', '数据管理', '', '备份导出 / 导入 / 清理', 'setPage', 'data'));
     adminRows.push(row('clock', '操作日志', '', '谁在什么时候做了什么', 'setPage', 'audit'));
   }
@@ -13738,6 +13769,26 @@ function setUpdate(body) {
 // 只对 Windows 桌面版开放。两种模式数据天然隔离：
 //   服务器模式 → 数据在本机，和现在完全一样
 //   客户端模式 → 本机不存业务数据，所有 /api 转发到远程服务器
+// 手机端和电脑端共用这段保存逻辑
+function saveMode(pick, server, M) {
+  if (pick === 'client' && !/^https?:\/\//i.test(server)) return toast('客户端模式要填服务器地址，例如 http://192.168.31.4:8686', 'error');
+  const cur = M || window.__runMode || {};
+  if (pick === cur.mode && (pick === 'server' || server.replace(/\/+$/, '') === String(cur.server || '').replace(/\/+$/, ''))) {
+    return toast('模式没有变化', 'info');
+  }
+  const ask = pick === 'client'
+    ? `切换到「客户端模式」？\n\n以后所有数据都读写 ${server}，本机不再存业务数据。\n本机现有数据不会被删除，切回服务器模式就能看到。\n\n需要退出程序重新打开才生效。`
+    : `切换到「服务器模式」？\n\n改用本机数据，手机和别的电脑可以连这台机。\n\n需要退出程序重新打开才生效。`;
+  if (!confirm(ask)) return;
+  api('PUT', '/api/mode', { mode: pick, server: pick === 'client' ? server : (cur.server || '') })
+    .then(async r => {
+      window.__runMode = { ...(window.__runMode || {}), mode: r.mode, server: r.server };
+      toast('已切换到' + (r.mode === 'client' ? '客户端模式' : '服务器模式') + '，请退出程序后重新打开');
+      await reload();
+      try { render(); } catch (e) { }
+    })
+    .catch(e => toast(e.message, 'error'));
+}
 function setMode(body) {
   const M = window.__runMode || { mode: 'server', server: '', desktop: false, dataDir: '' };
   const isClient = M.mode === 'client';
@@ -13747,6 +13798,70 @@ function setMode(body) {
       <div style="font-size:13px;color:#9aa3ad;line-height:1.7">这个部署（Docker / NAS / 飞牛）本身就是服务器，手机和电脑都连它，不存在「客户端模式」。</div>
     </div>
     <div class="set-note">运行模式只在 Windows 桌面版里可切换。</div>`;
+    return;
+  }
+  // ===== 电脑端：卡片 + 单选，和其它设置分区同一种观感 =====
+  if (!IS_MOBILE) {
+    body.innerHTML = `<div class="grid g2 mb">
+      <div class="card"><div class="card-head"><h3>当前运行模式</h3></div><div class="card-body">
+        <div style="display:flex;align-items:center;gap:14px;padding:14px;border-radius:10px;background:${isClient ? '#eef7ff' : '#eefaf3'};border:1px solid ${isClient ? '#c8e3fb' : '#cdeeda'}">
+          <span style="width:40px;height:40px;display:flex;align-items:center;justify-content:center;border-radius:50%;background:${isClient ? '#2f88d6' : '#25a26b'};color:#fff;flex:none">${ic(isClient ? 'cloud' : 'warehouse')}</span>
+          <div style="flex:1;min-width:0">
+            <div style="font-size:16px;font-weight:600;color:#222">${isClient ? '客户端模式' : '服务器模式'}</div>
+            <div style="font-size:13px;color:#7d8894;margin-top:4px;word-break:break-all">${isClient ? '数据在服务器：' + esc(M.server || '未填写地址') : '数据保存在本机'}</div>
+          </div>
+        </div>
+        <div class="sub-t" style="margin-top:14px">数据目录：<code>${esc(M.dataDir || '')}</code></div>
+      </div></div>
+      <div class="card"><div class="card-head"><h3>切换模式</h3></div><div class="card-body">
+        <label style="display:flex;gap:10px;align-items:flex-start;padding:12px;border:1px solid ${!isClient ? '#25a26b' : '#e2e7ed'};border-radius:8px;cursor:pointer;margin-bottom:10px">
+          <input type="radio" name="runmode" value="server" ${!isClient ? 'checked' : ''} style="margin-top:3px">
+          <div><b>服务器模式</b><div class="sub-t">数据存在这台电脑，手机、别的电脑都可以连它</div></div>
+        </label>
+        <label style="display:flex;gap:10px;align-items:flex-start;padding:12px;border:1px solid ${isClient ? '#2f88d6' : '#e2e7ed'};border-radius:8px;cursor:pointer">
+          <input type="radio" name="runmode" value="client" ${isClient ? 'checked' : ''} style="margin-top:3px">
+          <div style="flex:1"><b>客户端模式</b><div class="sub-t">连一台已有的服务器，本机不存业务数据</div></div>
+        </label>
+        <div id="modeSrvBox" style="display:${isClient ? '' : 'none'};margin-top:12px">
+          <label class="field"><span>服务器地址</span><input id="modeSrv" value="${esc(M.server || '')}" placeholder="例如 http://192.168.31.4:8686"></label>
+          <div style="display:flex;gap:10px;align-items:center;margin-top:10px">
+            <button class="btn" id="modeSrvTest" type="button">测试连接</button>
+            <span id="modeSrvState" class="sub-t">还没测试</span>
+          </div>
+        </div>
+        <div style="margin-top:16px"><button class="btn primary" id="modeSave" type="button">${ic('check')}保存</button></div>
+        <p class="sub-t" style="margin-top:12px;line-height:1.9">
+          两种模式的数据是分开的：服务器模式的数据在 <code>${esc(M.dataDir || '')}</code>，本机自己一套账；<br>
+          客户端模式本机只做界面转发，单据、库存、往来全部读写服务器。<br>
+          切换后需要<b>退出程序再重新打开</b>才生效。本机已有数据不会丢，切回服务器模式就能看到。
+        </p>
+      </div></div>
+    </div>`;
+    // 桌面端的交互
+    const srvBox = body.querySelector('#modeSrvBox');
+    let pick = M.mode;
+    body.querySelectorAll('input[name=runmode]').forEach(el => el.onchange = () => {
+      pick = el.value;
+      srvBox.style.display = pick === 'client' ? '' : 'none';
+      body.querySelectorAll('label').forEach(l => {
+        const r = l.querySelector('input[name=runmode]');
+        if (r) l.style.borderColor = r.value === pick ? (r.value === 'server' ? '#25a26b' : '#2f88d6') : '#e2e7ed';
+      });
+    });
+    const srvIn = body.querySelector('#modeSrv');
+    body.querySelector('#modeSrvTest').onclick = async () => {
+      const st = body.querySelector('#modeSrvState');
+      const url = String(srvIn.value || '').trim();
+      if (!/^https?:\/\//i.test(url)) { st.textContent = '地址要以 http:// 开头'; st.style.color = 'var(--red)'; return; }
+      st.textContent = '正在连接…'; st.style.color = '';
+      try {
+        const r = await fetch(url.replace(/\/+$/, '') + '/api/ping', { cache: 'no-store' });
+        const d = await r.json().catch(() => ({}));
+        if (!r.ok || d.app !== 'XERP') throw new Error('该地址不是 XLerp 服务端');
+        st.textContent = `连接成功 · ${d.company || ''} · v${d.version}`; st.style.color = '#25a26b';
+      } catch (e) { st.textContent = '连不上：' + (e.message || '网络错误'); st.style.color = 'var(--red)'; }
+    };
+    body.querySelector('#modeSave').onclick = () => saveMode(pick, String(srvIn.value || '').trim(), M);
     return;
   }
   body.innerHTML = `
@@ -13822,26 +13937,7 @@ function setMode(body) {
       st.textContent = '连不上：' + (e.message || '网络错误'); st.style.color = '#fa3757';
     }
   };
-  body.querySelector('#modeSave').onclick = () => {
-    const server = String(srvIn.value || '').trim();
-    if (pick === 'client' && !/^https?:\/\//i.test(server)) return toast('客户端模式要填服务器地址，例如 http://192.168.31.4:8686', 'error');
-    const cur = window.__runMode || {};
-    if (pick === cur.mode && (pick === 'server' || server.replace(/\/+$/, '') === (cur.server || '').replace(/\/+$/, ''))) {
-      return toast('模式没有变化', 'info');
-    }
-    const ask = pick === 'client'
-      ? `切换到「客户端模式」？\n\n以后所有数据都读写 ${server}，本机不再存业务数据。\n本机现有数据不会被删除，切回服务器模式就能看到。\n\n需要退出程序重新打开才生效。`
-      : `切换到「服务器模式」？\n\n改用本机数据，手机和别的电脑可以连这台机。\n\n需要退出程序重新打开才生效。`;
-    if (!confirm(ask)) return;
-    api('PUT', '/api/mode', { mode: pick, server: pick === 'client' ? server : (cur.server || '') })
-      .then(async r => {
-        window.__runMode = { ...(window.__runMode || {}), mode: r.mode, server: r.server };
-        toast('已切换到' + (r.mode === 'client' ? '客户端模式' : '服务器模式') + '，请退出程序后重新打开');
-        await reload();
-        try { render(); } catch (e) { }
-      })
-      .catch(e => toast(e.message, 'error'));
-  };
+  body.querySelector('#modeSave').onclick = () => saveMode(pick, String(srvIn.value || '').trim(), window.__runMode);
 }
 function setStats(body) {
   const st = db.settings;
@@ -13950,6 +14046,7 @@ function pageSettings() {
   if (isAdmin() || can('tpl.edit')) items.push(['print', '打印模板']);
   if (medOn()) items.push(['gsp', '医疗器械']);
   if (PORTAL && PORTAL_ADMIN) items.push(['companies', '公司管理']);
+
   if (isAdmin()) items.push(['users', '用户管理'], ['roles', '角色管理'], ['data', '数据管理'], ['audit', '操作日志']);
   if (!items.some(i => i[0] === ui.setTab)) ui.setTab = 'general';
   const st = db.settings;
@@ -13961,6 +14058,7 @@ function pageSettings() {
   if (ui.setTab === 'print') printTplPage(body);
   else if (ui.setTab === 'gsp') gspPage(body);
   else if (ui.setTab === 'companies') companiesPage(body);
+  else if (ui.setTab === 'runmode') setMode(body);
   else if (ui.setTab === 'general') {
     body.innerHTML = `<div class="grid g2">
     <div class="card"><div class="card-head"><h3>我的账户</h3></div><div class="card-body">

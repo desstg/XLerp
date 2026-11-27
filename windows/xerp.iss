@@ -49,7 +49,7 @@ Name: "{autodesktop}\XLerp"; Filename: "http://127.0.0.1:{code:GetPort}/"; IconF
 Name: "desktopicon"; Description: "在桌面创建快捷方式"; GroupDescription: "快捷方式："
 
 [Run]
-Filename: "powershell.exe"; Parameters: "-NoProfile -ExecutionPolicy Bypass -File ""{app}\xerp-service.ps1"" -Action install -AppDir ""{app}"" -DataDir ""{commonappdata}\XERP"" -Port {code:GetPort}"; StatusMsg: "正在启动 XLerp 服务…"; Flags: runhidden waituntilterminated
+Filename: "powershell.exe"; Parameters: "-NoProfile -ExecutionPolicy Bypass -File ""{app}\xerp-service.ps1"" -Action install -AppDir ""{app}"" -DataDir ""{code:DataDir}"" -Port {code:GetPort} -Mode {code:GetMode} -ClientServer ""{code:GetClientServer}"""; StatusMsg: "正在启动 XLerp 服务…"; Flags: runhidden waituntilterminated
 Filename: "http://127.0.0.1:{code:GetPort}/"; Description: "打开 XLerp"; Flags: postinstall shellexec nowait skipifsilent
 
 [UninstallRun]
@@ -58,11 +58,19 @@ Filename: "powershell.exe"; Parameters: "-NoProfile -ExecutionPolicy Bypass -Fil
 [Code]
 var
   CfgPage: TInputQueryWizardPage;
+  ModePage: TInputOptionWizardPage;
   Upgrading: Boolean;
 
-function DataDir(): String;
+function DataDir(Param: String): String;
+var
+  D: String;
 begin
-  Result := ExpandConstant('{commonappdata}\XERP');
+  // 安装时可以改数据目录（比如放到 D 盘），升级时沿用旧的
+  D := Trim(CfgPage.Values[4]);
+  if D = '' then
+    D := ExpandConstant('{commonappdata}\XERP');
+  D := RemoveBackslashUnlessRoot(D);
+  Result := D;
 end;
 
 function GetPort(Param: String): String;
@@ -70,23 +78,54 @@ begin
   Result := Trim(CfgPage.Values[0]);
 end;
 
+// server = 本机存数据（默认）；client = 连已有服务器
+function GetMode(Param: String): String;
+begin
+  if ModePage.Selected = 1 then
+    Result := 'client'
+  else
+    Result := 'server';
+end;
+
+function GetClientServer(Param: String): String;
+begin
+  Result := Trim(CfgPage.Values[3]);
+end;
+
 procedure InitializeWizard();
 begin
-  Upgrading := FileExists(DataDir() + '\erp.db');
-  CfgPage := CreateInputQueryPage(wpSelectDir, '服务设置',
+  // 第一步：选运行模式（放在服务设置前面，先问清这个再决定服务怎么装）
+  ModePage := CreateInputOptionPage(wpSelectDir, '运行模式',
+    '这台电脑是怎么用 XLerp？',
+    '服务器模式：数据存在这台电脑，手机、别的电脑都可以连它。' + #13#10 +
+    '客户端模式：连一台已经装好的服务器（比如 NAS 上的），本机不存业务数据。' + #13#10 +
+    '安装完成后可以在「系统设置 → 运行模式」里改，改完需要重新运行安装程序才生效。',
+    True, False);
+  ModePage.Add('服务器模式（数据存本机，推荐单机使用）');
+  ModePage.Add('客户端模式（连接已有服务器）');
+
+  CfgPage := CreateInputQueryPage(ModePage.ID, '服务设置',
     'XLerp 会作为后台服务运行，开机自动启动，不用登录 Windows 也能使用。',
     '局域网里的其他电脑用浏览器访问「http://本机IP:端口」即可使用。' + #13#10 +
-    '数据保存在 ' + DataDir() + '，卸载或升级都不会删除。');
+    '数据目录默认在系统盘，可以改成别的盘（比如 D:\XERP），卸载或升级都不会删除。');
   CfgPage.Add('服务端口：', False);
   CfgPage.Add('管理员密码（账号 admin，至少 6 位）：', True);
   CfgPage.Add('再次输入密码：', True);
+  CfgPage.Add('服务器地址（客户端模式才需要，如 http://192.168.1.10:8686）：', False);
+  CfgPage.Add('数据目录（留空 = ' + ExpandConstant('{commonappdata}') + '\XERP）：', False);
   CfgPage.Values[0] := GetPreviousData('Port', '8686');
+  // CfgPage 建好之后才能判断「是不是升级」（要读数据目录）
+  Upgrading := FileExists(DataDir('') + '\erp.db');
   if Upgrading then
   begin
     CfgPage.Edits[1].Enabled := False; CfgPage.Edits[2].Enabled := False;
     CfgPage.PromptLabels[1].Caption := '管理员密码：检测到已有数据，沿用原来的账号密码';
     CfgPage.PromptLabels[2].Caption := '';
     CfgPage.Edits[2].Visible := False;
+    // 已有数据就别让改数据目录了，免得找不到原来的库
+    CfgPage.Values[4] := ExpandConstant('{commonappdata}') + '\XERP';
+    CfgPage.Edits[4].Enabled := False;
+    CfgPage.PromptLabels[4].Caption := '数据目录：检测到已有数据，沿用原来的目录';
   end;
 end;
 
@@ -121,6 +160,20 @@ begin
         Result := False; Exit;
       end;
     end;
+    // 客户端模式必须填服务器地址，装完就该能连上，别让人装完才发现没填
+    if GetMode('') = 'client' then
+    begin
+      if Trim(CfgPage.Values[3]) = '' then
+      begin
+        MsgBox('选了客户端模式，请填写服务器地址，例如 http://192.168.1.10:8686', mbError, MB_OK);
+        Result := False; Exit;
+      end;
+      if (Pos('http://', Lowercase(CfgPage.Values[3])) <> 1) and (Pos('https://', Lowercase(CfgPage.Values[3])) <> 1) then
+      begin
+        MsgBox('服务器地址要以 http:// 开头，例如 http://192.168.1.10:8686', mbError, MB_OK);
+        Result := False; Exit;
+      end;
+    end;
   end;
 end;
 
@@ -143,9 +196,9 @@ begin
   // 首次安装：把管理员密码交给服务端（[Run] 里启动服务前写好），首次启动读取后立即删除
   if (CurStep = ssInstall) and (not Upgrading) then
   begin
-    ForceDirectories(DataDir());
+    ForceDirectories(DataDir(''));
     SetArrayLength(Lines, 1); Lines[0] := CfgPage.Values[1];
-    SaveStringsToUTF8File(DataDir() + '\admin-password.txt', Lines, False);
+    SaveStringsToUTF8File(DataDir('') + '\admin-password.txt', Lines, False);
   end;
 end;
 

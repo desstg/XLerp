@@ -1,14 +1,17 @@
 # XLerp Windows background service (scheduled task running as SYSTEM at boot).
 # Called by the installer / uninstaller:
-#   xerp-service.ps1 -Action install   -AppDir <dir> -DataDir <dir> -Port 8686
+#   xerp-service.ps1 -Action install   -AppDir <dir> -DataDir <dir> -Port 8686 -Mode server|client -ClientServer <url>
 #   xerp-service.ps1 -Action uninstall -AppDir <dir>
 #   xerp-service.ps1 -Action stop      -AppDir <dir>
+#   xerp-service.ps1 -Action reconfig  -AppDir <dir> -DataDir <dir>   (rebuild task from config.json)
 # Keep this file ASCII-only: Windows PowerShell 5.1 reads BOM-less files as ANSI.
 param(
-  [Parameter(Mandatory = $true)][ValidateSet('install', 'uninstall', 'stop')][string]$Action,
+  [Parameter(Mandatory = $true)][ValidateSet('install', 'uninstall', 'stop', 'reconfig')][string]$Action,
   [Parameter(Mandatory = $true)][string]$AppDir,
   [string]$DataDir = (Join-Path $env:ProgramData 'XERP'),
-  [int]$Port = 8686
+  [int]$Port = 8686,
+  [string]$Mode = '',
+  [string]$ClientServer = ''
 )
 $ErrorActionPreference = 'Stop'
 $TaskName = 'XLerp'
@@ -38,23 +41,40 @@ if ($Action -eq 'uninstall') {
   exit 0
 }
 
-# ---- install / upgrade ----
+# ---- install / upgrade / reconfig ----
+# reconfig: only rebuild the scheduled task from config.json (used after changing mode in the UI)
 Stop-Xerp
 $node = Join-Path $AppDir 'node.exe'
 $pwdFile = Join-Path $DataDir 'admin-password.txt'
 
-# Run mode comes from config.json (written by Settings -> Run mode):
+# Run mode:
 #   server (default) -> portal.js, data lives in $DataDir, LAN clients can connect
 #   client           -> client.js, proxies everything to the remote server, no local data
+# Installer passes -Mode / -ClientServer explicitly; reconfig reads config.json.
 $mode = 'server'
 $remote = ''
-$cfgPath = Join-Path $DataDir 'config.json'
-if (Test-Path $cfgPath) {
-  try {
-    $cfg = Get-Content $cfgPath -Raw | ConvertFrom-Json
-    if ($cfg.mode -eq 'client') { $mode = 'client'; $remote = [string]$cfg.clientServer }
-  } catch { Log ('config.json parse failed: ' + $_.Exception.Message) }
+if ($Mode -eq 'client') {
+  $mode = 'client'; $remote = $ClientServer
+} else {
+  $cfgPath = Join-Path $DataDir 'config.json'
+  if (Test-Path $cfgPath) {
+    try {
+      $cfg = Get-Content $cfgPath -Raw | ConvertFrom-Json
+      if ($cfg.mode -eq 'client') { $mode = 'client'; $remote = [string]$cfg.clientServer }
+    } catch { Log ('config.json parse failed: ' + $_.Exception.Message) }
+  }
 }
+# Persist the choice so a later reconfig sees the same thing
+try {
+  New-Item -ItemType Directory -Force -Path $DataDir | Out-Null
+  $cfgPath = Join-Path $DataDir 'config.json'
+  $cfgObj = @{ mode = $mode; clientServer = $remote }
+  if (Test-Path $cfgPath) {
+    $old = Get-Content $cfgPath -Raw | ConvertFrom-Json
+    foreach ($p in $old.PSObject.Properties) { if ($p.Name -ne 'mode' -and $p.Name -ne 'clientServer') { $cfgObj[$p.Name] = $p.Value } }
+  }
+  $cfgObj | ConvertTo-Json -Depth 8 | Set-Content -Path $cfgPath -Encoding UTF8
+} catch { Log ('config.json write failed: ' + $_.Exception.Message) }
 
 if ($mode -eq 'client') {
   # client.js listens on its own port and proxies /api to the remote server
