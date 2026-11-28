@@ -1588,7 +1588,7 @@ html.mobile .me-row svg{width:22px;height:22px;stroke:#b9c0c8;fill:none;stroke-w
 html.mobile .me-row span{font-size:16px;color:#333;flex:1}
 html.mobile .me-row .arrow{width:8px;height:8px;border-right:1.5px solid #c8cdd4;border-top:1.5px solid #c8cdd4;transform:rotate(45deg);flex:none}
 html.mobile .me-foot{text-align:center;font-size:13px;color:#a8b0b9;padding:10px 0 20px}
-html.mobile .me-foot span{display:block;margin-bottom:8px}
+html.mobile .me-foot span{display:block;margin-bottom:0}
 html.mobile .me-foot button{border:none;background:none;color:var(--zhj);font-size:14px}
 /* ===== 账户管理（照智慧记：总余额 + 整行彩色账户卡） ===== */
 html.mobile .zhj-acct-total{display:flex;align-items:center;gap:12px;padding:17px 16px;background:#fff;border-bottom:1px solid #f0f2f5}
@@ -3662,6 +3662,17 @@ function pageMore() {
       ...(isAdmin() ? [['cloud', 'WebDAV 备份', 'cloud']] : []),
       ['settings', '设置', 'settings'],
     ];
+    // 数据位置：放在列表最上面，一眼能看到现在是「服务器」还是「本机单机」
+    const LM = window.XerpLocalMode;
+    const localNow = !!(LM && LM.isLocal());
+    const dataRow = LM
+      ? `<a class="me-row" data-act="setPage" data-id="storage">
+           <i>${ic('cloud')}</i>
+           <span>数据位置</span>
+           <span class="rv" style="margin-left:auto;color:${localNow ? '#2f88d6' : '#25a26b'};font-size:13px">${localNow ? '本机单机' : '服务器'}</span>
+           <span class="arrow"></span>
+         </a>`
+      : '';
     $('#view').innerHTML = `<div class="zhj-me">
       <div class="me-hero">
         <div class="me-ava">${esc((ME.name || '我').slice(0, 1))}</div>
@@ -3676,9 +3687,11 @@ function pageMore() {
         <i>${ic(icn)}</i><span>${l}</span></a>`).join('')}</div>
       <div class="me-list">${listRows.map(([id, l, icn]) => `<a class="me-row" data-act="go" data-id="${id}">
         <i>${ic(icn)}</i><span>${l}</span><span class="arrow"></span></a>`).join('')}</div>
+      ${dataRow ? `<div class="me-list">${dataRow}</div>` : ''}
       <div class="me-foot">
-        <span>${esc(SERVER_ADDR || location.origin)}</span>
-        <button data-act="nativeServer">切换服务器</button>
+        ${(window.XerpLocalMode && window.XerpLocalMode.isLocal())
+          ? '<span>本机单机 · 数据存在这台设备里</span>'
+          : `<span>服务器 · ${esc((SERVER_ADDR || location.origin).replace(/^https?:\/\//, ''))}</span>`}
       </div>
     </div>`;
     return;
@@ -14105,29 +14118,28 @@ function storagePage(body) {
     ${local ? '本机账建议定期「导出备份」存一份，卸载应用或清理数据会把本机账一起清掉。' : ''}
   </div>`;
 
-  body.querySelectorAll('[data-storage-pick]').forEach(el => el.onclick = async () => {
+  body.querySelectorAll('[data-storage-pick]').forEach(el => el.onclick = () => {
     const val = el.dataset.storagePick;
     const cur = local ? 'local' : 'server';
     if (val === cur) return;
-    const ok = await confirmBox(val === 'local'
-      ? '切换到「本机单机」？\n\n之后不连服务器也能记账，数据存在这台设备里。服务器上的数据不会被改动。'
-      : '切换到「服务器」？\n\n之后连回服务器，本机单机的账仍保留在这台设备里，随时可以切回来。');
-    if (!ok) return;
-    // 安卓 App：交给原生切（它要换加载的入口文件）
-    if (NATIVE && (NATIVE.useLocalMode || NATIVE.useServerMode)) {
-      try {
-        if (val === 'local') NATIVE.useLocalMode(); else NATIVE.useServerMode();
-        return;
-      } catch (e) { /* 老版本 App 没有这两个方法，退回网页方案 */ }
-    }
-    localStorage.setItem('erp_runmode', val);
-    // 清登录态，避免两边 token 串用
-    try {
-      localStorage.removeItem('erp_token');
-      localStorage.removeItem('local_token');
-    } catch (e) {}
-    location.href = '/';
-    location.reload();
+    // confirmBox 是回调式（msg, onOk, opts），不是 Promise
+    confirmBox(val === 'local'
+      ? '切换到「本机单机」？切换后不连服务器也能记账，数据存在这台设备里。服务器上的数据不会被改动。'
+      : '切换到「服务器」？切换后连回服务器，本机单机的账仍保留在这台设备里，随时可以切回来。',
+      () => {
+        // 安卓 App：交给原生切（它要换加载的入口文件）
+        if (NATIVE && typeof NATIVE.useLocalMode === 'function' && typeof NATIVE.useServerMode === 'function') {
+          if (val === 'local') NATIVE.useLocalMode(); else NATIVE.useServerMode();
+          return;
+        }
+        // 浏览器 / 旧版 App：走网页方案
+        localStorage.setItem('erp_runmode', val);
+        try {
+          localStorage.removeItem('erp_token');
+          localStorage.removeItem('local_token');
+        } catch (e) {}
+        location.reload();
+      }, { danger: false, okText: '切换' });
   });
 
   const ex = body.querySelector('[data-act=localExport]');
@@ -14148,15 +14160,16 @@ function storagePage(body) {
     const inp = document.createElement('input');
     inp.type = 'file';
     inp.accept = '.json';
-    inp.onchange = async () => {
+    inp.onchange = () => {
       const f = inp.files && inp.files[0];
       if (!f) return;
-      if (!await confirmBox('导入会覆盖这台设备上现有的本机账，确定继续？')) return;
-      try {
-        await LM.importData(await f.text());
-        toast('已导入，正在重新加载');
-        setTimeout(() => location.reload(), 800);
-      } catch (e) { toast(e.message, 'error'); }
+      confirmBox('导入会覆盖这台设备上现有的本机账，确定继续？', async () => {
+        try {
+          await LM.importData(await f.text());
+          toast('已导入，正在重新加载');
+          setTimeout(() => location.reload(), 800);
+        } catch (e) { toast(e.message, 'error'); }
+      }, { danger: true, okText: '覆盖导入' });
     };
     inp.click();
   };

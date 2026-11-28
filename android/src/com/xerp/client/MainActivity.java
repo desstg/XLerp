@@ -154,8 +154,9 @@ public class MainActivity extends Activity {
     /** 切回服务器模式 */
     private void switchToServer() {
         setLocalMode(false);
-        if (server.isEmpty()) askServer(true);
-        else connect();
+        // 之前连过就直连，不用每次都让人重填地址；实在没有才弹输入框
+        if (server != null && !server.isEmpty()) connect();
+        else askServer(true);
     }
 
     /* ---------- 连接：先显示「正在连接」页（随时可以更换服务器），5 秒探测服务端，通了再打开；打开超过 15 秒也提示 ---------- */
@@ -410,6 +411,11 @@ public class MainActivity extends Activity {
     private void useServer(String url) {
         server = url;
         prefs.edit().putString("server", url).apply();
+        // 关键：从「我的 → 切换服务器」进来时可能还在单机模式，
+        // 这里必须把模式切成服务器，否则页面里的单机分支会继续生效，看着像连不上。
+        setLocalMode(false);
+        // 单机专用标记留在 localStorage 里也会让页面走单机分支，一起清掉
+        try { web.evaluateJavascript("try{localStorage.removeItem('erp_runmode');localStorage.removeItem('local_token');}catch(e){}", null); } catch (Exception ignored) { }
         web.clearHistory();
         showConnecting();
         openServer(++connSeq);  // 刚探测过，直接打开

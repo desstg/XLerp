@@ -6,6 +6,8 @@ FROM node:22-alpine
 WORKDIR /app
 COPY src/server.js src/portal.js src/index.html ./
 COPY src/vendor ./vendor
+# 单机模式的前端模块（浏览器里跑服务端业务逻辑用）
+COPY src/local ./local
 
 # XERP_PLAT：匿名统计里标记为 Docker 安装；TZ：单据日期、每日备份按北京时间
 ENV NODE_ENV=production \

@@ -23,8 +23,15 @@
    *   1) 页面是 App 内置的 assets/index.html（window.XERP_STANDALONE_ASSET）
    *   2) 安卓原生说当前是单机（XerpApp.isLocalMode()）
    *   3) localStorage 里 erp_runmode = 'local'
+   *
+   * 但有一条硬约束：**页面从 http(s) 加载时一定不是单机**。
+   * 因为单机模式的界面永远是 App 内置的 assets（file://）或本地文件，
+   * 从服务器下发的页面就该用服务器数据。否则用户在「我的 → 切换服务器」
+   * 连上服务器后，页面里的单机分支还会生效，登录走本地库，看着像登不进去。
    */
   const isLocal = () => {
+    const proto = location.protocol;
+    if (proto === 'http:' || proto === 'https:') return false;
     if (window.XERP_STANDALONE_ASSET) return true;
     try { if (window.XerpApp && window.XerpApp.isLocalMode && window.XerpApp.isLocalMode()) return true; } catch (e) {}
     return (localStorage.getItem(KEY) || 'server') === 'local';
