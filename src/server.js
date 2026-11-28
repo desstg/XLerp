@@ -20,7 +20,7 @@ const tls = require('tls');
 const zlib = require('zlib');
 const { DatabaseSync } = require('node:sqlite');
 
-const VERSION = '2.21.1';
+const VERSION = '2.22.0';
 const argv = process.argv.slice(2);
 const arg = (name, def) => { const i = argv.indexOf('--' + name); return i >= 0 && argv[i + 1] ? argv[i + 1] : def; };
 
@@ -4893,7 +4893,8 @@ function clientIp(req) {
 const demoBlocked = (method, p) => DEMO && DEMO_BLOCK.some(re => re.test(method + ' ' + p));
 let INDEX_HTML = null;
 function indexHtml() {
-  if (INDEX_HTML) return INDEX_HTML;
+  // 开发期（XERP_NO_CACHE=1）不缓存：改完 index.html 刷新就能看到
+  if (INDEX_HTML && !process.env.XERP_NO_CACHE) return INDEX_HTML;
   try { const sea = require('node:sea'); if (sea.isSea()) return (INDEX_HTML = sea.getAsset('index.html', 'utf8')); } catch (e) {}
   try { return (INDEX_HTML = fs.readFileSync(path.join(__dirname, 'index.html'), 'utf8')); } catch (e) {}
   return '<h1>XLerp 服务端运行中</h1>';
@@ -4906,6 +4907,17 @@ function vendorFile(p) {
   if (vendorCache[name]) return vendorCache[name];
   try { const sea = require('node:sea'); if (sea.isSea()) return (vendorCache[name] = Buffer.from(sea.getAsset('vendor/' + name))); } catch (e) {}
   try { return (vendorCache[name] = fs.readFileSync(path.join(__dirname, 'vendor', name))); } catch (e) { return null; }
+}
+// 单机模式的前端模块（浏览器本地跑 server.js 业务逻辑用）。
+// 只有白名单里的这几个文件能取，避免把 data 目录读出去。
+const LOCAL_JS = ['shim.js', 'sqlshim.js', 'db.js', 'server-local.js', 'boot.js'], localCache = {};
+function localFile(p) {
+  const name = p.startsWith('/local/') && p.slice(7);
+  if (!LOCAL_JS.includes(name)) return null;
+  // 开发期（XERP_NO_CACHE=1）每次都重新读盘：改完 src/local/*.js 不用重启服务
+  if (!process.env.XERP_NO_CACHE && localCache[name]) return localCache[name];
+  try { const sea = require('node:sea'); if (sea.isSea()) return (localCache[name] = Buffer.from(sea.getAsset('local/' + name))); } catch (e) {}
+  try { return (localCache[name] = fs.readFileSync(path.join(__dirname, 'local', name))); } catch (e) { return null; }
 }
 function send(res, status, obj) {
   const body = Buffer.from(JSON.stringify(obj));
@@ -4948,6 +4960,9 @@ const server = http.createServer(async (req, res) => {
     }
     const v = req.method === 'GET' && vendorFile(url.pathname);
     if (v) { res.writeHead(200, { 'Content-Type': 'text/javascript; charset=utf-8', 'Cache-Control': 'public, max-age=604800' }); return res.end(v); }
+    // 单机模式的前端模块（浏览器里跑业务逻辑用）
+    const lf = req.method === 'GET' && localFile(url.pathname);
+    if (lf) { res.writeHead(200, { 'Content-Type': 'text/javascript; charset=utf-8', 'Cache-Control': 'no-store' }); return res.end(lf); }
     res.writeHead(404); return res.end();
   }
   const ctx = { ip: clientIp(req), method: req.method, query: url.searchParams, body: {}, user: null, params: {}, perms: new Set() };

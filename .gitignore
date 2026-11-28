@@ -21,3 +21,7 @@ __pycache__/
 智慧记-to-x.erp-迁移手册.md
 *.bak
 *.bak-*
+
+# Electron/Node 运行时的试验文件（79 MB，用完即弃）
+android/libnode/
+android/libnode.zip

@@ -1588,7 +1588,7 @@ html.mobile .me-row svg{width:22px;height:22px;stroke:#b9c0c8;fill:none;stroke-w
 html.mobile .me-row span{font-size:16px;color:#333;flex:1}
 html.mobile .me-row .arrow{width:8px;height:8px;border-right:1.5px solid #c8cdd4;border-top:1.5px solid #c8cdd4;transform:rotate(45deg);flex:none}
 html.mobile .me-foot{text-align:center;font-size:13px;color:#a8b0b9;padding:10px 0 20px}
-html.mobile .me-foot span{display:block;margin-bottom:8px}
+html.mobile .me-foot span{display:block;margin-bottom:0}
 html.mobile .me-foot button{border:none;background:none;color:var(--zhj);font-size:14px}
 /* ===== 账户管理（照智慧记：总余额 + 整行彩色账户卡） ===== */
 html.mobile .zhj-acct-total{display:flex;align-items:center;gap:12px;padding:17px 16px;background:#fff;border-bottom:1px solid #f0f2f5}
@@ -2599,10 +2599,23 @@ html.mobile .zhj-rpt-cap{font-size:16px}
       <div class="srv-state" id="srvState"><i></i><span>未检测</span><a class="link" id="srvTest" style="margin-left:auto;white-space:nowrap">测试连接</a></div>
     </div>
     <div id="coBox" style="display:none"><label class="field"><span>公司（账套）</span><select id="lCompany"></select></label></div>
+    <!-- 单机模式首次使用：建账套 + 管理员账号 -->
+    <div id="localSetup" style="display:none">
+      <div style="font-size:13px;color:var(--muted);line-height:1.7;margin-bottom:14px;text-align:center">
+        这台设备还没有账套。<br>下面填的信息会保存在本机，不联网。
+      </div>
+      <label class="field"><span>公司 / 店铺名称</span><input id="lsCompany" placeholder="例如 小林进销存"></label>
+      <label class="field"><span>管理员账号</span><input id="lsUser" value="admin" autocomplete="username"></label>
+      <label class="field"><span>密码（至少 6 位）</span><input id="lsPass" type="password" autocomplete="new-password"></label>
+      <label class="field"><span>再输一次</span><input id="lsPass2" type="password" autocomplete="new-password"></label>
+      <button class="btn primary" id="lsBtn" type="button">创建并开始使用</button>
+    </div>
+    <div id="loginForm">
     <label class="field"><span>用户名</span><input id="lUser" autocomplete="username"></label>
     <label class="field"><span>密码</span><input id="lPass" type="password" autocomplete="current-password"></label>
     <button class="btn primary" id="lBtn">登 录</button>
     <p style="color:var(--muted);font-size:12px;text-align:center;margin-top:16px">首次使用默认账号 admin / admin123，登录后请及时修改密码</p>
+    </div>
     
   </form>
 </div>
@@ -2638,6 +2651,15 @@ html.mobile .zhj-rpt-cap{font-size:16px}
 <div class="modal-mask" id="mask"><div class="modal" id="modal"></div></div>
 <div class="toasts" id="toasts"></div>
 <input type="file" id="importFile" accept=".json" hidden>
+
+<!-- 单机模式（数据存在本机 IndexedDB，不连服务器）。
+     这几行必须放主脚本之前：主脚本里的 api() 会检查 window.XerpLocalMode。
+     服务器模式下这些脚本只加载不使用，不影响任何现有行为。 -->
+<script src="local/shim.js"></script>
+<script src="local/sqlshim.js"></script>
+<script src="local/db.js"></script>
+<script src="local/server-local.js"></script>
+<script src="local/boot.js"></script>
 
 <script>
 /* ================= 基础工具 ================= */
@@ -2945,6 +2967,12 @@ function busy(on) { pending += on ? 1 : -1; $('#lbar').classList.toggle('on', pe
 function setConn(ok) { const c = $('#conn'); if (!c) return; c.classList.toggle('bad', !ok); c.querySelector('span').textContent = ok ? '已连接' : '连接中断'; }
 let connFails = 0;   // 连续失败次数：偶尔一次抖动不标红，连续两次才提示
 async function api(method, path, body) {
+  // 单机模式：不连服务器，直接调浏览器里的业务代码（src/local/）
+  if (window.XerpLocalMode && window.XerpLocalMode.isLocal()) {
+    busy(true);
+    try { return await window.XerpLocalMode.localApi(method, path, body); }
+    finally { busy(false); }
+  }
   busy(true);
   try {
     let res;
@@ -3041,6 +3069,37 @@ async function testServer() {
     return true;
   } catch (e) { st.className = 'srv-state bad'; label.textContent = e.message; return false; }
 }
+/* ---------- 单机模式首次使用：建账套 + 管理员 ---------- */
+function localSetupPage() {
+  $('#login').classList.add('show');
+  $('#localSetup').style.display = '';
+  $('#loginForm').style.display = 'none';
+  const btn = $('#lsBtn');
+  // 让登录卡片撑得下多几个输入框
+  const card = document.querySelector('.login-card');
+  if (card) card.style.maxHeight = 'none';
+  btn.onclick = async () => {
+    const company = String($('#lsCompany').value || '').trim() || '我的公司';
+    const username = String($('#lsUser').value || '').trim() || 'admin';
+    const p1 = $('#lsPass').value, p2 = $('#lsPass2').value;
+    if (!/^[A-Za-z0-9_.-]{2,32}$/.test(username)) return toast('账号需为 2-32 位字母、数字或 _ . -', 'error');
+    if (String(p1).length < 6) return toast('密码至少 6 位', 'error');
+    if (p1 !== p2) return toast('两次输入的密码不一致', 'error');
+    btn.disabled = true; btn.textContent = '正在创建…';
+    try {
+      const r = await window.XerpLocalMode.setupLocal({ company, username, password: p1 });
+      LS.set('lastUser', username);
+      $('#login').classList.remove('show');
+      await enterApp();
+      toast('账套已创建，开始记第一笔吧');
+    } catch (e) {
+      toast(e.message || '创建失败', 'error');
+    } finally {
+      btn.disabled = false; btn.textContent = '创建并开始使用';
+    }
+  };
+  $('#lsCompany').focus();
+}
 async function doLogin() {
   const btn = $('#lBtn'), user = $('#lUser').value.trim();
   if (!user || !$('#lPass').value) return toast('请输入用户名和密码', 'error');
@@ -3071,7 +3130,13 @@ async function enterApp() {
   document.documentElement.classList.remove('zhj-login-page');   // 登入成功，放开底栏
   // 运行模式：客户端模式由 client.js 的 /local/config 告诉前端（它是本机的壳，知道自己连谁）；
   // 服务器模式则由 server.js 的 /api/mode 回答。要在 render 之前拿到。
+  // 单机模式：不联网，直接标成 local（工作台徽章显示「本机」）
   try {
+    if (window.XerpLocalMode && window.XerpLocalMode.isLocal()) {
+      window.__runMode = { mode: 'local', server: '', desktop: false, dataDir: '' };
+      applyTheme(); render();
+      return;
+    }
     let m = null;
     try {
       const r = await fetch('/local/config', { cache: 'no-store' });
@@ -3116,6 +3181,30 @@ function openCompanySwitch() {
 }
 async function boot() {
   applyTheme();
+  // 单机模式（数据全在手机/浏览器本地）：不碰网络，直接初始化本地库
+  if (window.XerpLocalMode && window.XerpLocalMode.isLocal()) {
+    $('#srvBox').style.display = 'none';
+    $('#coBox').style.display = 'none';
+    SERVER_ADDR = 'local';
+    let ready = false;
+    try {
+      await window.XerpLocalMode.bootLocal();
+      ready = window.XerpLocal.isInitialized();
+    } catch (e) { console.error('单机库初始化失败', e); }
+    // 第一次用：显示「建账套」表单，建完直接进主界面
+    if (!ready) {
+      localSetupPage();
+      return;
+    }
+    $('#localSetup').style.display = 'none';
+    $('#loginForm').style.display = '';
+    $('#lUser').value = LS.get('lastUser', 'admin');
+    if (LS.get('token') && window.XerpLocalMode.localTokenValid()) {
+      try { await enterApp(); return; } catch (e) { LS.set('token', null); }
+    }
+    showLogin();
+    return;
+  }
   if (window.XERP_DEMO) {
     // 在线演示：登录页给出演示账号，顶部常驻提示条
     $('#login p[style*="font-size:12px"]').innerHTML = '在线演示：账号 <b>admin</b>，密码 <b>admin123</b>，直接点登录即可。<br>所有人共用这个演示环境，数据每小时自动重置，请勿填写真实信息。';
@@ -3573,6 +3662,17 @@ function pageMore() {
       ...(isAdmin() ? [['cloud', 'WebDAV 备份', 'cloud']] : []),
       ['settings', '设置', 'settings'],
     ];
+    // 数据位置：放在列表最上面，一眼能看到现在是「服务器」还是「本机单机」
+    const LM = window.XerpLocalMode;
+    const localNow = !!(LM && LM.isLocal());
+    const dataRow = LM
+      ? `<a class="me-row" data-act="setPage" data-id="storage">
+           <i>${ic('cloud')}</i>
+           <span>数据位置</span>
+           <span class="rv" style="margin-left:auto;color:${localNow ? '#2f88d6' : '#25a26b'};font-size:13px">${localNow ? '本机单机' : '服务器'}</span>
+           <span class="arrow"></span>
+         </a>`
+      : '';
     $('#view').innerHTML = `<div class="zhj-me">
       <div class="me-hero">
         <div class="me-ava">${esc((ME.name || '我').slice(0, 1))}</div>
@@ -3587,9 +3687,11 @@ function pageMore() {
         <i>${ic(icn)}</i><span>${l}</span></a>`).join('')}</div>
       <div class="me-list">${listRows.map(([id, l, icn]) => `<a class="me-row" data-act="go" data-id="${id}">
         <i>${ic(icn)}</i><span>${l}</span><span class="arrow"></span></a>`).join('')}</div>
+      ${dataRow ? `<div class="me-list">${dataRow}</div>` : ''}
       <div class="me-foot">
-        <span>${esc(SERVER_ADDR || location.origin)}</span>
-        <button data-act="nativeServer">切换服务器</button>
+        ${(window.XerpLocalMode && window.XerpLocalMode.isLocal())
+          ? '<span>本机单机 · 数据存在这台设备里</span>'
+          : `<span>服务器 · ${esc((SERVER_ADDR || location.origin).replace(/^https?:\/\//, ''))}</span>`}
       </div>
     </div>`;
     return;
@@ -6600,8 +6702,14 @@ function loadXLSX() {
   if (window.XLSX) return Promise.resolve(window.XLSX);
   return new Promise((ok, bad) => {
     const s = document.createElement('script');
-    s.src = 'vendor/xlsx.full.min.js';
-    s.onload = () => ok(window.XLSX); s.onerror = () => { s.remove(); bad(new Error('Excel 组件加载失败，请刷新页面重试，或把表格另存为 CSV 再导入')); };
+    // 单机模式（App 内置界面，file:// 协议）用 assets 里的绝对路径；
+    // 服务器模式用相对路径，由服务端 /vendor/ 提供
+    s.src = window.XERP_STANDALONE_ASSET ? 'xlsx.full.min.js' : 'vendor/xlsx.full.min.js';
+    s.onload = () => ok(window.XLSX);
+    s.onerror = () => {
+      s.remove();
+      bad(new Error('Excel 组件加载失败，请刷新页面重试，或把表格另存为 CSV 再导入'));
+    };
     document.head.appendChild(s);
   });
 }
@@ -13515,10 +13623,15 @@ function setMobileHome(keepScroll) {
   const grp = (title, rows) => `<div class="set-grp">${title}</div><div class="set-card">${rows.join('')}</div>`;
   const themeName = { light: '浅色', dark: '深色', auto: '跟随系统' }[st.theme] || '浅色';
 
+  const isLocalMode = !!(window.XerpLocalMode && window.XerpLocalMode.isLocal());
   const accountRows = [
     row('wallet', '登录密码', '', '定期修改可提升账户安全', 'changePwd'),
     row('swap', '退出登录', '', CLIENT_MODE ? '退出后可切换账号或服务器' : '退出当前账号', 'logout'),
-    row('cloud', '服务器', esc(SERVER_ADDR), `服务端 v${esc(st.version || '-')}${platLabel ? ' · ' + esc(platLabel) : ''}`, NATIVE ? 'nativeServer' : null),
+    // 数据位置：服务器（连服务器） / 本机单机（不联网也能记账）
+    window.XerpLocalMode
+      ? row('cloud', '数据位置', isLocalMode ? '本机单机' : '服务器',
+            isLocalMode ? '数据存在这台设备里，不联网也能记账' : esc(SERVER_ADDR), 'setPage', 'storage')
+      : row('cloud', '服务器', esc(SERVER_ADDR), `服务端 v${esc(st.version || '-')}${platLabel ? ' · ' + esc(platLabel) : ''}`, NATIVE ? 'nativeServer' : null),
   ].filter(Boolean);
 
   const uiRows = [
@@ -13588,7 +13701,7 @@ function setSubPage(key) {
     orderRule: '开单规则', cost: '成本核算', expFlow: '报销审批流程', basic: '基础资料', notice: '首页公告',
     users: '用户管理', roles: '角色管理', modules: '功能模块', data: '数据管理', audit: '操作日志',
     print: '打印模板', notify: '通知推送', kdn: '快递鸟', gsp: '医疗器械', companies: '公司管理',
-    update: '版本更新', stats: '匿名使用统计', mode: '运行模式',
+    update: '版本更新', stats: '匿名使用统计', mode: '运行模式', storage: '数据位置',
   }[key] || '系统设置';
   // 后端会把内容写进 #setBody，这里先建外壳
   $('#view').innerHTML = `<div class="zhj-page zhj-set2">
@@ -13601,6 +13714,7 @@ function setSubPage(key) {
   </div>`;
   const body = $('#setBody');
   if (key === 'orderRule') setOrderRule(body);
+  else if (key === 'storage') storagePage(body);
   else if (key === 'cost') setCost(body);
   else if (key === 'expFlow') setExpFlow(body);
   else if (key === 'basic') setBasic(body);
@@ -13942,6 +14056,124 @@ function setMode(body) {
   };
   body.querySelector('#modeSave').onclick = () => saveMode(pick, String(srvIn.value || '').trim(), window.__runMode);
 }
+/* ---------- 数据位置：服务器 / 本机单机 ----------
+ * 和上面的「运行模式」（服务器 / 客户端）是两回事：
+ *   运行模式  = Windows 桌面版里，本机是当服务器还是连别人
+ *   数据位置  = 数据存在服务器上，还是存在这台设备自己的 IndexedDB 里（不联网也能记账）
+ * 两种数据完全分开，不做同步。
+ */
+function storagePage(body) {
+  const LM = window.XerpLocalMode;
+  const local = !!(LM && LM.isLocal());
+  // 单机模式下本地库统计
+  let cnt = { products: 0, customers: 0, sales: 0, purchases: 0 };
+  if (local && window.__xerpDB) {
+    const db = window.__xerpDB;
+    const n = col => (db.mem.get(col) ? db.mem.get(col).size : 0);
+    cnt = { products: n('products'), customers: n('customers'), sales: n('sales'), purchases: n('purchases') };
+  }
+  const isMobileView = IS_MOBILE;
+  const card = (() => {
+    const cur = local ? '本机单机' : '服务器';
+    const sub = local ? '数据存在这台设备里，不联网也能记账' : '数据存在服务器，多台设备共用一套账';
+    const color = local ? '#2f88d6' : '#25a26b';
+    const icon = local ? 'cloud' : 'warehouse';
+    return `<div style="display:flex;align-items:center;gap:12px;padding:14px;border-radius:10px;background:${local ? '#eef7ff' : '#eefaf3'};border:1px solid ${local ? '#c8e3fb' : '#cdeeda'}">
+      <span style="width:38px;height:38px;display:flex;align-items:center;justify-content:center;border-radius:50%;background:${color};color:#fff;flex:none">${ic(icon)}</span>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:16px;font-weight:600;color:#222">${cur}</div>
+        <div style="font-size:12.5px;color:#7d8894;margin-top:3px">${sub}</div>
+      </div>
+    </div>`;
+  })();
+  const row = (val, title, desc, active) => `
+    <div class="set-row" data-storage-pick="${val}" style="cursor:pointer">
+      <span class="ri">${ic(val === 'local' ? 'cloud' : 'warehouse')}</span>
+      <div class="tx"><b>${title}</b><small>${desc}</small></div>
+      <span class="rv" style="color:${active ? (val === 'local' ? '#2f88d6' : '#25a26b') : '#b6bcc4'}">${active ? '使用中' : '切换'}</span>
+      <span class="ar"></span>
+    </div>`;
+
+  body.innerHTML = `
+  <div class="set-sec" style="padding:16px">
+    <div style="font-size:13px;color:#9aa3ad;margin-bottom:10px">当前数据位置</div>
+    ${card}
+    ${local ? `<div style="margin-top:12px;font-size:12.5px;color:#7d8894;line-height:1.9">
+      本机账套：货品 ${cnt.products} · 客户 ${cnt.customers} · 销售单 ${cnt.sales} · 采购单 ${cnt.purchases}
+    </div>` : ''}
+  </div>
+  <div class="set-sec">
+    ${row('server', '服务器', '数据存在服务器上，手机、别的电脑共用一套账', !local)}
+    ${row('local', '本机单机', '数据只存在这台设备里，不联网也能开单记账', local)}
+  </div>
+  ${local ? `<div class="set-sec" style="padding:14px 16px">
+    <div style="display:flex;gap:10px;flex-wrap:wrap">
+      <button class="btn" data-act="localExport" type="button">导出备份</button>
+      <button class="btn" data-act="localImport" type="button">导入备份</button>
+    </div>
+  </div>` : ''}
+  <div class="set-note" style="line-height:1.9">
+    两种数据<b>完全分开、互不同步</b>：服务器那套账在服务器上，本机单机账存在这台设备的浏览器/应用里。<br>
+    切换不会删除任何一边的数据，切回来就能看到原来的账。<br>
+    ${local ? '本机账建议定期「导出备份」存一份，卸载应用或清理数据会把本机账一起清掉。' : ''}
+  </div>`;
+
+  body.querySelectorAll('[data-storage-pick]').forEach(el => el.onclick = () => {
+    const val = el.dataset.storagePick;
+    const cur = local ? 'local' : 'server';
+    if (val === cur) return;
+    // confirmBox 是回调式（msg, onOk, opts），不是 Promise
+    confirmBox(val === 'local'
+      ? '切换到「本机单机」？切换后不连服务器也能记账，数据存在这台设备里。服务器上的数据不会被改动。'
+      : '切换到「服务器」？切换后连回服务器，本机单机的账仍保留在这台设备里，随时可以切回来。',
+      () => {
+        // 安卓 App：交给原生切（它要换加载的入口文件）
+        if (NATIVE && typeof NATIVE.useLocalMode === 'function' && typeof NATIVE.useServerMode === 'function') {
+          if (val === 'local') NATIVE.useLocalMode(); else NATIVE.useServerMode();
+          return;
+        }
+        // 浏览器 / 旧版 App：走网页方案
+        localStorage.setItem('erp_runmode', val);
+        try {
+          localStorage.removeItem('erp_token');
+          localStorage.removeItem('local_token');
+        } catch (e) {}
+        location.reload();
+      }, { danger: false, okText: '切换' });
+  });
+
+  const ex = body.querySelector('[data-act=localExport]');
+  if (ex) ex.onclick = () => {
+    try {
+      const j = LM.exportData();
+      const blob = new Blob([JSON.stringify(j, null, 2)], { type: 'application/json' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'xlerp-本机账-' + today() + '.json';
+      a.click();
+      setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+      toast('已导出');
+    } catch (e) { toast(e.message, 'error'); }
+  };
+  const im = body.querySelector('[data-act=localImport]');
+  if (im) im.onclick = () => {
+    const inp = document.createElement('input');
+    inp.type = 'file';
+    inp.accept = '.json';
+    inp.onchange = () => {
+      const f = inp.files && inp.files[0];
+      if (!f) return;
+      confirmBox('导入会覆盖这台设备上现有的本机账，确定继续？', async () => {
+        try {
+          await LM.importData(await f.text());
+          toast('已导入，正在重新加载');
+          setTimeout(() => location.reload(), 800);
+        } catch (e) { toast(e.message, 'error'); }
+      }, { danger: true, okText: '覆盖导入' });
+    };
+    inp.click();
+  };
+}
 function setStats(body) {
   const st = db.settings;
   body.innerHTML = `<div class="set-sec">
@@ -14046,6 +14278,8 @@ function setAudit(body) {
 }
 function pageSettings() {
   const items = [['general', '常规设置']];
+  // 数据位置（服务器 / 本机单机）：手机上最重要，放前面
+  if (window.XerpLocalMode) items.push(['storage', '数据位置']);
   if (isAdmin() || can('tpl.edit')) items.push(['print', '打印模板']);
   if (medOn()) items.push(['gsp', '医疗器械']);
   if (PORTAL && PORTAL_ADMIN) items.push(['companies', '公司管理']);
@@ -14062,6 +14296,7 @@ function pageSettings() {
   else if (ui.setTab === 'gsp') gspPage(body);
   else if (ui.setTab === 'companies') companiesPage(body);
   else if (ui.setTab === 'runmode') setMode(body);
+  else if (ui.setTab === 'storage') storagePage(body);
   else if (ui.setTab === 'general') {
     body.innerHTML = `<div class="grid g2">
     <div class="card"><div class="card-head"><h3>我的账户</h3></div><div class="card-body">

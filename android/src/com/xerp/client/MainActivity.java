@@ -110,10 +110,53 @@ public class MainActivity extends Activity {
         setupWebView();
         setupBack();
 
-        if (server.isEmpty()) askServer(true);
+        // 单机模式：直接用内置界面，不碰网络
+        if (isLocalMode()) { openLocal(); }
+        else if (server.isEmpty()) askServer(true);
         else connect();
         // 自动检查更新已停用（按需求不再联网检查版本）
         ui.postDelayed(this::resumePendingInstall, 800);
+    }
+
+    /* ---------- 单机模式 ----------
+     * 不连服务器，界面从 APK 内置的 assets/index.html 加载，数据存在 WebView 的 IndexedDB 里。
+     * 和服务器模式的数据完全分开。
+     */
+    /**
+     * 默认单机模式：装上就能用，不用先填服务器地址。
+     * 想把默认改成服务器模式，把下面的 DEFAULT_LOCAL 改成 false 即可。
+     */
+    private static final boolean DEFAULT_LOCAL = true;
+
+    private boolean isLocalMode() {
+        return prefs.getBoolean("localmode", DEFAULT_LOCAL);
+    }
+
+    private void setLocalMode(boolean on) {
+        prefs.edit().putBoolean("localmode", on).apply();
+    }
+
+    /** 打开单机界面：file:///android_asset/index.html */
+    private void openLocal() {
+        connSeq++;                    // 让还在跑的 connect() 失效
+        hideConnecting();
+        String url = "file:///android_asset/index.html";
+        web.loadUrl(url);
+    }
+
+    /** 切到单机模式并立刻打开 */
+    private void switchToLocal() {
+        setLocalMode(true);
+        // 单机模式本地库是独立的一套，不需要服务器地址
+        openLocal();
+    }
+
+    /** 切回服务器模式 */
+    private void switchToServer() {
+        setLocalMode(false);
+        // 之前连过就直连，不用每次都让人重填地址；实在没有才弹输入框
+        if (server != null && !server.isEmpty()) connect();
+        else askServer(true);
     }
 
     /* ---------- 连接：先显示「正在连接」页（随时可以更换服务器），5 秒探测服务端，通了再打开；打开超过 15 秒也提示 ---------- */
@@ -232,17 +275,26 @@ public class MainActivity extends Activity {
         s.setSupportZoom(false);
         s.setBuiltInZoomControls(false);
         s.setDisplayZoomControls(false);
-        s.setAllowFileAccess(false);
+        // 单机模式要从 assets 加载界面（file:///android_asset/），必须允许文件访问；
+        // 服务器模式虽然是 http，但打开这个选项不会带来额外风险（只读 assets）
+        s.setAllowFileAccess(true);
+        s.setAllowContentAccess(true);
         // 服务端界面更新频繁，禁止缓存 HTML/JS，避免手机端看到旧界面
         s.setCacheMode(WebSettings.LOAD_NO_CACHE);
         s.setUserAgentString(s.getUserAgentString() + " XerpAndroid/" + VERSION);
         // 允许 chrome://inspect 远程调试（排查网页问题时用）
         if (Build.VERSION.SDK_INT >= 19) WebView.setWebContentsDebuggingEnabled(true);
         web.addJavascriptInterface(new Bridge(), "XerpApp");
+        // 单机模式也需要稳定的 localStorage / IndexedDB 目录
+        web.getSettings().setDatabaseEnabled(true);
+        web.getSettings().setDomStorageEnabled(true);
         web.setWebViewClient(new WebViewClient() {
             @Override
             public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest req) {
                 Uri u = req.getUrl();
+                String scheme = u.getScheme() == null ? "" : u.getScheme();
+                // 单机模式：assets 里的界面自己跳转，留在应用内
+                if ("file".equals(scheme)) return false;
                 // 服务端自己的页面留在应用里，其他链接（官网、GitHub 等）交给系统浏览器
                 if (!server.isEmpty() && u.toString().startsWith(server)) return false;
                 try { startActivity(new Intent(Intent.ACTION_VIEW, u)); } catch (ActivityNotFoundException e) { toast("没有可以打开链接的应用"); }
@@ -359,6 +411,11 @@ public class MainActivity extends Activity {
     private void useServer(String url) {
         server = url;
         prefs.edit().putString("server", url).apply();
+        // 关键：从「我的 → 切换服务器」进来时可能还在单机模式，
+        // 这里必须把模式切成服务器，否则页面里的单机分支会继续生效，看着像连不上。
+        setLocalMode(false);
+        // 单机专用标记留在 localStorage 里也会让页面走单机分支，一起清掉
+        try { web.evaluateJavascript("try{localStorage.removeItem('erp_runmode');localStorage.removeItem('local_token');}catch(e){}", null); } catch (Exception ignored) { }
         web.clearHistory();
         showConnecting();
         openServer(++connSeq);  // 刚探测过，直接打开
@@ -636,6 +693,20 @@ public class MainActivity extends Activity {
     class Bridge {
         @JavascriptInterface public String version() { return VERSION; }
         @JavascriptInterface public String server() { return server; }
+
+        /* ---- 单机模式（数据存手机，不连服务器）---- */
+        /** 当前是不是单机模式 */
+        @JavascriptInterface public boolean isLocalMode() { return MainActivity.this.isLocalMode(); }
+        /** 切到单机模式：界面换成本机 assets，数据存手机 */
+        @JavascriptInterface public void useLocalMode() { ui.post(MainActivity.this::switchToLocal); }
+        /** 切回服务器模式 */
+        @JavascriptInterface public void useServerMode() { ui.post(MainActivity.this::switchToServer); }
+        /** 设置里切换服务器地址（单机模式下也能改，改完切回服务器就生效） */
+        @JavascriptInterface public void setServer(String url) {
+            if (url == null || url.isEmpty()) return;
+            server = url;
+            prefs.edit().putString("server", url).apply();
+        }
         /** 状态栏高度的 dp 值：状态栏透明后内容会延伸到它下面，网页据此留安全区 */
         @JavascriptInterface public int statusBarDp() {
             int h = 0;
