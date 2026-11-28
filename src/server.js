@@ -4893,7 +4893,8 @@ function clientIp(req) {
 const demoBlocked = (method, p) => DEMO && DEMO_BLOCK.some(re => re.test(method + ' ' + p));
 let INDEX_HTML = null;
 function indexHtml() {
-  if (INDEX_HTML) return INDEX_HTML;
+  // 开发期（XERP_NO_CACHE=1）不缓存：改完 index.html 刷新就能看到
+  if (INDEX_HTML && !process.env.XERP_NO_CACHE) return INDEX_HTML;
   try { const sea = require('node:sea'); if (sea.isSea()) return (INDEX_HTML = sea.getAsset('index.html', 'utf8')); } catch (e) {}
   try { return (INDEX_HTML = fs.readFileSync(path.join(__dirname, 'index.html'), 'utf8')); } catch (e) {}
   return '<h1>XLerp 服务端运行中</h1>';
