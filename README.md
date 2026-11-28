@@ -222,6 +222,33 @@ node --test tests/api.test.mjs
 
 构建：`powershell -ExecutionPolicy Bypass -File windows\build-windows.ps1`（需要 x64 Node.js 22.13+ 和 Inno Setup 6：`winget install JRSoftware.InnoSetup`），产物为 `dist\xlerp-<版本>-windows-x64-setup.exe`。构建时会自动下载 Electron 运行时（npmmirror 优先，失败退回 GitHub）。
 
+## macOS 版
+
+下载 `XLerp-<版本>-macOS-arm64.dmg`（Apple Silicon：M1/M2/M3/M4），双击打开后把 **小林进销存** 拖进「应用程序」。
+
+**首次打开要右键 →「打开」**（程序没有 Apple 开发者签名，直接双击会被 Gatekeeper 拦下）。只想双击打开的话，先在「终端」里跑一次：
+
+```bash
+xattr -dr com.apple.quarantine /Applications/XLerp.app
+```
+
+Intel Mac 怎么办：
+
+- 装 [Rosetta 2](https://support.apple.com/zh-cn/HT211861)（`softwareupdate --install-rosetta`）后可以直接跑 arm64 版
+- 或者自己构建 x64 版，见下方「构建」
+
+和 Windows 版一样的两种运行模式（服务器 / 本机单机），切换在「系统设置 → 数据位置」。数据默认存在 `~/Library/Application Support/XERP`（时间机器备份会自动带上）。
+
+构建（需要 macOS + Node.js 22）：
+
+```bash
+chmod +x mac/build-mac.sh
+./mac/build-mac.sh                      # 按当前机器架构构建
+TARGET_ARCH=x64 ./mac/build-mac.sh      # 强制构建 Intel 版
+```
+
+产物为 `dist/XLerp-<版本>-macOS-<arch>.dmg`，同时生成 `.sha256` 校验文件。CI 上由 `.github/workflows/macos.yml` 自动构建（推 `v*` 标签或手动触发，产物自动传到对应 Release）。
+
 ## 安卓客户端
 
 下载 `xlerp-<版本>-android.apk`（Android 7.0 及以上）安装。
