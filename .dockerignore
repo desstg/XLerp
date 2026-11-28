@@ -5,3 +5,6 @@
 !src/index.html
 !src/vendor/
 !src/vendor/**
+# 单机模式的前端模块（浏览器里跑服务端业务逻辑用）
+!src/local/
+!src/local/**
