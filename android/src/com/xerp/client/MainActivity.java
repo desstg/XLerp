@@ -147,13 +147,48 @@ public class MainActivity extends Activity {
     /** 切到单机模式并立刻打开 */
     private void switchToLocal() {
         setLocalMode(true);
+        // 两套账的账号体系完全独立（服务器账号在群晖、单机账号在手机 IndexedDB），
+        // 切换时必须把服务器那边的登录态清掉，否则会拿旧 token 直接进单机界面，
+        // 用户以为「不用重新登录」，实际是状态串了。
+        clearLoginForSwitch("erp_token");
         // 单机模式本地库是独立的一套，不需要服务器地址
         openLocal();
+    }
+
+    /**
+     * 取消切换时回到「原来那个模式」的界面。
+     * 场景：用户在单机模式点「切换到服务器」，弹框要求填地址，
+     * 结果他点了取消——这时页面还停在 showConnecting() 的「正在连接」页，
+     * 必须把他送回单机界面，否则看着像卡住了。
+     */
+    private void reopenCurrentMode() {
+        connSeq++;                 // 让还在跑的 connect() 失效
+        hideConnecting();
+        if (isLocalMode()) openLocal();
+        else if (server != null && !server.isEmpty()) connect();
+        else finish();
+    }
+
+    /**
+     * 切换模式前清掉另一边的登录态。
+     * 必须在 loadUrl **之前**执行——那时还是旧页面的 JS 上下文，evaluateJavascript 才有效；
+     * 等新页面加载完再清就晚了（页面已经拿着旧 token 进去了）。
+     * 页面侧 boot() 里还有一道兜底：拿不到 erp_token 就一定显示登录页。
+     */
+    private void clearLoginForSwitch(String tokenKey) {
+        try {
+            web.evaluateJavascript(
+                "try{localStorage.removeItem('" + tokenKey + "');" +
+                "localStorage.removeItem('erp_token');localStorage.removeItem('local_token');" +
+                "localStorage.removeItem('erp_runmode');}catch(e){}", null);
+        } catch (Exception ignored) { }
     }
 
     /** 切回服务器模式 */
     private void switchToServer() {
         setLocalMode(false);
+        // 同理：切服务器时把单机的登录态清掉，避免两边 token 串用
+        clearLoginForSwitch("local_token");
         // 之前连过就直连，不用每次都让人重填地址；实在没有才弹输入框
         if (server != null && !server.isEmpty()) connect();
         else askServer(true);
@@ -360,6 +395,10 @@ public class MainActivity extends Activity {
     }
 
     private void askServer(boolean first) {
+        // 先把背景页面切成「连接中」：用户点了「切换到服务器」后，
+        // 如果只是弹个对话框、背后还停在单机界面，很容易以为没反应。
+        // 注意 first 的情况（开机没有任何地址）不切，保持原来的启动引导页。
+        if (!first) showConnecting();
         LinearLayout box = new LinearLayout(this);
         box.setOrientation(LinearLayout.VERTICAL);
         int p = dp(20);
@@ -380,9 +419,15 @@ public class MainActivity extends Activity {
                 .setView(box)
                 .setPositiveButton("连接", null)
                 .setNeutralButton("自动查找", null)
-                .setNegativeButton(first ? "退出" : "取消", (dd, w) -> { if (server.isEmpty()) finish(); })
+                // 取消：first 时退出应用；非 first 时回到原来的模式，别把用户扔在「连接中」页面
+                .setNegativeButton(first ? "退出" : "取消", (dd, w) -> {
+                    if (server.isEmpty()) finish();
+                    else reopenCurrentMode();
+                })
                 .setCancelable(!first)
                 .create();
+        // 返回键 / 点外面关掉 = 取消，同样回到原模式
+        d.setOnCancelListener(x -> { if (!first) reopenCurrentMode(); });
         d.setOnShowListener(x -> {
             d.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(v -> {
                 String url = normalize(in.getText().toString());
@@ -414,8 +459,8 @@ public class MainActivity extends Activity {
         // 关键：从「我的 → 切换服务器」进来时可能还在单机模式，
         // 这里必须把模式切成服务器，否则页面里的单机分支会继续生效，看着像连不上。
         setLocalMode(false);
-        // 单机专用标记留在 localStorage 里也会让页面走单机分支，一起清掉
-        try { web.evaluateJavascript("try{localStorage.removeItem('erp_runmode');localStorage.removeItem('local_token');}catch(e){}", null); } catch (Exception ignored) { }
+        // 清掉单机的登录态，避免两边 token 串用（页面会要求重新登录）
+        clearLoginForSwitch("local_token");
         web.clearHistory();
         showConnecting();
         openServer(++connSeq);  // 刚探测过，直接打开

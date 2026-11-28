@@ -3255,6 +3255,8 @@ async function boot() {
     if (hint) hint.textContent = '这是本机账套，用你建账时设的账号密码登录';
     // 用户名预填用单机专用键：服务器账号不该出现在本机登录框里
     $('#lUser').value = LS.get('lastUserLocal', 'admin');
+    // 从别的模式切进来时（安卓原生会清 erp_token），这里再兜一次：
+    // 只要没有 LS.get('token')，就必须重新登录，不能直接进。
     if (LS.get('token') && window.XerpLocalMode.localTokenValid()) {
       try { await enterApp(); return; } catch (e) { LS.set('token', null); }
     }
@@ -3718,17 +3720,18 @@ function pageMore() {
       ...(isAdmin() ? [['cloud', 'WebDAV 备份', 'cloud']] : []),
       ['settings', '设置', 'settings'],
     ];
-    // 数据位置：放在列表最上面，一眼能看到现在是「服务器」还是「本机单机」
+    // 数据位置：放在列表最下面，一眼能看到现在是「服务器」还是「本机单机」
+    // ⚠ 不能依赖 window.XerpLocalMode——服务器模式下单机模块是按需加载的（不下载），
+    //   判空会让这一行直接消失，用户再也找不到切换入口。
+    //   storagePage() 自己会处理模块未加载的情况。
     const LM = window.XerpLocalMode;
     const localNow = !!(LM && LM.isLocal());
-    const dataRow = LM
-      ? `<a class="me-row" data-act="setPage" data-id="storage">
+    const dataRow = `<a class="me-row" data-act="setPage" data-id="storage">
            <i>${ic('cloud')}</i>
            <span>数据位置</span>
            <span class="rv" style="margin-left:auto;color:${localNow ? '#2f88d6' : '#25a26b'};font-size:13px">${localNow ? '本机单机' : '服务器'}</span>
            <span class="arrow"></span>
-         </a>`
-      : '';
+         </a>`;
     $('#view').innerHTML = `<div class="zhj-me">
       <div class="me-hero">
         <div class="me-ava">${esc((ME.name || '我').slice(0, 1))}</div>
@@ -3743,11 +3746,11 @@ function pageMore() {
         <i>${ic(icn)}</i><span>${l}</span></a>`).join('')}</div>
       <div class="me-list">${listRows.map(([id, l, icn]) => `<a class="me-row" data-act="go" data-id="${id}">
         <i>${ic(icn)}</i><span>${l}</span><span class="arrow"></span></a>`).join('')}</div>
-      ${dataRow ? `<div class="me-list">${dataRow}</div>` : ''}
+      <div class="me-list">${dataRow}</div>
       <div class="me-foot">
-        ${(window.XerpLocalMode && window.XerpLocalMode.isLocal())
+        ${localNow
           ? '<span>本机单机 · 数据存在这台设备里</span>'
-          : `<span>服务器 · ${esc((SERVER_ADDR || location.origin).replace(/^https?:\/\//, ''))}</span>`}
+          : `<span>服务器 · ${esc(String(SERVER_ADDR || location.origin).replace(/^https?:\/\//, ''))}</span>`}
       </div>
     </div>`;
     return;
