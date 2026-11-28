@@ -2639,6 +2639,15 @@ html.mobile .zhj-rpt-cap{font-size:16px}
 <div class="toasts" id="toasts"></div>
 <input type="file" id="importFile" accept=".json" hidden>
 
+<!-- 单机模式（数据存在本机 IndexedDB，不连服务器）。
+     这几行必须放主脚本之前：主脚本里的 api() 会检查 window.XerpLocalMode。
+     服务器模式下这些脚本只加载不使用，不影响任何现有行为。 -->
+<script src="local/shim.js"></script>
+<script src="local/sqlshim.js"></script>
+<script src="local/db.js"></script>
+<script src="local/server-local.js"></script>
+<script src="local/boot.js"></script>
+
 <script>
 /* ================= 基础工具 ================= */
 const $ = (s, el = document) => el.querySelector(s);
@@ -2945,6 +2954,12 @@ function busy(on) { pending += on ? 1 : -1; $('#lbar').classList.toggle('on', pe
 function setConn(ok) { const c = $('#conn'); if (!c) return; c.classList.toggle('bad', !ok); c.querySelector('span').textContent = ok ? '已连接' : '连接中断'; }
 let connFails = 0;   // 连续失败次数：偶尔一次抖动不标红，连续两次才提示
 async function api(method, path, body) {
+  // 单机模式：不连服务器，直接调浏览器里的业务代码（src/local/）
+  if (window.XerpLocalMode && window.XerpLocalMode.isLocal()) {
+    busy(true);
+    try { return await window.XerpLocalMode.localApi(method, path, body); }
+    finally { busy(false); }
+  }
   busy(true);
   try {
     let res;
@@ -3071,7 +3086,13 @@ async function enterApp() {
   document.documentElement.classList.remove('zhj-login-page');   // 登入成功，放开底栏
   // 运行模式：客户端模式由 client.js 的 /local/config 告诉前端（它是本机的壳，知道自己连谁）；
   // 服务器模式则由 server.js 的 /api/mode 回答。要在 render 之前拿到。
+  // 单机模式：不联网，直接标成 local（工作台徽章显示「本机」）
   try {
+    if (window.XerpLocalMode && window.XerpLocalMode.isLocal()) {
+      window.__runMode = { mode: 'local', server: '', desktop: false, dataDir: '' };
+      applyTheme(); render();
+      return;
+    }
     let m = null;
     try {
       const r = await fetch('/local/config', { cache: 'no-store' });
@@ -3116,6 +3137,21 @@ function openCompanySwitch() {
 }
 async function boot() {
   applyTheme();
+  // 单机模式（数据全在手机/浏览器本地）：不碰网络，直接初始化本地库
+  if (window.XerpLocalMode && window.XerpLocalMode.isLocal()) {
+    $('#srvBox').style.display = 'none';
+    $('#coBox').style.display = 'none';
+    SERVER_ADDR = 'local';
+    try {
+      await window.XerpLocalMode.bootLocal();
+    } catch (e) { console.error('单机库初始化失败', e); }
+    $('#lUser').value = LS.get('lastUser', 'admin');
+    if (LS.get('token') && window.XerpLocalMode.localTokenValid()) {
+      try { await enterApp(); return; } catch (e) { LS.set('token', null); }
+    }
+    showLogin();
+    return;
+  }
   if (window.XERP_DEMO) {
     // 在线演示：登录页给出演示账号，顶部常驻提示条
     $('#login p[style*="font-size:12px"]').innerHTML = '在线演示：账号 <b>admin</b>，密码 <b>admin123</b>，直接点登录即可。<br>所有人共用这个演示环境，数据每小时自动重置，请勿填写真实信息。';

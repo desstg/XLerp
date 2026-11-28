@@ -4907,6 +4907,17 @@ function vendorFile(p) {
   try { const sea = require('node:sea'); if (sea.isSea()) return (vendorCache[name] = Buffer.from(sea.getAsset('vendor/' + name))); } catch (e) {}
   try { return (vendorCache[name] = fs.readFileSync(path.join(__dirname, 'vendor', name))); } catch (e) { return null; }
 }
+// 单机模式的前端模块（浏览器本地跑 server.js 业务逻辑用）。
+// 只有白名单里的这几个文件能取，避免把 data 目录读出去。
+const LOCAL_JS = ['shim.js', 'sqlshim.js', 'db.js', 'server-local.js', 'boot.js'], localCache = {};
+function localFile(p) {
+  const name = p.startsWith('/local/') && p.slice(7);
+  if (!LOCAL_JS.includes(name)) return null;
+  // 开发期（XERP_NO_CACHE=1）每次都重新读盘：改完 src/local/*.js 不用重启服务
+  if (!process.env.XERP_NO_CACHE && localCache[name]) return localCache[name];
+  try { const sea = require('node:sea'); if (sea.isSea()) return (localCache[name] = Buffer.from(sea.getAsset('local/' + name))); } catch (e) {}
+  try { return (localCache[name] = fs.readFileSync(path.join(__dirname, 'local', name))); } catch (e) { return null; }
+}
 function send(res, status, obj) {
   const body = Buffer.from(JSON.stringify(obj));
   const req = res.req, accept = String((req && req.headers['accept-encoding']) || '');
@@ -4948,6 +4959,9 @@ const server = http.createServer(async (req, res) => {
     }
     const v = req.method === 'GET' && vendorFile(url.pathname);
     if (v) { res.writeHead(200, { 'Content-Type': 'text/javascript; charset=utf-8', 'Cache-Control': 'public, max-age=604800' }); return res.end(v); }
+    // 单机模式的前端模块（浏览器里跑业务逻辑用）
+    const lf = req.method === 'GET' && localFile(url.pathname);
+    if (lf) { res.writeHead(200, { 'Content-Type': 'text/javascript; charset=utf-8', 'Cache-Control': 'no-store' }); return res.end(lf); }
     res.writeHead(404); return res.end();
   }
   const ctx = { ip: clientIp(req), method: req.method, query: url.searchParams, body: {}, user: null, params: {}, perms: new Set() };
