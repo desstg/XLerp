@@ -13725,10 +13725,12 @@ function setMobileHome(keepScroll) {
     row('wallet', '登录密码', '', '定期修改可提升账户安全', 'changePwd'),
     row('swap', '退出登录', '', CLIENT_MODE ? '退出后可切换账号或服务器' : '退出当前账号', 'logout'),
     // 数据位置：服务器（连服务器） / 本机单机（不联网也能记账）
-    window.XerpLocalMode
-      ? row('cloud', '数据位置', isLocalMode ? '本机单机' : '服务器',
-            isLocalMode ? '数据存在这台设备里，不联网也能记账' : esc(SERVER_ADDR), 'setPage', 'storage')
-      : row('cloud', '服务器', esc(SERVER_ADDR), `服务端 v${esc(st.version || '-')}${platLabel ? ' · ' + esc(platLabel) : ''}`, NATIVE ? 'nativeServer' : null),
+    // ⚠ 这一行不能依赖 window.XerpLocalMode 是否存在——服务器模式下单机模块是
+    //   按需加载的（不下载），如果这里判空就会退化成旧版「服务器」行，
+    //   用户再也找不到切换入口。storagePage() 自己会处理模块没加载的情况。
+    row('cloud', '数据位置', isLocalMode ? '本机单机' : '服务器',
+        isLocalMode ? '数据存在这台设备里，不联网也能记账' : esc(String(SERVER_ADDR || '').replace(/^https?:\/\//, '')),
+        'setPage', 'storage'),
   ].filter(Boolean);
 
   const uiRows = [

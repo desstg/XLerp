@@ -26,7 +26,6 @@
 | Docker（AMD64） | `xlerp-2.20.4-docker-amd64.tar.gz` | 群晖、威联通、Unraid、绿联、极空间、飞牛等 x86 NAS |
 | Docker（ARM64） | `xlerp-2.20.4-docker-arm64.tar.gz` | 树莓派、ARM 架构 NAS |
 | Windows | `xlerp-2.22.0-windows-x64-setup.exe` | Windows 10 / 11 64 位，双击安装，自带 Node.js |
-| macOS | `XLerp-2.22.0-macOS-arm64.dmg` | Apple Silicon（M1/M2/M3/M4），首次打开需右键→「打开」 |
 | Android | `xlerp-2.22.0-android.apk` | Android 7.0 及以上 |
 
 在线拉取镜像：`desstg/xlerp:latest`（amd64 + arm64 多架构）

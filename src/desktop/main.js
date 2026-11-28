@@ -43,19 +43,10 @@ const has = n => argv.includes('--' + n);
 /* ================= 路径 / 参数 ================= */
 // 安装目录：
 //   Windows 打包后 = XLerp.exe 所在目录（那里才有 node.exe / portal.js / index.html）
-//   macOS  打包后 = XLerp.app/Contents/MacOS/ 的上一级 Contents/Resources/ 里没有业务文件，
-//                  我们把 portal.js 等放在 Contents/MacOS/ 旁边（见 build-mac.yml），所以
-//                  这里统一用 execPath 的目录，两个平台都对。
 //   开发态 = 项目根（src/desktop 的上一级）
 const APP_DIR = app.isPackaged ? path.dirname(process.execPath) : path.resolve(__dirname, '..');
-// 数据目录：
-//   Windows = %ProgramData%\XERP
-//   macOS   = ~/Library/Application Support/XERP（Apple 规范位置，备份/时间机器会自动带上）
-//   都可用 --data 或环境变量 ERP_DATA 覆盖
-const DEFAULT_DATA = process.platform === 'darwin'
-  ? path.join(os.homedir(), 'Library', 'Application Support', 'XERP')
-  : path.join(process.env.ProgramData || os.homedir(), 'XERP');
-const DATA_DIR = path.resolve(arg('data', process.env.ERP_DATA || DEFAULT_DATA));
+// 数据目录：%ProgramData%\XERP，可用 --data 或环境变量 ERP_DATA 覆盖
+const DATA_DIR = path.resolve(arg('data', process.env.ERP_DATA || path.join(process.env.ProgramData || os.homedir(), 'XERP')));
 const MODE = String(arg('mode', 'server')).toLowerCase().startsWith('client') ? 'client' : 'server';
 // 客户端模式的代理端口固定 18686（和 xerp-service.ps1 里的 $clientPort 一致）。
 // 安装器传的 --port 是「服务器模式的服务端口」，客户端模式下不能拿它用，
@@ -291,16 +282,7 @@ function createSplash() {
 function createTray() {
   if (!fs.existsSync(ICON_PNG)) return;
   try {
-    // macOS 顶部菜单栏图标必须是模板图（纯黑 + 透明，系统自动适配深浅色），
-    // 否则深色模式下会看到一个白底方块。Windows 用彩色小图标即可。
-    let img = nativeImage.createFromPath(ICON_PNG);
-    if (process.platform === 'darwin') {
-      img = img.resize({ width: 18, height: 18 });
-      img.setTemplateImage(true);
-    } else {
-      img = img.resize({ width: 16, height: 16 });
-    }
-    tray = new Tray(img);
+    tray = new Tray(nativeImage.createFromPath(ICON_PNG).resize({ width: 16, height: 16 }));
     tray.setToolTip(APP_NAME);
     tray.setContextMenu(Menu.buildFromTemplate([
       { label: '打开 ' + APP_NAME, click: () => { if (win) { win.show(); win.focus(); } else boot(); } },
@@ -309,12 +291,7 @@ function createTray() {
       { label: '数据目录', click: () => shell.openPath(DATA_DIR) },
       { label: '退出', click: () => { quitting = true; app.quit(); } },
     ]));
-    // macOS 托盘没有双击事件，单击就要能唤起窗口
-    if (process.platform === 'darwin') {
-      tray.on('click', () => { if (win) { win.show(); win.focus(); } else boot(); });
-    } else {
-      tray.on('double-click', () => { if (win) { win.show(); win.focus(); } else boot(); });
-    }
+    tray.on('double-click', () => { if (win) { win.show(); win.focus(); } else boot(); });
   } catch (e) { log('托盘创建失败', e.message); }
 }
 
