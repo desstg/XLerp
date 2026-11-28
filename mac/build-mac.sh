@@ -20,12 +20,24 @@ cd "$ROOT"
 
 VERSION="$(grep -oE "const VERSION = '[^']+'" src/server.js | head -1 | sed "s/.*'\(.*\)'.*/\1/")"
 if [ -z "$VERSION" ]; then echo "读不到版本号" >&2; exit 1; fi
-ARCH="$(uname -m)"
-case "$ARCH" in
-  arm64)  ELECTRON_ARCH="arm64" ;;
-  x86_64) ELECTRON_ARCH="x64" ;;
-  *) echo "未知架构 $ARCH" >&2; exit 1 ;;
+
+# 目标架构：CI 里用 TARGET_ARCH 显式指定，本地不传就用当前机器架构
+#   arm64 → Apple Silicon（M1/M2/M3/M4）
+#   x64   → Intel Mac
+if [ -n "${TARGET_ARCH:-}" ]; then
+  ELECTRON_ARCH="$TARGET_ARCH"
+else
+  case "$(uname -m)" in
+    arm64)  ELECTRON_ARCH="arm64" ;;
+    x86_64) ELECTRON_ARCH="x64" ;;
+    *) echo "未知架构 $(uname -m)" >&2; exit 1 ;;
+  esac
+fi
+case "$ELECTRON_ARCH" in
+  arm64|x64) ;;
+  *) echo "TARGET_ARCH 只能是 arm64 或 x64，收到：$ELECTRON_ARCH" >&2; exit 1 ;;
 esac
+echo "==> 主机架构 $(uname -m) → 目标架构 $ELECTRON_ARCH"
 
 # 与 src/desktop/package.json 里保持一致
 ELECTRON_VER="$(node -p "require('./src/desktop/package.json').electronVersion")"
