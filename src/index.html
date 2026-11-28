@@ -2599,10 +2599,23 @@ html.mobile .zhj-rpt-cap{font-size:16px}
       <div class="srv-state" id="srvState"><i></i><span>未检测</span><a class="link" id="srvTest" style="margin-left:auto;white-space:nowrap">测试连接</a></div>
     </div>
     <div id="coBox" style="display:none"><label class="field"><span>公司（账套）</span><select id="lCompany"></select></label></div>
+    <!-- 单机模式首次使用：建账套 + 管理员账号 -->
+    <div id="localSetup" style="display:none">
+      <div style="font-size:13px;color:var(--muted);line-height:1.7;margin-bottom:14px;text-align:center">
+        这台设备还没有账套。<br>下面填的信息会保存在本机，不联网。
+      </div>
+      <label class="field"><span>公司 / 店铺名称</span><input id="lsCompany" placeholder="例如 小林进销存"></label>
+      <label class="field"><span>管理员账号</span><input id="lsUser" value="admin" autocomplete="username"></label>
+      <label class="field"><span>密码（至少 6 位）</span><input id="lsPass" type="password" autocomplete="new-password"></label>
+      <label class="field"><span>再输一次</span><input id="lsPass2" type="password" autocomplete="new-password"></label>
+      <button class="btn primary" id="lsBtn" type="button">创建并开始使用</button>
+    </div>
+    <div id="loginForm">
     <label class="field"><span>用户名</span><input id="lUser" autocomplete="username"></label>
     <label class="field"><span>密码</span><input id="lPass" type="password" autocomplete="current-password"></label>
     <button class="btn primary" id="lBtn">登 录</button>
     <p style="color:var(--muted);font-size:12px;text-align:center;margin-top:16px">首次使用默认账号 admin / admin123，登录后请及时修改密码</p>
+    </div>
     
   </form>
 </div>
@@ -3056,6 +3069,37 @@ async function testServer() {
     return true;
   } catch (e) { st.className = 'srv-state bad'; label.textContent = e.message; return false; }
 }
+/* ---------- 单机模式首次使用：建账套 + 管理员 ---------- */
+function localSetupPage() {
+  $('#login').classList.add('show');
+  $('#localSetup').style.display = '';
+  $('#loginForm').style.display = 'none';
+  const btn = $('#lsBtn');
+  // 让登录卡片撑得下多几个输入框
+  const card = document.querySelector('.login-card');
+  if (card) card.style.maxHeight = 'none';
+  btn.onclick = async () => {
+    const company = String($('#lsCompany').value || '').trim() || '我的公司';
+    const username = String($('#lsUser').value || '').trim() || 'admin';
+    const p1 = $('#lsPass').value, p2 = $('#lsPass2').value;
+    if (!/^[A-Za-z0-9_.-]{2,32}$/.test(username)) return toast('账号需为 2-32 位字母、数字或 _ . -', 'error');
+    if (String(p1).length < 6) return toast('密码至少 6 位', 'error');
+    if (p1 !== p2) return toast('两次输入的密码不一致', 'error');
+    btn.disabled = true; btn.textContent = '正在创建…';
+    try {
+      const r = await window.XerpLocalMode.setupLocal({ company, username, password: p1 });
+      LS.set('lastUser', username);
+      $('#login').classList.remove('show');
+      await enterApp();
+      toast('账套已创建，开始记第一笔吧');
+    } catch (e) {
+      toast(e.message || '创建失败', 'error');
+    } finally {
+      btn.disabled = false; btn.textContent = '创建并开始使用';
+    }
+  };
+  $('#lsCompany').focus();
+}
 async function doLogin() {
   const btn = $('#lBtn'), user = $('#lUser').value.trim();
   if (!user || !$('#lPass').value) return toast('请输入用户名和密码', 'error');
@@ -3142,9 +3186,18 @@ async function boot() {
     $('#srvBox').style.display = 'none';
     $('#coBox').style.display = 'none';
     SERVER_ADDR = 'local';
+    let ready = false;
     try {
       await window.XerpLocalMode.bootLocal();
+      ready = window.XerpLocal.isInitialized();
     } catch (e) { console.error('单机库初始化失败', e); }
+    // 第一次用：显示「建账套」表单，建完直接进主界面
+    if (!ready) {
+      localSetupPage();
+      return;
+    }
+    $('#localSetup').style.display = 'none';
+    $('#loginForm').style.display = '';
     $('#lUser').value = LS.get('lastUser', 'admin');
     if (LS.get('token') && window.XerpLocalMode.localTokenValid()) {
       try { await enterApp(); return; } catch (e) { LS.set('token', null); }
@@ -6636,8 +6689,14 @@ function loadXLSX() {
   if (window.XLSX) return Promise.resolve(window.XLSX);
   return new Promise((ok, bad) => {
     const s = document.createElement('script');
-    s.src = 'vendor/xlsx.full.min.js';
-    s.onload = () => ok(window.XLSX); s.onerror = () => { s.remove(); bad(new Error('Excel 组件加载失败，请刷新页面重试，或把表格另存为 CSV 再导入')); };
+    // 单机模式（App 内置界面，file:// 协议）用 assets 里的绝对路径；
+    // 服务器模式用相对路径，由服务端 /vendor/ 提供
+    s.src = window.XERP_STANDALONE_ASSET ? 'xlsx.full.min.js' : 'vendor/xlsx.full.min.js';
+    s.onload = () => ok(window.XLSX);
+    s.onerror = () => {
+      s.remove();
+      bad(new Error('Excel 组件加载失败，请刷新页面重试，或把表格另存为 CSV 再导入'));
+    };
     document.head.appendChild(s);
   });
 }

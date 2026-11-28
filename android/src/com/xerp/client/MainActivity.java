@@ -122,8 +122,14 @@ public class MainActivity extends Activity {
      * 不连服务器，界面从 APK 内置的 assets/index.html 加载，数据存在 WebView 的 IndexedDB 里。
      * 和服务器模式的数据完全分开。
      */
+    /**
+     * 默认单机模式：装上就能用，不用先填服务器地址。
+     * 想把默认改成服务器模式，把下面的 DEFAULT_LOCAL 改成 false 即可。
+     */
+    private static final boolean DEFAULT_LOCAL = true;
+
     private boolean isLocalMode() {
-        return prefs.getBoolean("localmode", false);
+        return prefs.getBoolean("localmode", DEFAULT_LOCAL);
     }
 
     private void setLocalMode(boolean on) {

@@ -91,6 +91,14 @@ $AssetsSrc = Join-Path $B 'assets'
 New-Item -ItemType Directory -Force $AssetsSrc | Out-Null
 Copy-Item $Standalone (Join-Path $AssetsSrc 'index.html') -Force
 Write-Host ("  assets/index.html  {0:N2} MB" -f ((Get-Item $Standalone).Length / 1MB))
+# Excel 组件（导出/导入 Excel 用）：单机模式按需从 assets 加载，
+# 不放 index.html 里，避免首屏多解析 881 KB
+$Xlsx = Join-Path $Root 'dist\standalone\xlsx.full.min.js'
+if (-not (Test-Path $Xlsx)) { $Xlsx = Join-Path $Root 'src\vendor\xlsx.full.min.js' }
+if (Test-Path $Xlsx) {
+  Copy-Item $Xlsx (Join-Path $AssetsSrc 'xlsx.full.min.js') -Force
+  Write-Host ("  assets/xlsx.full.min.js  {0:N0} KB" -f ((Get-Item $Xlsx).Length / 1KB))
+} else { Write-Warning '找不到 xlsx.full.min.js，单机模式导出 Excel 会失败' }
 
 Run (Join-Path $Bt 'aapt2.exe') compile --dir "$B\res" -o "$B\res.zip"
 Run (Join-Path $Bt 'aapt2.exe') link -o "$B\base.apk" -I $AndroidJar --manifest (Join-Path $And 'AndroidManifest.xml') --java "$B\gen" `

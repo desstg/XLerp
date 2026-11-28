@@ -16,42 +16,75 @@
 
 /* ================= Node 全局对象 shim ================= */
 
-// Buffer：server.js 里主要用于 base64 图片、hex 密码哈希、utf8 编解码
+// Buffer：server.js 用它做 base64/hex/utf8 编解码；
+// xlsx.full.min.js 这类第三方库还会用 new Buffer() / Buffer.isBuffer / .slice / .toString
 if (typeof window.Buffer === 'undefined') {
-  window.Buffer = {
-    from(input, enc) {
-      if (typeof input === 'string') {
-        if (enc === 'base64') {
-          const bin = atob(input);
-          const arr = new Uint8Array(bin.length);
-          for (let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
-          return Object.assign(arr, { __buf: true });
-        }
-        if (enc === 'hex') {
-          // 密码哈希比对走这里：每 2 个字符一个字节
-          const n = Math.floor(input.length / 2);
-          const arr = new Uint8Array(n);
-          for (let i = 0; i < n; i++) arr[i] = parseInt(input.substr(i * 2, 2), 16) || 0;
-          return Object.assign(arr, { __buf: true });
-        }
-        return Object.assign(new TextEncoder().encode(input), { __buf: true });
-      }
-      if (input instanceof Uint8Array || Array.isArray(input)) {
-        const arr = new Uint8Array(input);
+  function XBuffer(input, enc) {
+    if (!(this instanceof XBuffer)) return XBuffer.from(input, enc);
+    const bytes = XBuffer.from(input, enc);
+    this.__bytes = bytes;
+    this.length = bytes.length;
+  }
+  XBuffer.from = function (input, enc) {
+    if (typeof input === 'string') {
+      if (enc === 'base64') {
+        const bin = atob(input);
+        const arr = new Uint8Array(bin.length);
+        for (let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
         return Object.assign(arr, { __buf: true });
       }
-      return Object.assign(new Uint8Array(0), { __buf: true });
-    },
-    isBuffer(b) { return !!(b && b.__buf); },
-    concat(list) {
-      let n = 0;
-      for (const b of list) n += b.length;
-      const out = new Uint8Array(n);
-      let o = 0;
-      for (const b of list) { out.set(b, o); o += b.length; }
-      return Object.assign(out, { __buf: true });
-    },
+      if (enc === 'hex') {
+        const n = Math.floor(input.length / 2);
+        const arr = new Uint8Array(n);
+        for (let i = 0; i < n; i++) arr[i] = parseInt(input.substr(i * 2, 2), 16) || 0;
+        return Object.assign(arr, { __buf: true });
+      }
+      if (enc === 'latin1' || enc === 'binary') {
+        const arr = new Uint8Array(input.length);
+        for (let i = 0; i < input.length; i++) arr[i] = input.charCodeAt(i) & 0xff;
+        return Object.assign(arr, { __buf: true });
+      }
+      return Object.assign(new TextEncoder().encode(input), { __buf: true });
+    }
+    if (input instanceof ArrayBuffer) return Object.assign(new Uint8Array(input), { __buf: true });
+    if (input instanceof Uint8Array || Array.isArray(input)) {
+      return Object.assign(new Uint8Array(input), { __buf: true });
+    }
+    if (input && typeof input === 'object' && input.type === 'Buffer' && Array.isArray(input.data)) {
+      return Object.assign(new Uint8Array(input.data), { __buf: true });
+    }
+    return Object.assign(new Uint8Array(0), { __buf: true });
   };
+  XBuffer.isBuffer = b => !!(b && b.__buf);
+  XBuffer.alloc = n => Object.assign(new Uint8Array(n), { __buf: true });
+  XBuffer.allocUnsafe = n => Object.assign(new Uint8Array(n), { __buf: true });
+  XBuffer.concat = function (list, total) {
+    let n = total || 0;
+    if (!total) for (const b of list) n += b.length;
+    const out = new Uint8Array(n);
+    let o = 0;
+    for (const b of list) { out.set(b, o); o += b.length; }
+    return Object.assign(out, { __buf: true });
+  };
+  // 实例方法（xlsx 会调用 buf.slice / buf.toString）
+  XBuffer.prototype.slice = function (a, b) {
+    return Object.assign(this.__bytes.slice(a, b), { __buf: true });
+  };
+  XBuffer.prototype.toString = function (enc) {
+    const b = this.__bytes;
+    if (enc === 'hex') return [...b].map(x => x.toString(16).padStart(2, '0')).join('');
+    if (enc === 'base64') return btoa(String.fromCharCode.apply(null, b));
+    if (enc === 'latin1' || enc === 'binary') return String.fromCharCode.apply(null, b);
+    return new TextDecoder().decode(b);
+  };
+  // Uint8Array 上也补 slice 的 __buf 标记（xlsx 对 Uint8Array 直接用 slice）
+  const origSlice = Uint8Array.prototype.slice;
+  Uint8Array.prototype.slice = function (a, b) {
+    const r = origSlice.call(this, a, b);
+    if (this.__buf) Object.assign(r, { __buf: true });
+    return r;
+  };
+  window.Buffer = XBuffer;
 }
 
 // process：只用到 process.platform / process.env / process.pid 这类只读值

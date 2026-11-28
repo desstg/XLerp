@@ -57,6 +57,17 @@ fs.mkdirSync(OUT_DIR, { recursive: true });
 const outFile = path.join(OUT_DIR, 'index.html');
 fs.writeFileSync(outFile, html, 'utf8');
 
+// xlsx（881 KB）不内联进 HTML，单独放在旁边按需加载：
+// 只有导出/导入 Excel 时才需要，内联会让首屏多解析 881 KB。
+// 单机模式里 loadXLSX() 会请求同目录的 xlsx.full.min.js（见 index.html）。
+const xlsxSrc = path.join(SRC, 'vendor', 'xlsx.full.min.js');
+if (fs.existsSync(xlsxSrc)) {
+  fs.copyFileSync(xlsxSrc, path.join(OUT_DIR, 'xlsx.full.min.js'));
+  report.push(['vendor/xlsx.full.min.js（独立文件）', fs.statSync(xlsxSrc).size]);
+} else {
+  console.warn('  警告：找不到 src/vendor/xlsx.full.min.js，单机模式导出 Excel 会失败');
+}
+
 console.log('生成 ' + path.relative(ROOT, outFile));
 for (const [f, n] of report) console.log(`  内联 ${f}  ${(n / 1024).toFixed(1)} KB`);
 console.log(`  总大小 ${(html.length / 1024 / 1024).toFixed(2)} MB`);
