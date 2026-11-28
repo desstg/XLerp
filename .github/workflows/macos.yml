@@ -36,9 +36,14 @@ jobs:
   build:
     runs-on: macos-latest
     steps:
+      # 注意：checkout 用 main（构建脚本和源码永远取最新），
+      # 不要 checkout 标签——标签可能是旧 commit，里面没有后来新增的构建脚本。
+      # 版本号从 src/server.js 里读（build-mac.sh 自己会 grep），
+      # 发布到哪个 Release 由 TAG 决定。
       - uses: actions/checkout@v4
         with:
-          ref: ${{ env.TAG || github.ref }}
+          ref: main
+          fetch-depth: 1
 
       - uses: actions/setup-node@v4
         with:
