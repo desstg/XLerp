@@ -18,7 +18,17 @@
   const KEY = 'erp_runmode';
   const LSKEY = 'local_token';
 
-  const isLocal = () => (localStorage.getItem(KEY) || 'server') === 'local';
+  /**
+   * 是否单机模式。三个来源，任一成立即为单机：
+   *   1) 页面是 App 内置的 assets/index.html（window.XERP_STANDALONE_ASSET）
+   *   2) 安卓原生说当前是单机（XerpApp.isLocalMode()）
+   *   3) localStorage 里 erp_runmode = 'local'
+   */
+  const isLocal = () => {
+    if (window.XERP_STANDALONE_ASSET) return true;
+    try { if (window.XerpApp && window.XerpApp.isLocalMode && window.XerpApp.isLocalMode()) return true; } catch (e) {}
+    return (localStorage.getItem(KEY) || 'server') === 'local';
+  };
 
   function setMode(mode) {
     localStorage.setItem(KEY, mode === 'local' ? 'local' : 'server');

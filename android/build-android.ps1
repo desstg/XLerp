@@ -1,4 +1,4 @@
-﻿# 构建 XLerp 安卓客户端：dist\xerp-<版本>-android.apk
+# 构建 XLerp 安卓客户端：dist\xerp-<版本>-android.apk
 # 需要：JDK 17+（JAVA_HOME）、Android SDK（platforms;android-36、build-tools;36.1.0），不需要 Gradle / Android Studio
 # 签名密钥：%USERPROFILE%\.xerp-android\release.jks（首次构建自动生成；务必备份，丢了以后就没法覆盖升级）
 $ErrorActionPreference = 'Stop'
@@ -79,9 +79,22 @@ function New-Icon($size, $file) {
 
 # ---------- 2. 资源 ----------
 Step 'aapt2 compile / link'
+# 单机模式：界面打包进 APK 的 assets，离线也能用（见 tools/build-standalone.cjs）
+Step '单机界面（assets/index.html）'
+$Standalone = Join-Path $Root 'dist\standalone\index.html'
+if (-not (Test-Path $Standalone)) {
+  Push-Location $Root
+  try { & node tools\build-standalone.cjs } finally { Pop-Location }
+}
+if (-not (Test-Path $Standalone)) { throw '单机界面没生成：先跑 node tools\build-standalone.cjs' }
+$AssetsSrc = Join-Path $B 'assets'
+New-Item -ItemType Directory -Force $AssetsSrc | Out-Null
+Copy-Item $Standalone (Join-Path $AssetsSrc 'index.html') -Force
+Write-Host ("  assets/index.html  {0:N2} MB" -f ((Get-Item $Standalone).Length / 1MB))
+
 Run (Join-Path $Bt 'aapt2.exe') compile --dir "$B\res" -o "$B\res.zip"
 Run (Join-Path $Bt 'aapt2.exe') link -o "$B\base.apk" -I $AndroidJar --manifest (Join-Path $And 'AndroidManifest.xml') --java "$B\gen" `
-  --version-code $VersionCode --version-name $Version --min-sdk-version 24 --target-sdk-version 36 "$B\res.zip"
+  --version-code $VersionCode --version-name $Version --min-sdk-version 24 --target-sdk-version 36 -A $AssetsSrc "$B\res.zip"
 
 # ---------- 3. Java → class → dex ----------
 Step 'javac'

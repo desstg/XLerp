@@ -14054,6 +14054,13 @@ function storagePage(body) {
       ? '切换到「本机单机」？\n\n之后不连服务器也能记账，数据存在这台设备里。服务器上的数据不会被改动。'
       : '切换到「服务器」？\n\n之后连回服务器，本机单机的账仍保留在这台设备里，随时可以切回来。');
     if (!ok) return;
+    // 安卓 App：交给原生切（它要换加载的入口文件）
+    if (NATIVE && (NATIVE.useLocalMode || NATIVE.useServerMode)) {
+      try {
+        if (val === 'local') NATIVE.useLocalMode(); else NATIVE.useServerMode();
+        return;
+      } catch (e) { /* 老版本 App 没有这两个方法，退回网页方案 */ }
+    }
     localStorage.setItem('erp_runmode', val);
     // 清登录态，避免两边 token 串用
     try {
