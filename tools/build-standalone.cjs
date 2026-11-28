@@ -33,12 +33,13 @@ function inlineScript(tag, relPath) {
 }
 
 // 单机模块（顺序不能变：shim → sqlshim → db → server-local → boot）
+// index.html 里现在是「按需加载」的探测脚本（服务器模式下不下载这 320 KB），
+// 单机版永远要这些模块，所以这里直接把整段探测脚本替换成内联实现。
 const localFiles = ['local/shim.js', 'local/sqlshim.js', 'local/db.js', 'local/server-local.js', 'local/boot.js'];
-for (const f of localFiles) {
-  const re = new RegExp(`<script src="${f.replace(/[/.]/g, m => '\\' + m)}"></script>`, 'g');
-  if (!re.test(html)) throw new Error('index.html 里找不到 ' + f + ' 的 script 标签');
-  html = html.replace(re, () => inlineScript(null, f));
-}
+const probeRe = /\<script\>\s*\(function \(\) \{\s*\/\/ 和 local\/boot\.js[\s\S]*?\}\)\(\);\s*\<\/script\>/;
+if (!probeRe.test(html)) throw new Error('index.html 里找不到单机模块的按需加载脚本');
+const inlined = localFiles.map(f => inlineScript(null, f)).join('\n');
+html = html.replace(probeRe, () => inlined);
 
 // 第三方库（图表、Excel）：离线也要能用
 const vendorFiles = ['vendor/chart.umd.min.js', 'vendor/xlsx.full.min.js'];

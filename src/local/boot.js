@@ -19,22 +19,30 @@
   const LSKEY = 'local_token';
 
   /**
-   * 是否单机模式。三个来源，任一成立即为单机：
-   *   1) 页面是 App 内置的 assets/index.html（window.XERP_STANDALONE_ASSET）
-   *   2) 安卓原生说当前是单机（XerpApp.isLocalMode()）
-   *   3) localStorage 里 erp_runmode = 'local'
+   * 是否单机模式。
    *
-   * 但有一条硬约束：**页面从 http(s) 加载时一定不是单机**。
-   * 因为单机模式的界面永远是 App 内置的 assets（file://）或本地文件，
-   * 从服务器下发的页面就该用服务器数据。否则用户在「我的 → 切换服务器」
-   * 连上服务器后，页面里的单机分支还会生效，登录走本地库，看着像登不进去。
+   * 判断顺序（任一条成立即为单机）：
+   *   1) 页面是 App 内置的 assets/index.html（window.XERP_STANDALONE_ASSET）
+   *   2) localStorage 里 erp_runmode = 'local'（浏览器 / 网页里手动切的）
+   *   3) 安卓原生说当前是单机（XerpApp.isLocalMode()）
+   *
+   * 但有一条硬约束：**页面由「另一台机器的服务器」下发时不是单机**。
+   * 典型场景：用户在单机模式下点「切换服务器」连上服务器，页面换成 http://服务器地址/，
+   * 此时如果 isLocal() 还返回 true，api() 会走本地库，用户输入服务器账号密码也登不进去。
+   *
+   * 判断「是不是服务器下发的页面」不能只看协议（http），因为：
+   *   - 电脑浏览器本地开发/局域网单机也是 http://127.0.0.1:8686
+   * 所以改成看「这份页面是不是从远端服务器加载的」：
+   *   页面里没有 XERP_STANDALONE_ASSET，且 erp_runmode 不是 local，且当前 origin 与
+   *   用户配置的服务器地址一致 → 服务器页面。
+   * 简化实现：只要有 XERP_STANDALONE_ASSET 或 erp_runmode=local，就认单机；
+   *           否则如果是 http(s) 且没有这两个标记，视为服务器模式。
    */
   const isLocal = () => {
-    const proto = location.protocol;
-    if (proto === 'http:' || proto === 'https:') return false;
-    if (window.XERP_STANDALONE_ASSET) return true;
+    if (window.XERP_STANDALONE_ASSET) return true;                  // App 内置界面
+    if ((localStorage.getItem(KEY) || '') === 'local') return true; // 手动切到单机
     try { if (window.XerpApp && window.XerpApp.isLocalMode && window.XerpApp.isLocalMode()) return true; } catch (e) {}
-    return (localStorage.getItem(KEY) || 'server') === 'local';
+    return false;
   };
 
   function setMode(mode) {

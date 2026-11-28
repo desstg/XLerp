@@ -1,0 +1,73 @@
+# macOS 版自动构建：
+# - 推送 v* 标签或手动触发（填 tag 如 v2.22.0）时，在云端 macOS 打包 XLerp-<版本>-macOS-<arch>.dmg
+# - 自动上传为对应 GitHub Release 的附件
+#
+# 为什么用 macos-13（Intel）+ macos-14（Apple Silicon）两个 runner：
+#   macos-13 已经是 GitHub 最后一代 Intel 机型，能给老 Mac 出 x64 包；
+#   macos-14 是 arm64（M1/M2/M3），出 arm64 包。
+#   两个都构建，用户按自己机器选，避免 Rosetta。
+#
+# 不签名：Apple 公证要 $99/年开发者账号。用户首次打开需要
+#   右键 →「打开」，或者跑 xattr -dr com.apple.quarantine /Applications/XLerp.app
+#   这段说明会写进 Release 正文（见 README 的 macOS 一节）。
+name: macos
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: '要发布附件的版本标签（如 v2.22.0，留空只做构建测试）'
+        required: false
+
+permissions:
+  contents: write
+
+env:
+  TAG: ${{ inputs.tag || (startsWith(github.ref, 'refs/tags/v') && github.ref_name) || '' }}
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos-13      # Intel x64
+            arch: x64
+          - os: macos-14      # Apple Silicon arm64
+            arch: arm64
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.TAG || github.ref }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: 构建 DMG
+        run: |
+          chmod +x mac/build-mac.sh
+          ./mac/build-mac.sh
+
+      - name: 上传构建产物（Artifacts）
+        uses: actions/upload-artifact@v4
+        with:
+          name: xlerp-macos-${{ matrix.arch }}
+          path: |
+            dist/XLerp-*-macOS-*.dmg
+            dist/XLerp-*-macOS-*.dmg.sha256
+          if-no-files-found: error
+
+      - name: 上传 DMG 到 GitHub Release
+        if: env.TAG != ''
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          DMG=$(ls dist/XLerp-*-macOS-*.dmg | head -1)
+          if [ -z "$DMG" ]; then echo "未找到 DMG" >&2; exit 1; fi
+          echo "上传 $DMG"
+          gh release upload "$TAG" "$DMG" --clobber
+          [ -f "$DMG.sha256" ] && gh release upload "$TAG" "$DMG.sha256" --clobber

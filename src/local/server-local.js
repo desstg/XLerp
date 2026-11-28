@@ -10,7 +10,7 @@
  *   - 不含 HTTP 服务、日志文件、远程访问、快递鸟、消息推送、演示数据
  * 业务规则（库存、批次、成本、单据状态机、权限）与服务器版完全一致。
  */
-const VERSION = '2.21.1';
+const VERSION = '2.22.0';
 const argv = [];
 const arg = (name, def) => def;
 

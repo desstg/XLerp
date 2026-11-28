@@ -1177,7 +1177,12 @@ html.mobile .zhj-ob-foot .btn{
   border-radius:4px;background:#fff;border:1px solid var(--zhj);
   font-size:16px;color:var(--zhj);font-weight:400;
   text-align:center;box-sizing:border-box;
+  /* 按钮等分宽度、字号固定，忙碌文字（「保存中…」）不能溢出到按钮外 */
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;
 }
+/* 提交中：按钮变灰 + 文字略小一点，保证「保存中…」这类文案放得下 */
+html.mobile .zhj-ob-foot .btn[disabled]{opacity:.55}
+html.mobile .zhj-ob-foot .btn.busy{font-size:14px}
 html.mobile .zhj-ob-foot .btn.primary{background:#fff!important;border-color:var(--zhj)!important;color:var(--zhj)!important}
 /* ===== 手机端 WebDAV 备份页：行式布局（和货品详情、系统设置同一套手感） ===== */
 html.mobile .zhj-dav .dav-body{padding:0 0 calc(78px + env(safe-area-inset-bottom,0px));background:#f2f4f8;min-height:100%}
@@ -2614,7 +2619,8 @@ html.mobile .zhj-rpt-cap{font-size:16px}
     <label class="field"><span>用户名</span><input id="lUser" autocomplete="username"></label>
     <label class="field"><span>密码</span><input id="lPass" type="password" autocomplete="current-password"></label>
     <button class="btn primary" id="lBtn">登 录</button>
-    <p style="color:var(--muted);font-size:12px;text-align:center;margin-top:16px">首次使用默认账号 admin / admin123，登录后请及时修改密码</p>
+    <p id="loginHint" style="color:var(--muted);font-size:12px;text-align:center;margin-top:16px">首次使用默认账号 admin / admin123，登录后请及时修改密码</p>
+    <p id="loginFoot" style="text-align:center;margin-top:14px;font-size:13px"></p>
     </div>
     
   </form>
@@ -2653,13 +2659,28 @@ html.mobile .zhj-rpt-cap{font-size:16px}
 <input type="file" id="importFile" accept=".json" hidden>
 
 <!-- 单机模式（数据存在本机 IndexedDB，不连服务器）。
-     这几行必须放主脚本之前：主脚本里的 api() 会检查 window.XerpLocalMode。
-     服务器模式下这些脚本只加载不使用，不影响任何现有行为。 -->
-<script src="local/shim.js"></script>
-<script src="local/sqlshim.js"></script>
-<script src="local/db.js"></script>
-<script src="local/server-local.js"></script>
-<script src="local/boot.js"></script>
+     这些脚本一共 320 KB（server-local.js 就占 281 KB），**按需加载**：
+     服务器模式下完全不下载、不解析，避免拖慢首屏（实测省 ~515ms）。
+     判断只要几微秒，写在下面的内联脚本里；确认真是单机才 appendChild 加载。 -->
+<script>
+(function () {
+  // 和 local/boot.js 里的 isLocal() 保持一致的判断（这里不能用它，因为它还没加载）
+  var KEY = 'erp_runmode';
+  var local = false;
+  try {
+    if (window.XERP_STANDALONE_ASSET) local = true;                       // App 内置界面
+    else if ((localStorage.getItem(KEY) || '') === 'local') local = true;  // 手动切到单机
+    else if (window.XerpApp && window.XerpApp.isLocalMode && window.XerpApp.isLocalMode()) local = true;
+  } catch (e) {}
+  if (!local) return;   // 服务器模式：一个字节都不加载
+  // 单机：用 document.write 同步插入，保证在主脚本之前按顺序执行完
+  // （动态 appendChild 是异步的，主脚本可能先跑，那时 window.XerpLocalMode 还不存在）
+  var files = ['local/shim.js', 'local/sqlshim.js', 'local/db.js', 'local/server-local.js', 'local/boot.js'];
+  for (var i = 0; i < files.length; i++) {
+    document.write('<script src="' + files[i] + '"><\/script>');
+  }
+})();
+</script>
 
 <script>
 /* ================= 基础工具 ================= */
@@ -3043,7 +3064,31 @@ function showLogin(msg) {
   if (bar) bar.style.display = 'none';
   $('#lPass').value = window.XERP_DEMO ? 'admin123' : '';
   if (msg) toast(msg, 'error');
+  refreshLoginFooter();       // 底部「本机单机 / 服务器」随模式刷新
+  // 用户名按模式预填：本机账套用 lastUserLocal，服务器用 lastUser
+  const localNow = !!(window.XerpLocalMode && window.XerpLocalMode.isLocal());
+  $('#lUser').value = LS.get(localNow ? 'lastUserLocal' : 'lastUser', 'admin');
   setTimeout(() => (CLIENT_MODE && !$('#lServer').value ? $('#lServer') : $('#lPass')).focus(), 50);
+}
+/**
+ * 登录页底部的数据位置提示。每次显示登录页都重算，
+ * 不能只在 boot 时算一次——用户可能在「数据位置」里切过模式。
+ */
+function refreshLoginFooter() {
+  const box = document.getElementById('loginFoot');
+  if (!box) return;
+  const localNow = !!(window.XerpLocalMode && window.XerpLocalMode.isLocal());
+  if (localNow) {
+    box.innerHTML = '<span class="sub-t">本机单机 · 数据存在这台设备里</span>';
+    const hint = document.getElementById('loginHint');
+    if (hint) hint.textContent = '这是本机账套，用你建账时设的账号密码登录';
+  } else {
+    const addr = (NATIVE && NATIVE.server ? NATIVE.server() : (SERVER_ADDR || location.origin)).replace(/^https?:\/\//, '');
+    box.innerHTML = `<span class="sub-t">服务器 ${esc(addr)}</span>` +
+      (NATIVE ? ' · <a class="link" data-act="nativeServer">切换</a>' : '');
+    const hint = document.getElementById('loginHint');
+    if (hint) hint.textContent = '首次使用默认账号 admin / admin123，登录后请及时修改密码';
+  }
 }
 async function testServer() {
   const st = $('#srvState'), label = st.querySelector('span');
@@ -3088,7 +3133,7 @@ function localSetupPage() {
     btn.disabled = true; btn.textContent = '正在创建…';
     try {
       const r = await window.XerpLocalMode.setupLocal({ company, username, password: p1 });
-      LS.set('lastUser', username);
+      LS.set('lastUserLocal', username);
       $('#login').classList.remove('show');
       await enterApp();
       toast('账套已创建，开始记第一笔吧');
@@ -3118,7 +3163,10 @@ async function doLogin() {
       return;
     }
     const r = await api('POST', '/api/login', {username:user, password:$('#lPass').value});
-    LS.set('token', r.token); LS.set('lastUser', user);
+    LS.set('token', r.token);
+    // 本机账套和服务器账套的用户名分开记，别互相覆盖
+    if (window.XerpLocalMode && window.XerpLocalMode.isLocal()) LS.set('lastUserLocal', user);
+    else LS.set('lastUser', user);
     await enterApp();
     toast('欢迎回来，' + ME.name);
   } catch (e) { toast(e.message, 'error'); }
@@ -3186,6 +3234,10 @@ async function boot() {
     $('#srvBox').style.display = 'none';
     $('#coBox').style.display = 'none';
     SERVER_ADDR = 'local';
+    // 单机账套没有多公司门户，PORTAL 必须清掉，
+    // 否则 doLogin 会走 /api/portal/login 分支（单机版没这个接口）
+    PORTAL = null; PORTAL_COMPANIES = []; PORTAL_COMPANY = null; PORTAL_ADMIN = false;
+    CLIENT_MODE = false;
     let ready = false;
     try {
       await window.XerpLocalMode.bootLocal();
@@ -3198,7 +3250,11 @@ async function boot() {
     }
     $('#localSetup').style.display = 'none';
     $('#loginForm').style.display = '';
-    $('#lUser').value = LS.get('lastUser', 'admin');
+    // 单机版没有默认密码，提示改成跟本机账套相关的
+    const hint = $('#loginHint');
+    if (hint) hint.textContent = '这是本机账套，用你建账时设的账号密码登录';
+    // 用户名预填用单机专用键：服务器账号不该出现在本机登录框里
+    $('#lUser').value = LS.get('lastUserLocal', 'admin');
     if (LS.get('token') && window.XerpLocalMode.localTokenValid()) {
       try { await enterApp(); return; } catch (e) { LS.set('token', null); }
     }
@@ -7907,7 +7963,11 @@ function finOrderPage(kind, id) {
     obImgRender();
   };
   obImgRender();
+  // 收支记账的提交锁（网络慢时连点会记两笔）
+  let __finSaving = false;
   const doSaveFin = async after => {
+    // 防重复提交：网络慢时连点会记两笔
+    if (__finSaving) return;
     const amt = +($('#finAmt') || {}).value || 0;
     const cat = ($('#finCat') || {}).value || '';
     const date = ($('#finDate') || {}).value || '';
@@ -7918,7 +7978,18 @@ function finOrderPage(kind, id) {
     if (!(amt > 0)) return toast('金额必须大于 0', 'error');
     if (!acct) return toast('请选择资金账户', 'error');
     const body = { type, category: cat, amount: amt, date, account: acct, note: note.trim() };
-    const b = $('#finSave'); if (b) b.disabled = true;
+    // 上锁 + 忙碌文字（「保存」2 字 → 「保存中…」5 字，等分按钮放得下；
+    // 「保存并新增」5 字不动文字，只变灰）
+    __finSaving = true;
+    const fb = $('#finSave'), fn2 = $('#finSaveNew');
+    const finBtns = [fb, fn2].filter(Boolean);
+    const finTexts = finBtns.map(x => x.textContent);
+    finBtns.forEach(x => { x.disabled = true; });
+    const unlockFin = () => {
+      __finSaving = false;
+      finBtns.forEach((x, i) => { x.disabled = false; x.textContent = finTexts[i]; x.classList.remove('busy'); });
+    };
+    if (fb) { fb.textContent = '保存中…'; fb.classList.add('busy'); }
     try {
       let newId = f0 ? f0.id : '';
       if (f0) { await api('PUT', '/api/finance/' + f0.id, body); }
@@ -7935,7 +8006,7 @@ function finOrderPage(kind, id) {
       if (c && newId) { c.id = newId; c.imgs = ((byId(db.finance, newId) || {}).imgs || []).slice(); }
       toast(f0 ? '已修改' : (isIn ? '收入已记账' : '支出已记账'));
     } catch (e) { toast(e.message, 'error'); return; }
-    finally { if (b) b.disabled = false; }
+    finally { unlockFin(); }
     if (after) after(); else { closeModal(); document.documentElement.classList.remove('zhj-ob-page'); render(); }
   };
   $('#finSave').onclick = () => doSaveFin(null);
@@ -8318,10 +8389,17 @@ function orderModal(kind, id, srcId0) {
     $('#oDate').onchange = e => { const s = dRow2.querySelector('.v'); if (s) s.textContent = e.target.value; };
     // 购物车行 → 明细编辑（供全局委托调用）
     window.__obItemEdit = openItemEdit;
+    // 提交锁：一次只允许一张单在提交中（三个按钮共用）
+    let __obSaving = false;
     // 保存 / 保存并新增 / 收银（照智慧记底部三按钮）。收银 = 存单 + 立刻收款
-    const doSave2 = (after, wantPay) => {
+    const doSave2 = (after, wantPay, busyLabel, busyIdIn) => {
+      // ⚠ 提交锁：网络慢时用户会连点「保存」/「保存并新增」/「收银」，
+      // 以前每个按钮各自防重，换个按钮点还是会重复建单（单号 +1）。
+      // 这里用一个统一的锁把三个按钮一起挡住，请求结束（成功或失败）再放开。
+      if (__obSaving) return;
       const party = $('#oParty').value, date = $('#oDate').value, remark = $('#oRemark').value.trim();
       const items = draft.items.filter(i => i.productId && +i.qty > 0);
+      // 校验失败不占锁，直接提示
       if (!party) return toast('请选择' + C.partyLabel, 'error');
       if (!items.length) return toast('请至少添加一个商品', 'error');
       const total = +(sum(items, it => it.qty * it.price - (it.lineDiscount || 0)) - disc()).toFixed(2);
@@ -8336,16 +8414,32 @@ function orderModal(kind, id, srcId0) {
       if (paid > total + 0.001) return toast('实收不能大于应收 ' + money(total), 'error');
       // qty/price 在 draft 里一直按基本单位存；提交时换成「选中单位的数量/单价」，服务端再乘/除换算率
       const body = {partyId:party, date, remark, handler:$('#oHandler').value.trim(), ...(C.src ? {srcId:draft.srcId} : {discount:disc()}), items:items.map(i => ({productId:i.productId, unit:i.unit, qty: i.rate > 1 ? (+i.uqty || 0) : (+i.qty || 0), price: i.rate > 1 ? (+i.uprice || 0) : (+i.price || 0), lineDiscount:+i.lineDiscount || 0}))};
-      const b = $('#oSave'); b.disabled = true;
+      // 上锁：三个按钮全禁用。
+      // 忙碌文字只加在「保存」和「收银」上——它们只有 2 个字，加「中…」变成 4~5 字，
+      // 在 flex:1 的等分按钮里放得下；「保存并新增」本来就有 5 个字，再加就溢出了，
+      // 所以它只变灰、不改文字。
+      __obSaving = true;
+      const btns = ['oSave', 'oSaveNew', 'oCash'].map(id => document.getElementById(id)).filter(Boolean);
+      const texts = btns.map(b => b.textContent);
+      const busyId = busyIdIn || 'oSave';
+      const label = busyLabel || '保存中…';
+      btns.forEach(b => { b.disabled = true; });
+      const target = document.getElementById(busyId);
+      if (target) { target.textContent = label; target.classList.add('busy'); }
+      const unlock = () => {
+        __obSaving = false;
+        btns.forEach((b, i) => { b.disabled = false; b.textContent = texts[i]; b.classList.remove('busy'); });
+      };
       // 注意：不能走 mutate()——它内部会 closeModal() + render()，把开单页直接顶掉，
       // 于是「保存并新增」永远回不到开单页。这里只负责发请求 + 刷数据 + 提示，
       // 保存完去哪由下面的 after() 决定。
-      return (async () => {
+      const p = (async () => {
         let r;
         try {
           r = await api(o ? 'PUT' : 'POST', '/api/orders/' + kind + (o ? '/' + o.id : ''), body);
         } catch (e) {
           toast(e.message, 'error');
+          unlock();
           return null;
         }
         try { await reload(); } catch (e2) { }
@@ -8389,7 +8483,8 @@ function orderModal(kind, id, srcId0) {
           if (after) after();
         })
         .catch(() => { })
-        .finally(() => { b.disabled = false; });
+        .finally(unlock);   // 统一解锁（成功/失败都放开三个按钮）
+      return p;
     };
     if ($('#oPaid')) {
       $('#oPaid').oninput = () => { paidTouched = true; };
@@ -8402,7 +8497,7 @@ function orderModal(kind, id, srcId0) {
       document.documentElement.classList.remove('zhj-ob-page');
       try { closeModal(); } catch (e) { }
       render();
-    });
+    }, undefined, '保存中…', 'oSave');
     // 保存并新增：存完留在开单页，清空购物车和客户
     if ($('#oSaveNew')) $('#oSaveNew').onclick = () => doSave2(() => {
       draft.items = [blank()];
@@ -8414,11 +8509,13 @@ function orderModal(kind, id, srcId0) {
       window.__obImgCtx = { kind, id: '', imgs: [], pending: [] };
       obImgRender();
       toast('已保存，可以继续开单', 'success');
-    });
+    }, undefined, '', '');   // 文案不改（「保存并新增」5 个字再加就溢出），只变灰
     // 收银 = 存单并「当场收全款」：自动把本次实收填成未收余额，并保证有结算账户，
     // 这样点完这张单就是已结清（挂账请用「保存」）。散客本来就自动填满，这里对
     // 有档案的客户也强制填满，避免「点了收银却还是未收款」。
+    // ⚠ 必须防重复点击：网络慢时用户会连点，之前会建出两张单（单号不一样）
     if ($('#oCash')) $('#oCash').onclick = () => {
+      // 防重由 doSave2 里的 __obSaving 统一处理，这里只负责把金额补满
       try {
         const items = draft.items.filter(i => i.productId && +i.qty > 0);
         const total = +(sum(items, it => it.qty * it.price - (it.lineDiscount || 0)) - disc()).toFixed(2);
@@ -8440,7 +8537,7 @@ function orderModal(kind, id, srcId0) {
         try { closeModal(); } catch (e) { }
         render();
         toast('已保存并收款', 'success');
-      });
+      }, undefined, '收银中…', 'oCash');
     };
     // ===== 票据影像：老单据进编辑页直接能传；新建单据先攒草稿，保存时一起上传 =====
     window.__obImgCtx = { kind, id: o ? o.id : '', imgs: (o && Array.isArray(o.imgs)) ? o.imgs.slice() : [], pending: [] };
@@ -16531,7 +16628,10 @@ const A = {
     }}),
   logout: () => confirmBox('确定退出登录吗？', async () => {
     try { await api('POST', '/api/logout', {}); } catch (e) {}
-    LS.set('token', null); ME = null; showLogin();
+    LS.set('token', null); ME = null;
+    // 单机模式的 token 也要清，否则退出后状态不干净
+    try { localStorage.removeItem('local_token'); } catch (e) {}
+    showLogin();
   }, {danger:false, okText:'退出'}),
   userEdit: id => userEdit(id),
   roleEdit: id => roleEdit(id),
@@ -16766,7 +16866,9 @@ if (NATIVE) {
     if (ap && ap.classList.contains('open')) { ap.classList.remove('open'); return true; }
     return false;
   };
-  $('#lBtn').insertAdjacentHTML('afterend', `<p style="text-align:center;margin-top:14px;font-size:13px"><span class="sub-t">服务器 ${esc(NATIVE.server().replace(/^https?:\/\//, ''))}</span> · <a class="link" data-act="nativeServer">切换</a></p>`);
+  // 登录页底部的数据位置提示由 refreshLoginFooter() 统一渲染（每次 showLogin 都刷新），
+  // 这里只需要初始化一次，别再无脑插「服务器 xxx」了。
+  refreshLoginFooter();
 }
 
 $('#lBtn').onclick = doLogin;
